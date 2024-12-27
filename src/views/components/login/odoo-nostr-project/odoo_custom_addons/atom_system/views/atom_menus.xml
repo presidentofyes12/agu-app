@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <menuitem id="menu_atom_root" name="Atom System" sequence="10"/>
+
+    <menuitem id="menu_atom" name="Atoms" parent="menu_atom_root" sequence="10"/>
+    <menuitem id="menu_atom_list" name="Atom List" parent="menu_atom" action="action_atom_list" sequence="10"/>
+
+    <menuitem id="menu_element" name="Elements" parent="menu_atom_root" sequence="20"/>
+    <menuitem id="menu_element_list" name="Element List" parent="menu_element" action="action_element_list" sequence="10"/>
+
+    <menuitem id="menu_atom_config" name="Configuration" parent="menu_atom_root" sequence="100"/>
+    <menuitem id="menu_atom_backup" name="Backups" parent="menu_atom_config" action="action_atom_backup" sequence="10"/>
+    <menuitem id="menu_atom_deployment" name="Deployments" parent="menu_atom_config" action="action_atom_deployment" sequence="20"/>
+
+    <!-- Other menu items for other models would go here -->
+</odoo>

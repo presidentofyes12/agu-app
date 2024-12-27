@@ -1,0 +1,217 @@
+=== ./index.tsx ===
+// @ts-nocheck
+import React, { useState } from 'react';
+import { Button, TextField, Typography, Box, CircularProgress } from '@mui/material';
+import { toast } from 'react-toastify';
+import AppWrapper from 'views/components/app-wrapper';
+import AppMenu from 'views/components/app-menu';
+import axios from 'axios';
+
+const NostrRelaySetup: React.FC = () => {
+  const [nostrKey, setNostrKey] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [assignedPort, setAssignedPort] = useState(null);
+
+  const handleSetupRelay = async () => {
+    setIsLoading(true);
+    try {
+      console.log('Sending setup request to server...');
+      const response = await axios.post('http://172.17.0.1:5000/api/setup-relay', { nostrKey });
+      console.log('Server response:', response.data);
+      if (response.data.success) {
+        setAssignedPort(response.data.port);
+        toast.success(`Nostr relay and OpenVPN setup completed successfully on port ${response.data.port}`);
+      } else {
+        toast.error(`Setup failed: ${response.data.error}`);
+      }
+    } catch (error) {
+      console.error('Setup failed:', error);
+      toast.error(`Setup failed: ${error.response?.data?.error || error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <AppWrapper>
+      <AppMenu />
+    <Box sx={{ p: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Set Up Nostr Relay with OpenVPN
+      </Typography>
+      <TextField
+        label="Nostr Private Key"
+        value={nostrKey}
+        onChange={(e) => setNostrKey(e.target.value)}
+        fullWidth
+        margin="normal"
+      />
+      <Button 
+        variant="contained" 
+        color="primary" 
+        onClick={handleSetupRelay}
+        disabled={isLoading}
+      >
+        {isLoading ? <CircularProgress size={24} /> : 'Set Up Relay and VPN'}
+      </Button>
+      {assignedPort && (
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Relay set up on port: {assignedPort}
+        </Typography>
+      )}
+    </Box>
+    </AppWrapper>
+  );
+};
+
+export default NostrRelaySetup;
+=== ./allfiles.txt ===
+=== ./server.js ===
+const express = require('express');
+const { exec } = require('child_process');
+const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
+const axios = require('axios');
+const unzipper = require('unzipper');
+const net = require('net');
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const REPO_URL = 'https://github.com/scsibug/nostr-rs-relay/archive/refs/heads/master.zip';
+const RELAY_DIR = path.join(__dirname, 'nostr-rs-relay');
+
+function findAvailablePort(startPort = 9000) {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.listen(startPort, () => {
+      const { port } = server.address();
+      server.close(() => {
+        resolve(port);
+      });
+    });
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        findAvailablePort(startPort + 1).then(resolve, reject);
+      } else {
+        reject(err);
+      }
+    });
+  });
+}
+
+app.post('/api/setup-relay', async (req, res) => {
+  const { nostrKey } = req.body;
+
+  if (!nostrKey) {
+    return res.status(400).json({ success: false, error: 'Nostr private key is required' });
+  }
+
+  try {
+    // Step 1: Download and extract nostr-rs-relay
+    await downloadAndExtractRelay();
+
+    // Step 2: Find an available port
+    const port = await findAvailablePort(8080);
+
+    // Step 3: Build and set up the relay
+    await buildAndSetupRelay(port);
+
+    // Step 4: Set up noscl
+    await setupNoscl(nostrKey, port);
+
+    res.json({ success: true, message: 'Nostr relay and OpenVPN setup completed successfully', port });
+  } catch (error) {
+    console.error('Setup failed:', error);
+    res.status(500).json({ success: false, error: error.toString() });
+  }
+});
+
+async function downloadAndExtractRelay() {
+  console.log('Downloading nostr-rs-relay...');
+  const response = await axios({
+    method: 'get',
+    url: REPO_URL,
+    responseType: 'stream'
+  });
+
+  await new Promise((resolve, reject) => {
+    response.data.pipe(unzipper.Extract({ path: __dirname }))
+      .on('close', () => {
+        fs.renameSync(path.join(__dirname, 'nostr-rs-relay-master'), RELAY_DIR);
+        resolve();
+      })
+      .on('error', reject);
+  });
+
+  console.log('nostr-rs-relay downloaded and extracted');
+}
+
+function buildAndSetupRelay(port) {
+  return new Promise((resolve, reject) => {
+    const commands = [
+      'sudo podman stop nostr-relay || true',
+      'sudo podman rm nostr-relay || true',
+      'sudo podman system prune --all --force',
+      'sudo podman build --pull -t nostr-rs-relay .',
+      'mkdir -p data',
+      'sudo chown 100:100 data',
+      `sudo podman run -d -p ${port}:8080 --user=100:100 -v $(pwd)/data:/usr/src/app/db:Z -v $(pwd)/config.toml:/usr/src/app/config.toml:ro,Z --name nostr-relay nostr-rs-relay:latest`
+    ];
+
+    const executeCommands = (index) => {
+      if (index >= commands.length) {
+        resolve();
+        return;
+      }
+
+      console.log(`Executing command: ${commands[index]}`);
+      exec(commands[index], { cwd: RELAY_DIR }, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Error executing command: ${commands[index]}`);
+          console.error(`stderr: ${stderr}`);
+          reject(`Error: ${error.message}`);
+          return;
+        }
+        console.log(`stdout: ${stdout}`);
+        executeCommands(index + 1);
+      });
+    };
+
+    executeCommands(0);
+  });
+}
+
+function setupNoscl(nostrKey, port) {
+  return new Promise((resolve, reject) => {
+    const commands = [
+      `noscl setprivate ${nostrKey}`,
+      `noscl relay add ws://localhost:${port}`
+    ];
+
+    const executeCommands = (index) => {
+      if (index >= commands.length) {
+        resolve();
+        return;
+      }
+
+      exec(commands[index], (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Error executing command: ${commands[index]}`);
+          console.error(stderr);
+          reject(error);
+          return;
+        }
+        console.log(stdout);
+        executeCommands(index + 1);
+      });
+    };
+
+    executeCommands(0);
+  });
+}
+
+const SERVER_PORT = process.env.PORT || 5000;
+app.listen(SERVER_PORT, () => console.log(`Server running on port ${SERVER_PORT}`));

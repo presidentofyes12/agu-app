@@ -1,0 +1,15 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_atom_atom_user,atom.atom.user,model_atom_atom,base.group_user,1,1,1,1
+access_atom_element_user,atom.element.user,model_atom_element,base.group_user,1,1,1,1
+access_atom_element_value_user,atom.element.value.user,model_atom_element_value,base.group_user,1,1,1,1
+access_atom_link_user,atom.link.user,model_atom_link,base.group_user,1,1,1,1
+access_atom_version_user,atom.version.user,model_atom_version,base.group_user,1,1,1,1
+access_atom_backup_user,atom.backup.user,model_atom_backup,base.group_user,1,1,1,1
+access_atom_deployment_user,atom.deployment.user,model_atom_deployment,base.group_user,1,1,1,1
+access_atom_conflict_resolution_user,atom.conflict.resolution.user,model_atom_conflict_resolution,base.group_user,1,1,1,1
+access_atom_documentation_user,atom.documentation.user,model_atom_documentation,base.group_user,1,1,1,1
+access_atom_guideline_user,atom.guideline.user,model_atom_guideline,base.group_user,1,1,1,1
+access_atom_log_user,atom.log.user,model_atom_log,base.group_user,1,1,1,1
+access_atom_performance_monitor_user,atom.performance.monitor.user,model_atom_performance_monitor,base.group_user,1,1,1,1
+access_atom_data_migration_user,atom.data.migration.user,model_atom_data_migration,base.group_user,1,1,1,1
+access_atom_best_practice_user,atom.best.practice.user,model_atom_best_practice,base.group_user,1,1,1,1

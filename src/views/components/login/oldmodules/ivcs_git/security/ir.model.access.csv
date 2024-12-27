@@ -1,0 +1,18 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ivcs_metadata_user,ivcs.metadata user,model_ivcs_metadata,base.group_user,1,1,1,1
+access_ivcs_odoo_sync_wizard_user,ivcs.odoo.sync.wizard.user,model_ivcs_odoo_sync_wizard,base.group_user,1,1,1,0
+access_ivcs_version_user,ivcs.version.user,model_ivcs_version,base.group_user,1,1,1,1
+access_ivcs_metadata_user,ivcs.metadata.user,model_ivcs_metadata,base.group_user,1,1,1,1
+access_ivcs_file_user,ivcs.file.user,model_ivcs_file,base.group_user,1,1,1,1
+access_ivcs_workflow_user,ivcs.workflow.user,model_ivcs_workflow,base.group_user,1,1,1,1
+access_ivcs_workflow_stage_user,ivcs.workflow.stage.user,model_ivcs_workflow_stage,base.group_user,1,1,1,1
+access_ivcs_item_workflow_user,ivcs.item.workflow.user,model_ivcs_item_workflow,base.group_user,1,1,1,1
+access_ivcs_create_version_wizard,access.ivcs.create.version.wizard,model_ivcs_create_version_wizard,base.group_user,1,1,1,1
+access_ivcs_add_remote_wizard,access.ivcs.add.remote.wizard,model_ivcs_add_remote_wizard,base.group_user,1,1,1,1
+access_ivcs_create_file_wizard,access.ivcs.create.file.wizard,model_ivcs_create_file_wizard,base.group_user,1,1,1,1
+access_ivcs_commit_user,ivcs.commit.user,model_ivcs_commit,base.group_user,1,1,1,1
+access_ivcs_create_branch_wizard,access.ivcs.create.branch.wizard,model_ivcs_create_branch_wizard,base.group_user,1,1,1,1
+access_ivcs_switch_branch_wizard,access.ivcs.switch.branch.wizard,model_ivcs_switch_branch_wizard,base.group_user,1,1,1,1
+access_ivcs_merge_branches_wizard,access.ivcs.merge.branches.wizard,model_ivcs_merge_branches_wizard,base.group_user,1,1,1,1
+access_ivcs_rebase_branch_wizard,access.ivcs.rebase.branch.wizard,model_ivcs_rebase_branch_wizard,base.group_user,1,1,1,1
+access_ivcs_item_user,ivcs.item user,model_ivcs_item,base.group_user,1,1,1,1

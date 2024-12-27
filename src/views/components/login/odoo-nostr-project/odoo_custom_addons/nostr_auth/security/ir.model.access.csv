@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_nostr_relay_all,nostr.relay.all,model_nostr_relay,base.group_user,1,0,0,0
+access_nostr_relay_admin,nostr.relay.admin,model_nostr_relay,base.group_system,1,1,1,1
+access_nostr_auth_module_all,nostr.auth.module.all,model_nostr_auth_module,base.group_user,1,0,0,0

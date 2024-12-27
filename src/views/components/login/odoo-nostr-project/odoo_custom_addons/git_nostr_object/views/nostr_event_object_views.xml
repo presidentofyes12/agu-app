@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_nostr_event_object_form" model="ir.ui.view">
+        <field name="name">nostr.event.object.form</field>
+        <field name="model">nostr.event.object</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_publish" string="Publish Event" type="object" class="oe_highlight" attrs="{'invisible': [('published', '=', True)]}"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="kind"/>
+                        <field name="content"/>
+                        <field name="tags"/>
+                        <field name="created_at"/>
+                        <field name="signature"/>
+                        <field name="public_key"/>
+                        <field name="published"/>
+                    </group>
+                    <notebook>
+                        <page string="Logs">
+                            <field name="logs" widget="text" readonly="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_nostr_event_object_tree" model="ir.ui.view">
+        <field name="name">nostr.event.object.tree</field>
+        <field name="model">nostr.event.object</field>
+        <field name="arch" type="xml">
+            <tree string="Nostr Event Objects">
+                <field name="kind"/>
+                <field name="content"/>
+                <field name="tags"/>
+                <field name="created_at"/>
+                <field name="signature"/>
+                <field name="public_key"/>
+                <field name="published"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_nostr_event_object" model="ir.actions.act_window">
+        <field name="name">Nostr Event Objects</field>
+        <field name="res_model">nostr.event.object</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_merge_branches_wizard_form" model="ir.ui.view">
+        <field name="name">ivcs.merge.branches.wizard.form</field>
+        <field name="model">ivcs.merge.branches.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Merge Branches">
+                <group>
+                    <field name="item_id" invisible="1"/>
+                    <field name="source_branch"/>
+                    <field name="target_branch"/>
+                </group>
+                <footer>
+                    <button name="action_merge_branches" string="Merge Branches" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

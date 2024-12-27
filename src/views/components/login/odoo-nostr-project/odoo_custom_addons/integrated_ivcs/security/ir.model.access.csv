@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_nostr_event_user,nostr.event user,model_nostr_event,base.group_user,1,1,1,1
+access_nostr_event_branch_user,nostr.event.branch user,model_nostr_event_branch,base.group_user,1,1,1,1
+access_nostr_event_commit_user,nostr.event.commit user,model_nostr_event_commit,base.group_user,1,1,1,1
+access_nostr_event_tree_user,nostr.event.tree user,model_nostr_event_tree,base.group_user,1,1,1,1
+access_nostr_event_blob_user,nostr.event.blob user,model_nostr_event_blob,base.group_user,1,1,1,1
+access_nostr_event_repository_anchor_user,nostr.event.repository.anchor user,model_nostr_event_repository_anchor,base.group_user,1,1,1,1

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_create_nostr_event_wizard_form" model="ir.ui.view">
+        <field name="name">create.nostr.event.wizard.form</field>
+        <field name="model">create.nostr.event.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Create Nostr Event">
+                <group>
+                    <field name="repository_id"/>
+                    <field name="event_type"/>
+                    <field name="commit_message" attrs="{'invisible': [('event_type', '!=', 'commit')], 'required': [('event_type', '=', 'commit')]}"/>
+                    <field name="branch_name" attrs="{'invisible': [('event_type', '!=', 'branch')], 'required': [('event_type', '=', 'branch')]}"/>
+                    <field name="file_name" attrs="{'invisible': [('event_type', '!=', 'blob')], 'required': [('event_type', '=', 'blob')]}"/>
+                    <field name="file_content" attrs="{'invisible': [('event_type', '!=', 'blob')], 'required': [('event_type', '=', 'blob')]}" widget="ace" options="{'mode': 'xml'}"/>
+                </group>
+                <footer>
+                    <button name="action_create_event" string="Create Event" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_create_nostr_event_wizard" model="ir.actions.act_window">
+        <field name="name">Create Nostr Event</field>
+        <field name="res_model">create.nostr.event.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

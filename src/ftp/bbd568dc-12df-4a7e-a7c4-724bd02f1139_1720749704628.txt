@@ -1,0 +1,4 @@
+npm install net --force
+npm install --force
+npm start dev
+echo h

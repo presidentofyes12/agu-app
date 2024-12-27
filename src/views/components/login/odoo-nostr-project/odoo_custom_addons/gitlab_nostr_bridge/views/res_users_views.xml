@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_users_form_inherit_nostr_gitlab" model="ir.ui.view">
+        <field name="name">res.users.form.inherit.nostr.gitlab</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <notebook position="inside">
+                <page string="Nostr Settings" name="nostr_settings">
+                    <group>
+                        <field name="nostr_private_key" password="True" readonly="1"/>
+                        <field name="nostr_public_key" readonly="1"/>
+                        <button name="action_generate_nostr_key" string="Generate New Nostr Key Pair" type="object" class="oe_highlight"/>
+                        <button name="action_clear_nostr_key" string="Clear Nostr Key Pair" type="object" class="btn-secondary"/>
+                    </group>
+                </page>
+                <page string="GitLab Settings" name="gitlab_settings">
+                    <group>
+                        <field name="gitlab_username" readonly="1"/>
+                        <field name="gitlab_email" readonly="1"/>
+                        <field name="gitlab_user_id" readonly="1"/>
+                        <button name="action_sync_gitlab_user" string="Sync GitLab User" type="object" class="oe_highlight"/>
+                    </group>
+                </page>
+            </notebook>
+        </field>
+    </record>
+</odoo>

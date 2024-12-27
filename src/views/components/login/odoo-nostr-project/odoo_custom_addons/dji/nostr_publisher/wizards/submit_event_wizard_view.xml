@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_submit_event_wizard_form" model="ir.ui.view">
+        <field name="name">submit.event.wizard.form</field>
+        <field name="model">submit.event.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Submit Nostr Event">
+                <sheet>
+                    <group>
+                        <field name="publisher_id" invisible="1"/>
+                        <field name="content" required="1"/>
+                        <field name="kind"/>
+                        <field name="attachment" widget="binary" filename="attachment_name"/>
+                        <field name="attachment_name" invisible="1"/>
+                    </group>
+                    <group string="Add Tag">
+                        <field name="tag_key" placeholder="Key"/>
+                        <field name="tag_value" placeholder="Value"/>
+                    </group>
+                    <field name="tags" widget="json_tags" options="{'nolabel': True}"/>
+                </sheet>
+                <footer>
+                    <button name="submit_event" string="Submit" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_submit_event_wizard" model="ir.actions.act_window">
+        <field name="name">Submit Nostr Event</field>
+        <field name="res_model">submit.event.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_publisher_id': active_id}</field>
+    </record>
+</odoo>

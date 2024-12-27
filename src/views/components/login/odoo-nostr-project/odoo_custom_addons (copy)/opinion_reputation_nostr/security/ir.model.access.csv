@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_opinion_question,access_opinion_question,model_opinion_question,base.group_user,1,1,1,1
+access_opinion_prediction,access_opinion_prediction,model_opinion_prediction,base.group_user,1,1,1,1
+access_opinion_nostr_event,access_opinion_nostr_event,model_opinion_nostr_event,base.group_user,1,1,1,1

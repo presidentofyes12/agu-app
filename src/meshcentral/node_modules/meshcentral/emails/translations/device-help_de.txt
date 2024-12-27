@@ -1,0 +1,7 @@
+[[[SERVERNAME]]] - Device Help Request
+Gerät "[[[DEVICENAME]]]" hat Unterstützung angefordert.
+
+Benutzer:  "[[[HELPUSERNAME]]]"
+Anforderung: "[[[HELPREQUEST]]]"
+
+[[[SERVERURL]]]?viewmode=10&gotonode=[[[NODEID]]]

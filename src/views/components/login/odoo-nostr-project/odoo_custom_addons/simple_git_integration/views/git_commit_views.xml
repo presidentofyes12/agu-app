@@ -1,0 +1,23 @@
+<odoo>
+    <record id="view_git_commit_tree" model="ir.ui.view">
+        <field name="name">git.commit.tree</field>
+        <field name="model">git.commit</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="hash"/>
+                <field name="message"/>
+                <field name="author"/>
+                <field name="date"/>
+                <field name="repository_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_git_commit" model="ir.actions.act_window">
+        <field name="name">Git Commits</field>
+        <field name="res_model">git.commit</field>
+        <field name="view_mode">tree</field>
+    </record>
+
+    <menuitem id="menu_git_commit" parent="menu_git_root" action="action_git_commit" name="Commits"/>
+</odoo>

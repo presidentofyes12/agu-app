@@ -1,0 +1,105 @@
+<!DOCTYPE html><html dir="ltr" xmlns="http://www.w3.org/1999/xhtml"><head lang="en">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta name="viewport" content="user-scalable=1.0,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="robots" content="noindex,nofollow">
+    <link type="text/css" href="/styles/style.css" media="screen" rel="stylesheet" title="CSS">
+    <link rel="apple-touch-icon" href="/favicon-303x303.png">
+    <script type="text/javascript" src="scripts/common-0.0.1{{min}}.js"></script>
+    <title id="topTitle">{{{title}}}</title>
+</head>
+<body>
+    <div id="container" style="max-height:100vh">
+        <div id="mastheadx"></div>
+        <div id="masthead" style="background:url(logo.png) 0px 0px;background-color:#036;background-repeat:no-repeat;height:66px;width:100%;overflow:hidden">
+            <div style="float:left;text-shadow: 1px 1px 2px #000">{{{titlehtml}}}</div>
+            <div style="float:left;height:66px;color:#c8c8c8;padding-left:14px;padding-top:7px">
+                <strong><font style="font-size:46px;font-family:Arial,Helvetica,sans-serif;text-shadow: 1px 1px 2px #000">{{{title1}}}</font></strong>
+            </div>
+            <div style="float:left;height:66px;color:#c8c8c8;padding-left:5px;padding-top:14px">
+                <strong><font style="font-size:14px;font-family:Arial,Helvetica,sans-serif;text-shadow: 1px 1px 2px #000">{{{title2}}}</font></strong>
+            </div>
+        </div>
+        <div id="page_content" style="max-height:calc(100vh-138px)">
+            <div id="column_l">
+                <h1 id="mainTitle"></h1>
+                <p id="mainMessage"></p>
+                <br>
+            </div>
+            <div id="footer">
+                <table cellpadding="0" cellspacing="10" style="width:100%">
+                    <tbody><tr>
+                        <td style="text-align:left"></td>
+                        <td style="text-align:right">
+                            <a href="terms">條款和隱私</a>
+                        </td>
+                    </tr>
+                </tbody></table>
+            </div>
+        </div>
+    </div>
+    <script>
+        var random = '{{{randomlength}}}' // Random length string for BREACH mitigation
+        var titleid = parseInt('{{{titleid}}}');
+        var msgid = parseInt('{{{msgid}}}');
+        var domainurl = decodeURIComponent('{{{domainurl}}}');
+        var arg1 = decodeURIComponent('{{{arg1}}}');
+        var arg2 = decodeURIComponent('{{{arg2}}}');
+        var urlargs = parseUriArgs();
+
+        var title = '';
+        if (titleid == 1) { title = "帳戶驗證"; }
+        if (titleid == 2) { title = "桌面共享"; }
+        if (titleid == 3) { title = "維護中的服務器"; }
+        if (titleid == 4) { title = "終端共享"; }
+        QH('topTitle', Q('topTitle').innerText + ' - ' + title);
+        QH('mainTitle', title);
+
+        var msg = '';
+        switch (msgid) {
+            case 1: { msg = "錯誤：無效的域。"; break; }
+            case 2: { msg = format("錯誤：無效的用戶名“ {0} ”。", arg1); break; }
+            case 3: { msg = format("錯誤：用戶“ {1} ”的電郵“ {0} ”無效。", arg1, arg2); break; }
+            case 4: { msg = format("用戶“ {1} ”的電郵“ {0} ”已通過驗證。", arg1, arg2); break; }
+            case 5: { msg = format("電郵“ {0} ”已在其他帳戶上使用。更改電郵地址，然後重試。", arg1); break; }
+            case 6: { msg = format("用戶帳戶{1}的已驗證電郵{0}。", '<b>' + arg1 + '</b>', '<b>' + arg2 + '</b>'); break; }
+            case 7: { msg = format("未驗證用戶“ {1} ”的電郵“ {0} ”。", arg1, arg2); break; }
+            case 8: {
+                msg = '<div>' + format("帳戶{0}的密碼已重置為：", '<b>' + arg1 + '</b>') + '</div><div style=padding:14px;font-size:18px><b>' + arg2 + '</b></div>';
+                msg += "登入並進入“我的帳戶”標籤以更新密碼。";
+                break;
+            }
+            case 9: { msg = "錯誤：無效的帳戶檢查。"; break; }
+            case 10: { msg = "錯誤：無效的帳戶檢查，驗證網址僅在30分鐘內有效。"; break; }
+            case 11: { msg = "共享鏈接無效。"; break; }
+            case 12: { msg = "共享鏈接已過期。"; break; }
+            case 13: { msg = "如果您是管理員，請[在此處登錄]。".replace('[', '<a href=login?loginscreen=1>').replace(']', '</a>'); break; }
+            case 14: { msg = '<a href=' + window.location.href + '&confirm=1>' + "單擊此處重置你的帳戶密碼。" + '</a>'; break; }
+        }
+
+        // Add login page link
+        if ((msgid != 11) && (msgid != 12) && (msgid != 13) && (msgid != 14)) { msg += ' <a href="' + domainurl + (urlargs.key ? ('?key=' + urlargs.key) : '') + '">' + "進入登入頁面" + '</a>.' }
+        QH('mainMessage', msg);
+
+        function format(format) { var args = Array.prototype.slice.call(arguments, 1); return format.replace(/{(\d+)}/g, function (match, number) { return typeof args[number] != 'undefined' ? args[number] : match; }); };
+
+        // Parse URL arguments, only keep safe values
+        function parseUriArgs() {
+            var href = window.document.location.href;
+            if (href.endsWith('#')) { href = href.substring(0, href.length - 1); }
+            var name, r = {}, parsedUri = href.split(/[\?&|]/);
+            parsedUri.splice(0, 1);
+            for (var j in parsedUri) {
+                var arg = parsedUri[j], i = arg.indexOf('=');
+                name = arg.substring(0, i);
+                r[name] = arg.substring(i + 1);
+                if (!isSafeString(r[name])) { delete r[name]; } else { var x = parseInt(r[name]); if (x == r[name]) { r[name] = x; } }
+            }
+            return r;
+        }
+
+    </script>
+
+</body></html>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ivcs_item_form" model="ir.ui.view">
+        <field name="name">ivcs.item.form</field>
+        <field name="model">ivcs.item</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="sync_repository" string="Sync Repository" type="object" class="oe_highlight"/>
+                    <button name="action_open_create_branch_wizard" string="Create Branch" type="object" class="oe_highlight"/>
+                    <button name="action_open_add_remote_wizard" string="Add Remote" type="object" class="oe_highlight"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="description"/>
+                        <field name="repo_path"/>
+                        <field name="current_branch"/>
+                        <field name="current_version_id"/>
+                        <field name="git_host"/>
+                        <field name="git_token" password="True" attrs="{'invisible': [('git_host', '=', 'other')]}"/>
+                        <field name="odoo_instance_url" attrs="{'invisible': [('git_host', '!=', 'odoo')]}"/>
+                        <field name="odoo_database" attrs="{'invisible': [('git_host', '!=', 'odoo')]}"/>
+                    </group>
+                    <notebook>
+                        <page string="Versions">
+                            <field name="version_ids" readonly="1">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="create_date"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Commits">
+                            <field name="commit_ids" readonly="1">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="message"/>
+                                    <field name="date"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ivcs_item_tree" model="ir.ui.view">
+        <field name="name">ivcs.item.tree</field>
+        <field name="model">ivcs.item</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="repo_path"/>
+                <field name="current_branch"/>
+                <field name="current_version_id"/>
+                <field name="git_host"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_ivcs_item_search" model="ir.ui.view">
+        <field name="name">ivcs.item.search</field>
+        <field name="model">ivcs.item</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="repo_path"/>
+                <field name="current_branch"/>
+                <field name="git_host"/>
+                <filter string="GitHub Repos" name="github_repos" domain="[('git_host', '=', 'github')]"/>
+                <filter string="GitLab Repos" name="gitlab_repos" domain="[('git_host', '=', 'gitlab')]"/>
+                <filter string="Odoo Instances" name="odoo_instances" domain="[('git_host', '=', 'odoo')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Git Host" name="group_by_git_host" context="{'group_by': 'git_host'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ivcs_item" model="ir.actions.act_window">
+        <field name="name">IVCS Items</field>
+        <field name="res_model">ivcs.item</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_ivcs_item_search"/>
+    </record>
+
+    <menuitem id="menu_ivcs_git_nostr" name="IVCS Git Nostr" sequence="10"/>
+    <menuitem id="menu_ivcs_item" name="IVCS Items" parent="menu_ivcs_git_nostr" action="action_ivcs_item" sequence="10"/>
+</odoo>

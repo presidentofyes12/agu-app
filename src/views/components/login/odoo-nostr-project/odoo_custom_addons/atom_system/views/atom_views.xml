@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Atom Tree View -->
+    <record id="view_atom_tree" model="ir.ui.view">
+        <field name="name">atom.atom.tree</field>
+        <field name="model">atom.atom</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="create_date"/>
+                <field name="write_date"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Atom Form View -->
+    <record id="view_atom_form" model="ir.ui.view">
+        <field name="name">atom.atom.form</field>
+        <field name="model">atom.atom</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                    </group>
+                    <notebook>
+                        <page string="Element Values">
+                            <field name="element_values">
+                                <tree editable="bottom">
+                                    <field name="element_id"/>
+                                    <field name="value1"/>
+                                    <field name="value2"/>
+                                    <field name="value3"/>
+                                    <field name="sum"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Links">
+                            <group>
+                                <field name="parent_links"/>
+                                <field name="child_links"/>
+                            </group>
+                        </page>
+                        <page string="Versions">
+                            <field name="version_ids">
+                                <tree>
+                                    <field name="version_number"/>
+                                    <field name="changed_by"/>
+                                    <field name="changed_on"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Atom Search View -->
+    <record id="view_atom_search" model="ir.ui.view">
+        <field name="name">atom.atom.search</field>
+        <field name="model">atom.atom</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="element_values"/>
+                <group expand="0" string="Group By">
+                    <filter string="Creation Date" name="group_by_create_date" context="{'group_by': 'create_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Atom Action -->
+    <record id="action_atom" model="ir.actions.act_window">
+        <field name="name">Atoms</field>
+        <field name="res_model">atom.atom</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Atom Menu -->
+    <menuitem id="menu_atom" name="Atom System" sequence="10"/>
+    <menuitem id="menu_atom_sub" name="Atoms" parent="menu_atom" action="action_atom" sequence="10"/>
+</odoo>

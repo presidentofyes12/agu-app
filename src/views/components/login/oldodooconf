@@ -1,0 +1,10 @@
+[options]
+addons_path = /opt/odoo/odoo/addons,/opt/odoo/odoo/odoo/addons,/opt/odoo/custom_addons
+admin_passwd = your_secure_admin_password
+db_host = postgres
+db_port = 5432
+db_user = odoo
+db_password = your_secure_password
+db_name = odoodb
+auth_method = nostr
+load_language = en_US

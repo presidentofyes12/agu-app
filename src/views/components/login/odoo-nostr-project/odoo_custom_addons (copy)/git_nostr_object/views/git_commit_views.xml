@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_git_commit_form" model="ir.ui.view">
+        <field name="name">git.commit.form</field>
+        <field name="model">git.commit</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="sha"/>
+                    <field name="message"/>
+                    <field name="author"/>
+                    <field name="timestamp"/>
+                    <field name="data"/>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_git_commit_tree" model="ir.ui.view">
+        <field name="name">git.commit.tree</field>
+        <field name="model">git.commit</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="sha"/>
+                <field name="message"/>
+                <field name="author"/>
+                <field name="timestamp"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_git_commit" model="ir.actions.act_window">
+        <field name="name">Git Commits</field>
+        <field name="res_model">git.commit</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

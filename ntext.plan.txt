@@ -1,0 +1,1 @@
+show all proposal from the rave.ts and redirect with 

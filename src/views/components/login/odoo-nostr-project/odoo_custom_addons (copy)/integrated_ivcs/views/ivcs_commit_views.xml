@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ivcs_commit_form" model="ir.ui.view">
+        <field name="name">ivcs.commit.form</field>
+        <field name="model">ivcs.commit</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="hash"/>
+                        <field name="message"/>
+                        <field name="author"/>
+                        <field name="date"/>
+                        <field name="item_id"/>
+                        <field name="version_id"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ivcs_commit_tree" model="ir.ui.view">
+        <field name="name">ivcs.commit.tree</field>
+        <field name="model">ivcs.commit</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="hash"/>
+                <field name="message"/>
+                <field name="author"/>
+                <field name="date"/>
+                <field name="item_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_ivcs_commit" model="ir.actions.act_window">
+        <field name="name">IVCS Commits</field>
+        <field name="res_model">ivcs.commit</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_ivcs_commit" name="Commits" parent="menu_ivcs_root" action="action_ivcs_commit"/>
+</odoo>

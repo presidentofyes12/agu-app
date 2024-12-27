@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ivcs_odoo_sync_wizard_form" model="ir.ui.view">
+        <field name="name">ivcs.odoo.sync.wizard.form</field>
+        <field name="model">ivcs.odoo.sync.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Sync with Odoo Instance">
+                <group>
+                    <field name="item_id" invisible="1"/>
+                    <field name="odoo_instance_url"/>
+                    <field name="odoo_database"/>
+                    <field name="odoo_login"/>
+                    <field name="odoo_password" password="True"/>
+                </group>
+                <footer>
+                    <button name="action_sync" string="Sync" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

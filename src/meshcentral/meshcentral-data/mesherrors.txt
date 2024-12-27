@@ -1,0 +1,17 @@
+-------- 7/29/2024, 9:01:32 AM ---- 1.1.27 --------
+
+/home/impromise/meshcentral/node_modules/meshcentral/webserver.js:3367
+        if (req.session.flash && req.session.flash.error) {
+                        ^
+
+TypeError: Cannot read properties of null (reading 'flash')
+    at handleRootRequestLogin (/home/impromise/meshcentral/node_modules/meshcentral/webserver.js:3367:25)
+    at handleRootRequestEx (/home/impromise/meshcentral/node_modules/meshcentral/webserver.js:3201:13)
+    at /home/impromise/meshcentral/node_modules/meshcentral/webserver.js:2432:40
+    at /home/impromise/meshcentral/node_modules/meshcentral/webserver.js:743:36
+    at PBKDF2Job.<anonymous> (/home/impromise/meshcentral/node_modules/meshcentral/pass.js:31:88)
+    at job.ondone (node:internal/crypto/pbkdf2:58:14)
+
+Node.js v18.18.0
+
+

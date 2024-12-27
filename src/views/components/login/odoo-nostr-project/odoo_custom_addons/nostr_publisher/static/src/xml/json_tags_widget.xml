@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="JsonTagsWidget">
+        <div class="o_json_tags_widget"/>
+    </t>
+</templates>

@@ -1,0 +1,3 @@
+export const SET_NOTE="SET_NOTE"
+export const SET_STOCK_NOTE="SET_STOCK_NOTE"
+export const SET_SEARCH_NOTE="SET_SEARCH_NOTE"

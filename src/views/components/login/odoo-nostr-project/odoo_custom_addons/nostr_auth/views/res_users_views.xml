@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_users_form_nostr" model="ir.ui.view">
+        <field name="name">res.users.form.nostr</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='access_rights']" position="after">
+                <page string="Nostr Authentication" name="nostr_auth">
+                    <group>
+                        <field name="nostr_public_key"/>
+                        <field name="nostr_private_key" password="True"/>
+                        <field name="nostr_relay_ids" widget="many2many_tags"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="nostr_relay_tree" model="ir.ui.view">
+        <field name="name">nostr.relay.tree</field>
+        <field name="model">nostr.relay</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="url"/>
+                <field name="is_active"/>
+                <field name="created_at"/>
+            </tree>
+        </field>
+    </record>
+</odoo>

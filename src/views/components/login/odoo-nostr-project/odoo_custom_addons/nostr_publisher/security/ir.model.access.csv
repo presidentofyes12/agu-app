@@ -1,0 +1,11 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_nostr_publisher_user,nostr.publisher.user,model_nostr_publisher,base.group_user,1,0,0,0
+access_nostr_publisher_manager,nostr.publisher.manager,model_nostr_publisher,nostr_publisher.group_nostr_manager,1,1,1,1
+access_nostr_relay_user,nostr.relay.user,model_nostr_relay,base.group_user,1,0,0,0
+access_nostr_relay_manager,nostr.relay.manager,model_nostr_relay,nostr_publisher.group_nostr_manager,1,1,1,1
+access_nostr_connected_module_user,nostr.connected.module.user,model_nostr_connected_module,base.group_user,1,0,0,0
+access_nostr_connected_module_manager,nostr.connected.module.manager,model_nostr_connected_module,nostr_publisher.group_nostr_manager,1,1,1,1
+access_nostr_publish_log_user,nostr.publish.log.user,model_nostr_publish_log,base.group_user,1,0,0,0
+access_nostr_publish_log_manager,nostr.publish.log.manager,model_nostr_publish_log,nostr_publisher.group_nostr_manager,1,1,1,1
+access_submit_event_wizard_user,submit.event.wizard.user,model_submit_event_wizard,base.group_user,1,1,1,0
+access_submit_event_wizard_manager,submit.event.wizard.manager,model_submit_event_wizard,nostr_publisher.group_nostr_manager,1,1,1,1

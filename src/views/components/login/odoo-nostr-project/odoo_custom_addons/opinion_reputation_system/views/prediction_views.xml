@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_opinion_prediction_form" model="ir.ui.view">
+        <field name="name">opinion.prediction.form</field>
+        <field name="model">opinion.prediction</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="user_id"/>
+                        <field name="question_id"/>
+                        <field name="answer"/>
+                        <field name="confidence"/>
+                        <field name="timestamp"/>
+                        <field name="is_correct"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_opinion_prediction_tree" model="ir.ui.view">
+        <field name="name">opinion.prediction.tree</field>
+        <field name="model">opinion.prediction</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="user_id"/>
+                <field name="question_id"/>
+                <field name="answer"/>
+                <field name="confidence"/>
+                <field name="timestamp"/>
+                <field name="is_correct"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_opinion_prediction" model="ir.actions.act_window">
+        <field name="name">Predictions</field>
+        <field name="res_model">opinion.prediction</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_opinion_prediction" parent="menu_opinion_root" action="action_opinion_prediction"/>
+</odoo>

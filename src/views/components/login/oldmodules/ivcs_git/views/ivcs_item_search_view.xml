@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ivcs_item_search" model="ir.ui.view">
+        <field name="name">ivcs.item.search</field>
+        <field name="model">ivcs.item</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="description"/>
+                <field name="current_version_id" options="{'no_create': True, 'no_open': True}"/>
+                <filter string="Draft Versions" name="draft_versions" domain="[('current_version_id.state', '=', 'draft')]"/>
+                <filter string="Released Versions" name="released_versions" domain="[('current_version_id.state', '=', 'released')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Current Version" name="group_by_current_version" context="{'group_by': 'current_version_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+</odoo>

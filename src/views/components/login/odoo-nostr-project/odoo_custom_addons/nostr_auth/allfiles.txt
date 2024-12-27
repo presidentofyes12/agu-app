@@ -1,0 +1,486 @@
+=== ./models/__init__.py ===
+from . import res_users
+from . import nostr_auth_module
+from . import nostr_relay
+=== ./models/res_users.py ===
+from odoo import models, fields, api
+from odoo.exceptions import AccessDenied, ValidationError
+import logging
+_logger = logging.getLogger(__name__)
+
+class ResUsers(models.Model):
+    _inherit = 'res.users'
+
+    nostr_public_key = fields.Char(string='Nostr Public Key', copy=False)
+    nostr_private_key = fields.Char(string='Nostr Private Key', copy=False)
+    nostr_relay_ids = fields.Many2many('nostr.relay', string='Nostr Relays')
+    
+    _sql_constraints = [
+        ('nostr_public_key_unique', 'unique(nostr_public_key)',
+         'Nostr public key must be unique per user!')
+    ]
+
+    @api.model
+    def _check_credentials(self, password, user_agent_env):
+        try:
+            return super(ResUsers, self)._check_credentials(password, user_agent_env)
+        except AccessDenied:
+            if self.nostr_public_key and self.nostr_public_key == self.login:
+                if self.nostr_private_key == password:
+                    return
+            raise
+
+    def _get_session_token_fields(self):
+        return super(ResUsers, self)._get_session_token_fields() | {'nostr_public_key'}
+
+    @api.model
+    def authenticate(self, db, login, password, user_agent_env):
+        try:
+            return super(ResUsers, self).authenticate(db, login, password, user_agent_env)
+        except AccessDenied:
+            if login and login.startswith('npub1'):
+                uid = self.sudo().search([('nostr_public_key', '=', login)]).id
+                if uid and self.sudo().browse(uid).nostr_private_key == password:
+                    return uid
+            raise
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('nostr_public_key'):
+                vals['login'] = vals['nostr_public_key']
+        return super(ResUsers, self).create(vals_list)
+
+    @api.constrains('nostr_public_key')
+    def _check_nostr_public_key(self):
+        for user in self:
+            if user.nostr_public_key and not user.nostr_public_key.startswith('npub1'):
+                raise ValidationError("Nostr public key must start with 'npub1'")
+=== ./models/nostr_relay.py ===
+from odoo import models, fields, api
+
+class NostrRelay(models.Model):
+    _name = 'nostr.relay'
+    _description = 'Nostr Relay'
+
+    name = fields.Char(string='Name', required=True)
+    url = fields.Char(string='URL', required=True)
+    is_active = fields.Boolean(string='Active', default=True)
+    created_at = fields.Datetime(string='Created At', default=fields.Datetime.now)
+=== ./models/nostr_auth_module.py ===
+# File: odoo_custom_addons/nostr_auth/models/nostr_auth_module.py
+
+from odoo import models, api
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat, PrivateFormat, NoEncryption
+import base64
+from bech32 import bech32_encode, bech32_decode, convertbits
+
+class NostrAuthModule(models.AbstractModel):
+    _name = 'nostr.auth.module'
+    _description = 'Nostr Authentication Module'
+
+    @api.model
+    def generate_keypair(self):
+        private_key = ec.generate_private_key(ec.SECP256K1())
+        public_key = private_key.public_key()
+        
+        private_bytes = private_key.private_numbers().private_value.to_bytes(32, 'big')
+        public_bytes = public_key.public_bytes(
+            encoding=Encoding.X962,
+            format=PublicFormat.UncompressedPoint
+        )[1:]
+        
+        return {
+            'private_key': self.bytes_to_nsec(private_bytes),
+            'public_key': self.bytes_to_npub(public_bytes)
+        }
+
+    @api.model
+    def verify_signature(self, public_key, message, signature):
+        try:
+            public_key_bytes = self.npub_to_bytes(public_key)
+            public_key_obj = ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP256K1(), b'\x04' + public_key_bytes)
+            signature_bytes = base64.b64decode(signature)
+            public_key_obj.verify(
+                signature_bytes,
+                message.encode('utf-8'),
+                ec.ECDSA(hashes.SHA256())
+            )
+            return True
+        except:
+            return False
+
+    @api.model
+    def bytes_to_npub(self, key_bytes):
+        data = convertbits(key_bytes[:32], 8, 5)
+        return bech32_encode('npub', data)
+
+    @api.model
+    def bytes_to_nsec(self, key_bytes):
+        data = convertbits(key_bytes[:32], 8, 5)
+        return bech32_encode('nsec', data)
+        
+    @api.model
+    def npub_to_bytes(self, npub):
+        hrp, data = bech32_decode(npub)
+        return bytes(convertbits(data, 5, 8, False))
+
+    @api.model
+    def nsec_to_bytes(self, nsec):
+        hrp, data = bech32_decode(nsec)
+        return bytes(convertbits(data, 5, 8, False))
+=== ./__init__.py ===
+from . import models
+=== ./__manifest__.py ===
+{
+    'name': 'Nostr Authentication',
+    'version': '1.0',
+    'category': 'Authentication',
+    'summary': 'Extends user model with Nostr fields and authentication',
+    'depends': ['base', 'auth_signup', 'web'],  # Added web dependency
+    'data': [
+        'security/nostr_security.xml',
+        'security/ir.model.access.csv',
+        'views/res_users_views.xml',
+    ],
+    'installable': True,
+    'application': False,
+    'auto_install': False,
+    'external_dependencies': {
+        'python': ['cryptography', 'bech32', 'websockets', 'nostr'],
+    },
+}
+=== ./allfiles.txt ===
+=== ./security/nostr_security.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="model_nostr_relay_urls" model="ir.model">
+            <field name="name">Nostr Relay URLs</field>
+            <field name="model">nostr.relay.urls</field>
+            <field name="description">Stores Nostr relay URLs</field>
+        </record>
+    </data>
+</odoo>
+=== ./security/ir.model.access.csv ===
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_nostr_relay_all,nostr.relay.all,model_nostr_relay,base.group_user,1,0,0,0
+access_nostr_relay_admin,nostr.relay.admin,model_nostr_relay,base.group_system,1,1,1,1
+access_nostr_auth_module_all,nostr.auth.module.all,model_nostr_auth_module,base.group_user,1,0,0,0
+=== ./views/res_users_views.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_users_form_nostr" model="ir.ui.view">
+        <field name="name">res.users.form.nostr</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='access_rights']" position="after">
+                <page string="Nostr Authentication" name="nostr_auth">
+                    <group>
+                        <field name="nostr_public_key"/>
+                        <field name="nostr_private_key" password="True"/>
+                        <field name="nostr_relay_ids" widget="many2many_tags"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="nostr_relay_tree" model="ir.ui.view">
+        <field name="name">nostr.relay.tree</field>
+        <field name="model">nostr.relay</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="url"/>
+                <field name="is_active"/>
+                <field name="created_at"/>
+            </tree>
+        </field>
+    </record>
+</odoo>
+=== ./controllers/__init__.py ===
+from . import main
+=== ./controllers/main.py ===
+# controllers/main.py
+from odoo import http
+from odoo.http import request
+import json
+from odoo.addons.web.controllers.main import Home
+from odoo.exceptions import AccessDenied
+
+class NostrAuthController(Home):
+    @http.route('/web/login', type='http', auth="none", methods=['GET', 'POST'], website=True)
+    def web_login(self, redirect=None, **kw):
+        try:
+            # First try Nostr authentication
+            if request.httprequest.method == 'POST':
+                username = request.params.get('login', '')
+                password = request.params.get('password', '')
+                
+                if username and password and (username.startswith('npub1') or username.startswith('nsec1')):
+                    uid = request.env['res.users'].sudo().search([
+                        ('nostr_public_key', '=', username)
+                    ]).id
+                    
+                    if uid:
+                        request.session.authenticate(request.db, username, password)
+                        return http.redirect_with_hash(self._login_redirect(uid, redirect=redirect))
+        except AccessDenied:
+            pass
+            
+        return super(NostrAuthController, self).web_login(redirect=redirect, **kw)
+
+    @http.route('/web/nostr/authenticate', type='json', auth='none')
+    def authenticate(self, public_key, signature, message):
+        uid = request.env['res.users'].sudo().authenticate_nostr(public_key, signature, message)
+        if uid:
+            request.session.authenticate(request.session.db, uid, public_key)
+            return {'success': True, 'uid': uid}
+        return {'success': False, 'error': 'Authentication failed'}
+=== ./models/__init__.py ===
+from . import res_users
+from . import nostr_auth_module
+from . import nostr_relay
+=== ./models/res_users.py ===
+from odoo import models, fields, api
+from odoo.exceptions import AccessDenied, ValidationError
+import logging
+_logger = logging.getLogger(__name__)
+
+class ResUsers(models.Model):
+    _inherit = 'res.users'
+
+    nostr_public_key = fields.Char(string='Nostr Public Key', copy=False)
+    nostr_private_key = fields.Char(string='Nostr Private Key', copy=False)
+    nostr_relay_ids = fields.Many2many('nostr.relay', string='Nostr Relays')
+    
+    _sql_constraints = [
+        ('nostr_public_key_unique', 'unique(nostr_public_key)',
+         'Nostr public key must be unique per user!')
+    ]
+
+    @api.model
+    def _check_credentials(self, password, user_agent_env):
+        try:
+            return super(ResUsers, self)._check_credentials(password, user_agent_env)
+        except AccessDenied:
+            if self.nostr_public_key and self.nostr_public_key == self.login:
+                if self.nostr_private_key == password:
+                    return
+            raise
+
+    def _get_session_token_fields(self):
+        return super(ResUsers, self)._get_session_token_fields() | {'nostr_public_key'}
+
+    @api.model
+    def authenticate(self, db, login, password, user_agent_env):
+        try:
+            return super(ResUsers, self).authenticate(db, login, password, user_agent_env)
+        except AccessDenied:
+            if login and login.startswith('npub1'):
+                uid = self.sudo().search([('nostr_public_key', '=', login)]).id
+                if uid and self.sudo().browse(uid).nostr_private_key == password:
+                    return uid
+            raise
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('nostr_public_key'):
+                vals['login'] = vals['nostr_public_key']
+        return super(ResUsers, self).create(vals_list)
+
+    @api.constrains('nostr_public_key')
+    def _check_nostr_public_key(self):
+        for user in self:
+            if user.nostr_public_key and not user.nostr_public_key.startswith('npub1'):
+                raise ValidationError("Nostr public key must start with 'npub1'")
+=== ./models/nostr_relay.py ===
+from odoo import models, fields, api
+
+class NostrRelay(models.Model):
+    _name = 'nostr.relay'
+    _description = 'Nostr Relay'
+
+    name = fields.Char(string='Name', required=True)
+    url = fields.Char(string='URL', required=True)
+    is_active = fields.Boolean(string='Active', default=True)
+    created_at = fields.Datetime(string='Created At', default=fields.Datetime.now)
+=== ./models/nostr_auth_module.py ===
+# File: odoo_custom_addons/nostr_auth/models/nostr_auth_module.py
+
+from odoo import models, api
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat, PrivateFormat, NoEncryption
+import base64
+from bech32 import bech32_encode, bech32_decode, convertbits
+
+class NostrAuthModule(models.AbstractModel):
+    _name = 'nostr.auth.module'
+    _description = 'Nostr Authentication Module'
+
+    @api.model
+    def generate_keypair(self):
+        private_key = ec.generate_private_key(ec.SECP256K1())
+        public_key = private_key.public_key()
+        
+        private_bytes = private_key.private_numbers().private_value.to_bytes(32, 'big')
+        public_bytes = public_key.public_bytes(
+            encoding=Encoding.X962,
+            format=PublicFormat.UncompressedPoint
+        )[1:]
+        
+        return {
+            'private_key': self.bytes_to_nsec(private_bytes),
+            'public_key': self.bytes_to_npub(public_bytes)
+        }
+
+    @api.model
+    def verify_signature(self, public_key, message, signature):
+        try:
+            public_key_bytes = self.npub_to_bytes(public_key)
+            public_key_obj = ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP256K1(), b'\x04' + public_key_bytes)
+            signature_bytes = base64.b64decode(signature)
+            public_key_obj.verify(
+                signature_bytes,
+                message.encode('utf-8'),
+                ec.ECDSA(hashes.SHA256())
+            )
+            return True
+        except:
+            return False
+
+    @api.model
+    def bytes_to_npub(self, key_bytes):
+        data = convertbits(key_bytes[:32], 8, 5)
+        return bech32_encode('npub', data)
+
+    @api.model
+    def bytes_to_nsec(self, key_bytes):
+        data = convertbits(key_bytes[:32], 8, 5)
+        return bech32_encode('nsec', data)
+        
+    @api.model
+    def npub_to_bytes(self, npub):
+        hrp, data = bech32_decode(npub)
+        return bytes(convertbits(data, 5, 8, False))
+
+    @api.model
+    def nsec_to_bytes(self, nsec):
+        hrp, data = bech32_decode(nsec)
+        return bytes(convertbits(data, 5, 8, False))
+=== ./__init__.py ===
+from . import models
+=== ./__manifest__.py ===
+{
+    'name': 'Nostr Authentication',
+    'version': '1.0',
+    'category': 'Authentication',
+    'summary': 'Extends user model with Nostr fields and authentication',
+    'depends': ['base', 'auth_signup', 'web'],  # Added web dependency
+    'data': [
+        'security/nostr_security.xml',
+        'security/ir.model.access.csv',
+        'views/res_users_views.xml',
+    ],
+    'installable': True,
+    'application': False,
+    'auto_install': False,
+    'external_dependencies': {
+        'python': ['cryptography', 'bech32', 'websockets', 'nostr'],
+    },
+}
+=== ./allfiles.txt ===
+=== ./security/nostr_security.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="model_nostr_relay_urls" model="ir.model">
+            <field name="name">Nostr Relay URLs</field>
+            <field name="model">nostr.relay.urls</field>
+            <field name="description">Stores Nostr relay URLs</field>
+        </record>
+    </data>
+</odoo>
+=== ./security/ir.model.access.csv ===
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_nostr_relay_all,nostr.relay.all,model_nostr_relay,base.group_user,1,0,0,0
+access_nostr_relay_admin,nostr.relay.admin,model_nostr_relay,base.group_system,1,1,1,1
+access_nostr_auth_module_all,nostr.auth.module.all,model_nostr_auth_module,base.group_user,1,0,0,0
+=== ./views/res_users_views.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_users_form_nostr" model="ir.ui.view">
+        <field name="name">res.users.form.nostr</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='access_rights']" position="after">
+                <page string="Nostr Authentication" name="nostr_auth">
+                    <group>
+                        <field name="nostr_public_key"/>
+                        <field name="nostr_private_key" password="True"/>
+                        <field name="nostr_relay_ids" widget="many2many_tags"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="nostr_relay_tree" model="ir.ui.view">
+        <field name="name">nostr.relay.tree</field>
+        <field name="model">nostr.relay</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="url"/>
+                <field name="is_active"/>
+                <field name="created_at"/>
+            </tree>
+        </field>
+    </record>
+</odoo>
+=== ./controllers/__init__.py ===
+from . import main
+=== ./controllers/main.py ===
+# controllers/main.py
+from odoo import http
+from odoo.http import request
+import json
+from odoo.addons.web.controllers.main import Home
+from odoo.exceptions import AccessDenied
+
+class NostrAuthController(Home):
+    @http.route('/web/login', type='http', auth="none", methods=['GET', 'POST'], website=True)
+    def web_login(self, redirect=None, **kw):
+        try:
+            # First try Nostr authentication
+            if request.httprequest.method == 'POST':
+                username = request.params.get('login', '')
+                password = request.params.get('password', '')
+                
+                if username and password and (username.startswith('npub1') or username.startswith('nsec1')):
+                    uid = request.env['res.users'].sudo().search([
+                        ('nostr_public_key', '=', username)
+                    ]).id
+                    
+                    if uid:
+                        request.session.authenticate(request.db, username, password)
+                        return http.redirect_with_hash(self._login_redirect(uid, redirect=redirect))
+        except AccessDenied:
+            pass
+            
+        return super(NostrAuthController, self).web_login(redirect=redirect, **kw)
+
+    @http.route('/web/nostr/authenticate', type='json', auth='none')
+    def authenticate(self, public_key, signature, message):
+        uid = request.env['res.users'].sudo().authenticate_nostr(public_key, signature, message)
+        if uid:
+            request.session.authenticate(request.session.db, uid, public_key)
+            return {'success': True, 'uid': uid}
+        return {'success': False, 'error': 'Authentication failed'}

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Example repository data -->
+        <record id="git_repository_example" model="git.repository">
+            <field name="name">Example Repository</field>
+            <field name="path">/path/to/example-repo</field>
+            <field name="description">This is an example repository created during module installation.</field>
+            <field name="maintainer_ids" eval="[(4, ref('base.user_admin'))]"/>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_admin_test_form" model="ir.ui.view">
+        <field name="name">git_nostr_object.admin_test.form</field>
+        <field name="model">git_nostr_object.admin_test</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="run_tests" string="Run Tests" type="object" class="oe_highlight"/>
+                </header>
+                <div>
+                    <p>Click the button to run the Git-Nostr Object tests.</p>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_admin_test" model="ir.actions.act_window">
+        <field name="name">Admin Tests</field>
+        <field name="res_model">git_nostr_object.admin_test</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_admin_test" name="Admin Tests" parent="menu_git_nostr_object_root" action="action_admin_test" groups="base.group_system"/>
+</odoo>

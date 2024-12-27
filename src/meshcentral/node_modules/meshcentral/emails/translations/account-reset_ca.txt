@@ -1,0 +1,6 @@
+[[[SERVERNAME]]]: restabliment del compte
+Hola, [[[USERNAME]]], [[[SERVERNAME]]] ([[[SERVERURL]]][[[URLARGS1]]]) està sol·licitant el restabliment de la contrasenya del compte. Accedeix al següent enllaç per completar el procés:
+~
+~[[[SERVERURL]]]/checkmail?c=[[[COOKIE]]][[[URLARGS2]]]
+~
+Si no vau iniciar aquesta sol·licitud, ignoreu aquest correu.

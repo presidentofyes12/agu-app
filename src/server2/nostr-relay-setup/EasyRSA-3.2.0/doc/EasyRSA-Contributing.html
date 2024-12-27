@@ -1,0 +1,91 @@
+<h1>Easy-RSA 3 Github Contributions Documentation</h1>
+<p>This document explains how to contribute to Easy-RSA 3.</p>
+<p>Please follow these simple steps and make contributing easier.</p>
+<p>Intended audience: Everyone.</p>
+<h2>Contributing Guide</h2>
+<ul>
+<li>
+<p><strong>Do not</strong> edit Easy-RSA <code>master</code> branch.</p>
+</li>
+<li>
+<p><strong>Do not</strong> edit Easy-RSA <code>master</code> branch.</p>
+<p>Pull Requests submitted from <code>master</code> branch may be be squashed or rejected.</p>
+</li>
+</ul>
+<h3>Create a new branch:</h3>
+<ul>
+<li>
+<p>Select a suitable name for the new branch. eg: <code>doc-contrib-typo</code></p>
+<p><code>git checkout -b doc-contrib-typo</code></p>
+</li>
+<li>
+<p>Make changes to the new branch.</p>
+<p>Please use tabs to indent the code but only use tabs at the beginning of
+the line.</p>
+</li>
+<li>
+<p>Review the changes:</p>
+<p><code>git diff</code></p>
+</li>
+<li>
+<p>Stage the changes:</p>
+<p><code>git add -A</code></p>
+</li>
+<li>
+<p>Show the extent of the changes:</p>
+<p><code>git status -v</code></p>
+</li>
+<li>
+<p>Commit the changes:</p>
+<p><code>git commit -sS</code></p>
+<p>Please write a detailed commit message.</p>
+<p>github <code>help</code> has details of creating a private key.</p>
+<p>Using github <code>no-reply</code> email address is suitable for the <code>Signed-off-by:</code>
+line.</p>
+</li>
+<li>
+<p>Push the changes:</p>
+<p><code>git push origin doc-contrib-typo</code></p>
+</li>
+<li>
+<p>Share the changes:</p>
+<p><code>Raise a Pull Request on github.</code></p>
+</li>
+</ul>
+<h2>Keeping your fork syncronised</h2>
+<ul>
+<li>
+<p>Configure the <code>upstream</code> remote for your fork:</p>
+<p><code>git remote add upstream https://github.com/OpenVPN/easy-rsa.git</code></p>
+</li>
+<li>
+<p>Verify the remote sources:</p>
+<p><code>git remote -v</code></p>
+<p>Remote <code>origin</code> will have <strong>your</strong> repository:</p>
+<p><code>origin https://github.com/TinCanTech/easy-rsa.git (fetch)
+origin https://github.com/TinCanTech/easy-rsa.git (push)</code></p>
+<p>Remote <code>upstream</code> will be <code>Openvpn/easy-rsa</code>:</p>
+<p><code>upstream https://github.com/Openvpn/easy-rsa.git (fetch)
+upstream https://github.com/Openvpn/easy-rsa.git (push)</code></p>
+</li>
+</ul>
+<h3>Syncronising your fork:</h3>
+<ul>
+<li>
+<p>Select <code>master</code> branch:</p>
+<p><code>git checkout master</code></p>
+</li>
+<li>
+<p>Fetch changes in <code>upstream</code>:</p>
+<p><code>git fetch upstream</code></p>
+</li>
+<li>
+<p>Merge changes in <code>upstream</code>:</p>
+<p><code>git merge upstream/master</code></p>
+</li>
+<li>
+<p>Update your fork on github:</p>
+<p><code>git push</code></p>
+<p>Your fork is now syncronised.</p>
+</li>
+</ul>

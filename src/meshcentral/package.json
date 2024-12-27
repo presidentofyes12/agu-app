@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "meshcentral": "^1.1.27",
+    "otplib": "10.2.3"
+  }
+}

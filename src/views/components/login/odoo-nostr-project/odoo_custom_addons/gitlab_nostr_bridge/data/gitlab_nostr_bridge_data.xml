@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="gitlab_private_token" model="ir.config_parameter">
+            <field name="key">gitlab.private_token</field>
+            <field name="value">your_gitlab_private_token_here</field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,47 @@
+<html><head></head><body><div>[[[SERVERNAME]]] - Invitació</div>
+<div style="font-family:Arial,Helvetica,sans-serif">
+    <table style="background-color:#003366;color:lightgray;width:100%" cellpadding="8">
+        <tbody><tr>
+            <td>
+                <b style="font-size:20px;font-family:Arial,Helvetica,sans-serif">[[[SERVERNAME]]] - Instal·lació de l'agent</b>
+            </td>
+        </tr>
+    </tbody></table>
+    <area-name>
+        <p>
+            Hola, [[[NAME]]],
+        </p>
+    </area-name>
+    <p>Usuari [[USERNAME]]] al servidor <a href="[[[SERVERURL]]][[[URLARGS1]]]">[[NOM DEL SERVIDOR]]]</a> us demana que instal·leu programari per iniciar una sessió de control remot.</p>
+    <area-msg>
+        <p>
+            Missatge: <b notrans="1">[[[MSG]]]</b>
+        </p>
+    </area-msg>
+    <area-windows>
+        <p style="margin-left:30px">
+            <a href="[[[SERVERURL]]]/meshagents?id=4&amp;meshid=[[[MESHIDHEX]]]&amp;tag=mailto:[[[EMAIL]]]&amp;installflags=[[[INSTALLFLAGS]]]">Feu clic aquí per descarregar MeshAgent per a Windows.</a>
+        </p>
+    </area-windows>
+    <area-osx>
+        <p style="margin-left:30px"><a href="[[[SERVERURL]]]/meshosxagent?id=16&amp;meshid=[[[MESHIDHEX]]]&amp;tag=mailto:[[[EMAIL]]]&amp;installflags=[[[INSTALLFLAGS]]]">Feu clic aquí per descarregar MeshAgent per a Apple OSX.</a></p>
+    </area-osx>
+    <area-linux>
+        <p>
+            Per a Linux, retalla i enganxa el següent en un terminal per instal·lar l'agent:<br>
+            </p><pre style="margin-left:30px" notrans="1">wget -q "[[[SERVERURL]]]/meshagents?script=1" --no-check-certificate -O ./meshinstall.sh &amp;&amp; chmod 755 ./meshinstall.sh &amp;&amp; sudo ./meshinstall.sh [[[SERVERURL]]] \'[[[MESHIDHEX]]]\'</pre>
+        <p></p>
+    </area-linux>
+    <area-assistant>
+        <p style="margin-left:30px">
+            <a href="[[[SERVERURL]]]/meshagents?id=10006&amp;meshid=[[[MESHIDHEX]]]&amp;tag=mailto:[[[EMAIL]]]">Feu clic aquí per descarregar MeshCentral Assistant per a Windows.</a>
+        </p>
+    </area-assistant>
+    <area-link>
+        <p>
+            Per instal·lar el programari, <a href="[[[SERVERURL]]][[[LINKURL]]][[[URLARGS2]]]">clica aquí</a> i seguiu les instruccions.
+        </p>
+    </area-link>
+    <p>Si no vau iniciar aquesta sol·licitud, ignoreu aquest correu.</p>
+    Salutacions cordials,<br>[[NOM D'USUARI]]]<br>
+</div></body></html>

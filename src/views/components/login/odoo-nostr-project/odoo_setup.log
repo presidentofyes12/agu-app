@@ -1,0 +1,94 @@
+[2024-11-03 12:58:15] Starting base module initialization...
+[2024-11-03 12:58:16] Attempt 1 of 3...
+[2024-11-03 12:58:16] Container status:
+0d7774dcdc66   odoo-nostr-project_odoo   "/opt/odoo/docker-en…"   43 seconds ago   Up 30 seconds            0.0.0.0:8069->8069/tcp, :::8069->8069/tcp, 0.0.0.0:8072->8072/tcp, :::8072->8072/tcp   odoo-nostr-project_odoo_1
+ac8d104cc6da   postgres:14               "docker-entrypoint.s…"   7 minutes ago    Up 7 minutes (healthy)   5432/tcp                                                                               odoo-nostr-project_postgres_1
+[2024-11-03 12:58:16] Current Odoo logs:
+Waiting for PostgreSQL...
+PostgreSQL is ready!
+Configuring database tables...
+CREATE TABLE
+CREATE TABLE
+INSERT 0 4
+INSERT 0 1
+Initializing module: base
+Module base initialized successfully
+Initializing module: web
+[2024-11-03 12:58:16] Executing base module initialization...
+[2024-11-03 12:58:18] Initialization failed with exit code: 255
+[2024-11-03 12:58:18] Recent Odoo logs:
+Waiting for PostgreSQL...
+PostgreSQL is ready!
+Configuring database tables...
+CREATE TABLE
+CREATE TABLE
+INSERT 0 4
+INSERT 0 1
+Initializing module: base
+Module base initialized successfully
+Initializing module: web
+[2024-11-03 12:58:18] Checking database state...
+ name |   state   
+------+-----------
+ base | installed
+(1 row)
+
+[2024-11-03 12:58:18] Waiting 10 seconds before next attempt...
+[2024-11-03 12:58:28] Attempt 2 of 3...
+[2024-11-03 12:58:28] Container status:
+0d7774dcdc66   odoo-nostr-project_odoo   "/opt/odoo/docker-en…"   55 seconds ago   Up 42 seconds            0.0.0.0:8069->8069/tcp, :::8069->8069/tcp, 0.0.0.0:8072->8072/tcp, :::8072->8072/tcp   odoo-nostr-project_odoo_1
+ac8d104cc6da   postgres:14               "docker-entrypoint.s…"   7 minutes ago    Up 7 minutes (healthy)   5432/tcp                                                                               odoo-nostr-project_postgres_1
+[2024-11-03 12:58:28] Current Odoo logs:
+CREATE TABLE
+INSERT 0 4
+INSERT 0 1
+Initializing module: base
+Module base initialized successfully
+Initializing module: web
+Module web initialized successfully
+Initializing module: bus
+Module bus initialized successfully
+Initializing module: mail
+[2024-11-03 12:58:28] Executing base module initialization...
+[2024-11-03 12:58:32] Initialization failed with exit code: 255
+[2024-11-03 12:58:32] Recent Odoo logs:
+Waiting for PostgreSQL...
+PostgreSQL is ready!
+Configuring database tables...
+CREATE TABLE
+CREATE TABLE
+INSERT 0 4
+INSERT 0 1
+Initializing module: base
+Module base initialized successfully
+Initializing module: web
+Module web initialized successfully
+Initializing module: bus
+Module bus initialized successfully
+Initializing module: mail
+[2024-11-03 12:58:32] Checking database state...
+ name |   state   
+------+-----------
+ base | installed
+(1 row)
+
+[2024-11-03 12:58:32] Waiting 10 seconds before next attempt...
+[2024-11-03 12:58:42] Attempt 3 of 3...
+[2024-11-03 12:58:42] Container status:
+0d7774dcdc66   odoo-nostr-project_odoo   "/opt/odoo/docker-en…"   About a minute ago   Up 56 seconds            0.0.0.0:8069->8069/tcp, :::8069->8069/tcp, 0.0.0.0:8072->8072/tcp, :::8072->8072/tcp   odoo-nostr-project_odoo_1
+ac8d104cc6da   postgres:14               "docker-entrypoint.s…"   7 minutes ago        Up 7 minutes (healthy)   5432/tcp                                                                               odoo-nostr-project_postgres_1
+[2024-11-03 12:58:42] Current Odoo logs:
+[OK] __manifest__.py contains 'depends' and 'data' sections
+
+Checking configuration parameters...
+[OK] Relay URLs are set in the database
+
+Testing network connectivity...
+[OK] Successfully connected to wss://nostr-pub.wellorder.net
+
+Pre-update checks completed.
+PostgreSQL is ready!
+[2024-11-03 12:58:42] Executing base module initialization...
+[2024-11-03 12:58:53] Base module initialization appears successful
+[2024-11-03 12:58:53] Base module initialization completed successfully
+[2024-11-03 12:58:53] Proceeding with Nostr schema setup...

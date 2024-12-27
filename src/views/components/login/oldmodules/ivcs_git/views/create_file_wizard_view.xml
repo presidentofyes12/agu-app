@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ivcs_create_file_wizard_form" model="ir.ui.view">
+        <field name="name">ivcs.create.file.wizard.form</field>
+        <field name="model">ivcs.create.file.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Create File">
+                <group>
+                    <field name="item_id" invisible="1"/>
+                    <field name="filename"/>
+                    <field name="content"/>
+                </group>
+                <footer>
+                    <button name="action_create_file" string="Create File" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

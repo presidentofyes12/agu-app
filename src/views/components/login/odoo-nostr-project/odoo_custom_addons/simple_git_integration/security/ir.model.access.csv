@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_git_repository_user,git.repository user,model_git_repository,group_git_user,1,1,1,1
+access_git_commit_user,git.commit user,model_git_commit,group_git_user,1,1,1,0
+access_create_commit_wizard,create.commit.wizard,model_create_commit_wizard,base.group_user,1,1,1,0

@@ -1,0 +1,852 @@
+/views/components/login/index.tsx
+
+import React, { useState, useEffect } from 'react';
+import { useAtom } from 'jotai';
+import { useTranslation } from 'react-i18next';
+import { Box, Button, Divider, CircularProgress, Modal, Typography, Checkbox, TextField } from '@mui/material';
+import { CiWarning } from 'react-icons/ci';
+import { IoMdClose } from 'react-icons/io';
+import { nip06, getPublicKey, nip19 } from 'nostr-tools';
+import { generateFirstGenKeys, deriveSecondGenKeys, generateCredentials } from 'hooks/keyDerivation';
+import { keysAtom, profileAtom, backupWarnAtom, ravenAtom, ravenStatusAtom } from 'atoms';
+import useModal from 'hooks/use-modal';
+import useMediaBreakPoint from 'hooks/use-media-break-point';
+import LoginMetadataForm from 'views/components/metadata-form/loginForm';
+import KeyDisplayDialog from 'views/components/KeyDisplayDialog';
+import CredentialDisplayDialog from 'views/components/CredentialDisplayDialog';
+import DownloadSeedWords from 'views/settings/DownloadSeedWords';
+import Creation from 'svg/creation';
+import Import from 'svg/import';
+import { storeKeys, storeCredentials } from 'local-storage';
+import { Keys } from 'types';
+import ImportAccount from 'views/components/dialogs/import-account';
+import { InstallNip07Dialog } from "views/components/dialogs/no-wallet/nip07";
+import axios from 'axios';
+
+import { getUserIP } from './ip';
+
+const style = {
+  position: 'absolute' as 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: '700px',
+  maxWidth: '100%',
+  bgcolor: 'background.paper',
+  border: '2px solid #000',
+  boxShadow: 24,
+  p: 4,
+};
+
+const Login = (props: { onDone: () => void }) => {
+  const { onDone } = props;
+  const { isSm } = useMediaBreakPoint();
+  const { t } = useTranslation();
+  const [, showModal] = useModal();
+  const [, setKeys] = useAtom(keysAtom);
+  const [profile, setProfile] = useAtom(profileAtom);
+  const [, setBackupWarn] = useAtom(backupWarnAtom);
+  const [raven] = useAtom(ravenAtom);
+  const [ravenStatus] = useAtom(ravenStatusAtom);
+  const [step, setStep] = useState<0 | 1 | 2>(0);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [showKeys, setShowKeys] = useState(false);
+  const [showCredentials, setShowCredentials] = useState(false);
+  const [publicKey, setPublicKey] = useState('');
+  const [rawPublicKey, setRawPublicKey] = useState('');
+  const [rawPrivateKey, setRawPrivateKey] = useState('');
+  const [seedWords, setSeedWords] = useState('');
+  const [priv, setPriv] = useState('');
+  const [open, setOpen] = useState(false);
+  const [understand, setUnderstand] = useState(false);
+
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+  const [meshCommands, setMeshCommands] = useState('');
+  
+  useEffect(() => {
+    if (step === 1 && ravenStatus.ready) setStep(2);
+  }, [step, ravenStatus.ready]);
+
+  useEffect(() => {
+    if (profile) onDone();
+  }, [profile]);
+
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+  
+  const [isStartingOdoo, setIsStartingOdoo] = useState(false);
+  const [odooStarted, setOdooStarted] = useState(false);
+
+  const createAccount = async () => {
+    const { mnemonic, privateKey } = generateFirstGenKeys();
+    console.log("Generated mnemonic:", mnemonic);
+    console.log("Generated private key:", privateKey);
+
+    if (!mnemonic || !privateKey) {
+      console.error("Failed to generate keys");
+      alert("Failed to generate account keys. Please try again.");
+      return;
+    }
+
+    const pubKey = getPublicKey(privateKey);
+
+    // Ensure cookies are set correctly
+    document.cookie = `ssoUsername=${pubKey}; path=/; secure; samesite=strict`;
+    document.cookie = `ssoPassword=${privateKey}; path=/; secure; samesite=strict`;
+
+    setRawPublicKey(pubKey);
+    setRawPrivateKey(privateKey);
+
+    const secondGenKeys = deriveSecondGenKeys(privateKey);
+    const { username, password } = generateCredentials(secondGenKeys.privateKey);
+
+    setSeedWords(mnemonic);
+    setPriv(privateKey);
+    setUsername(username);
+    setPassword(password);
+
+    const userIP = await getUserIP();
+    await storeCredentials(username, password, userIP);
+
+    localStorage.setItem('seedWords', mnemonic);
+
+    setShowKeys(true);
+    setEmailDialogOpen(true);
+  };
+
+  const handleEmailSubmit = async () => {
+    if (!email) {
+      setEmailError('Email is required');
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setEmailError('Invalid email format');
+      return;
+    }
+    setEmailError('');
+    
+  const npubKey = nip19.npubEncode(rawPublicKey);
+  const nsecKey = nip19.nsecEncode(rawPrivateKey);
+
+  setIsCreatingAccount(true);
+  try {
+    // Start Odoo
+    const response = await axios.post('http://localhost:5001/api/start-odoo', {
+      publicKey: npubKey,
+      privateKey: nsecKey,
+      email
+    });
+
+    if (response.data.success) {
+      console.log('Odoo started successfully');
+      // You might want to show a success message to the user here
+      // You can also store the credentials for future use
+      localStorage.setItem('odooUsername', npubKey);
+      localStorage.setItem('odooPassword', nsecKey);
+    } else {
+      console.error('Failed to start Odoo:', response.data.error);
+      // You might want to show an error message to the user here
+    }
+  } catch (error) {
+    console.error('Error starting Odoo:', error);
+    // You might want to show an error message to the user here
+  } finally {
+    setIsCreatingAccount(false);
+  }
+
+  setEmailDialogOpen(false);
+  setShowCredentials(true);
+};
+
+  const importAccount = () => {
+    showModal({
+      body: (
+        <ImportAccount
+          onSuccess={(key, type) => {
+            showModal(null);
+            if (type === 'priv') {
+              loginPriv(key);
+            } else if (type === 'pub') {
+              proceed({ priv: 'none', pub: key });
+            }
+          }}
+        />
+      ),
+    });
+  };
+
+  const loginNip07 = async () => {
+    if (!window.nostr) {
+      showModal({
+        body: <InstallNip07Dialog />,
+      });
+      return;
+    }
+
+    const pub = await window.nostr.getPublicKey();
+    if (pub) proceed({ priv: 'nip07', pub });
+  };
+
+  const loginPriv = (priv: string) => {
+    try {
+      const pub = getPublicKey(priv);
+      proceed({ priv, pub });
+    } catch (error) {
+      console.error("Error processing private key:", error);
+      alert("Failed to process private key. Please try creating the account again.");
+    }
+  };
+
+  const proceed = (keys: Keys) => {
+    storeKeys(keys).then(() => {
+      setKeys(keys);
+      setProfile(null);
+      if (keys?.priv === 'none') {
+        onDone();
+        return;
+      }
+      setStep(1);
+    });
+  };
+
+  const continueCreateAccount = (priv: string | null) => {
+    if (!priv) {
+      console.error("Private key is null");
+      alert("Invalid private key. Please try creating the account again.");
+      return;
+    }
+    handleClose();
+    loginPriv(priv);
+    setBackupWarn(true);
+  };
+
+  const handleKeyDialogClose = () => {
+    setShowKeys(false);
+    setShowCredentials(true);
+  };
+
+
+  const startOdoo = async () => {
+    setIsStartingOdoo(true);
+    try {
+      const response = await axios.post('http://localhost:5001/api/start-odoo', {
+        publicKey: nip19.npubEncode(rawPublicKey),
+        privateKey: nip19.nsecEncode(rawPrivateKey)
+      });
+
+      if (response.data.success) {
+        console.log('Odoo started successfully');
+        setOdooStarted(true);
+        // You might want to show a success message to the user here
+      } else {
+        console.error('Failed to start Odoo:', response.data.error);
+        // You might want to show an error message to the user here
+      }
+    } catch (error) {
+      console.error('Error starting Odoo:', error);
+      // You might want to show an error message to the user here
+    } finally {
+      setIsStartingOdoo(false);
+    }
+  };
+
+  const handleCredentialDialogClose = () => {
+    setShowCredentials(false);
+    startOdoo(); // Start Odoo after showing credentials
+    setOpen(true);
+  };
+
+  return (
+    <>
+      <KeyDisplayDialog
+        open={showKeys}
+        onClose={handleKeyDialogClose}
+        publicKey={rawPublicKey}
+        privateKey={rawPrivateKey}
+      />
+
+      <CredentialDisplayDialog
+        open={showCredentials}
+        onClose={handleCredentialDialogClose}
+        username={username}
+        password={password}
+      />
+
+      <Modal open={open} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
+        <Box sx={style}>
+          <Typography id="modal-modal-title" variant="h6" component="h2">
+            <div className="flex_2s">
+              <span><CiWarning /> Important</span>
+              <span onClick={handleClose} style={{ cursor: 'pointer' }}><IoMdClose /></span>
+            </div>
+          </Typography>
+          <Typography id="modal-modal-description" sx={{ mt: 2, mb: 2 }}>
+            Your mnemonic seed phrase will be displayed under your profile (Once you Log in). Please ensure now to Download it and keep it safe as it is crucial for recovering your account if needed.
+          </Typography>
+          <p>
+            <Checkbox onChange={() => setUnderstand(!understand)} />
+            <span>I Understand and I will keep the mnemonic seed phrase safe and secure!</span>
+          </p>
+          {understand && (
+            <div className="flex_2s">
+              <DownloadSeedWords text={seedWords} title="Download Seed Phrase" />
+              <button className="btn btn_primary" onClick={() => continueCreateAccount(priv)}>Next</button>
+            </div>
+          )}
+        </Box>
+      </Modal>
+
+      <Modal open={emailDialogOpen} onClose={() => setEmailDialogOpen(false)}>
+        <Box sx={style}>
+          <Typography variant="h6" component="h2">
+            Enter Your Email
+          </Typography>
+          <Typography sx={{ mt: 2 }}>
+            Please enter your email address. This will be used to create your MeshCentral account.
+          </Typography>
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            error={!!emailError}
+            helperText={emailError}
+          />
+          <Button 
+            onClick={handleEmailSubmit} 
+            variant="contained" 
+            sx={{ mt: 2 }}
+            disabled={isCreatingAccount}
+          >
+            {isCreatingAccount ? <CircularProgress size={24} /> : 'Submit'}
+          </Button>
+        </Box>
+      </Modal>
+
+      <Modal open={isStartingOdoo || odooStarted} onClose={() => setOdooStarted(false)}>
+        <Box sx={style}>
+          <Typography variant="h6" component="h2">
+            {isStartingOdoo ? 'Starting Odoo' : 'Odoo Started'}
+          </Typography>
+          {isStartingOdoo ? (
+            <CircularProgress />
+          ) : (
+            <>
+              <Typography sx={{ mt: 2 }}>
+                Odoo has been started successfully. You can now access it at:
+              </Typography>
+              <TextField
+                fullWidth
+                margin="normal"
+                value="http://localhost:8069"
+                InputProps={{
+                  readOnly: true,
+                }}
+              />
+              <Button 
+                onClick={() => window.open('http://localhost:8069', '_blank')}
+                variant="contained" 
+                sx={{ mt: 2 }}
+              >
+                Open Odoo
+              </Button>
+            </>
+          )}
+        </Box>
+      </Modal>
+
+      {meshCommands && (
+        <Modal open={true} onClose={() => setMeshCommands('')}>
+          <Box sx={style}>
+            <Typography variant="h6" component="h2">
+              MeshCentral Commands
+            </Typography>
+            <Typography sx={{ mt: 2, whiteSpace: 'pre-wrap' }}>
+              Please run the following commands to set up your MeshCentral account:
+            </Typography>
+            <TextField
+              fullWidth
+              multiline
+              variant="outlined"
+              value={meshCommands}
+              InputProps={{
+                readOnly: true,
+              }}
+              sx={{ mt: 2 }}
+            />
+            <Button onClick={() => setMeshCommands('')} variant="contained" sx={{ mt: 2 }}>
+              Close
+            </Button>
+          </Box>
+        </Modal>
+      )}
+
+      <Box
+        component="img"
+        src="/logo-large-white.png"
+        sx={{
+          width: isSm ? '526px' : '100%',
+          height: isSm ? '132px' : null,
+          m: '20px 0 10px 0',
+        }}
+      />
+      <Divider sx={{ m: '28px 0' }} />
+
+      {step === 1 ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          <CircularProgress />
+        </Box>
+      ) : step === 2 ? (
+        <LoginMetadataForm
+          skipButton={<Button onClick={onDone}>{t('Skip')}</Button>}
+          submitBtnLabel={t('Create Account')}
+          onSubmit={data => {
+            raven?.updateProfile(data).then(() => onDone());
+          }}
+        />
+      ) : (
+        <>
+          <Box sx={{ color: 'text.secondary', mb: '28px' }}>
+            {t('Sign in to get started')}
+          </Box>
+          <Box sx={{ display: 'flex', flexDirection: isSm ? 'row' : 'column' }}>
+            <Button
+              variant="login"
+              size="large"
+              disableElevation
+              fullWidth
+              onClick={createAccount}
+              sx={{ mb: '22px', p: '20px 26px', mr: isSm ? '22px' : null }}
+              startIcon={<Creation width={38} />}
+            >
+              {t('Create Nostr Account')}
+            </Button>
+            <Button
+              variant="login"
+              size="large"
+              disableElevation
+              fullWidth
+              onClick={importAccount}
+              sx={{ mb: '22px', p: '20px 26px' }}
+              startIcon={<Import width={38} />}
+            >
+              {t('Import Nostr Account')}
+            </Button>
+          </Box>
+        </>
+      )}
+    </>
+  );
+};
+
+export default Login;
+
+
+/hooks/useNostrAuth.ts
+
+import { useState } from 'react';
+import { generatePrivateKey, getPublicKey, signEvent, verifySignature } from 'nostr-tools';
+
+export const useNostrAuth = () => {
+  const [privateKey, setPrivateKey] = useState<string | null>(null);
+  const [publicKey, setPublicKey] = useState<string | null>(null);
+
+  const generateKeys = () => {
+    const privKey = generatePrivateKey();
+    const pubKey = getPublicKey(privKey);
+    setPrivateKey(privKey);
+    setPublicKey(pubKey);
+    return { privateKey: privKey, publicKey: pubKey };
+  };
+
+  const sign = (message: string) => {
+    if (!privateKey) throw new Error('Private key not set');
+    if (!publicKey) throw new Error('Public key not set');
+    return signEvent({ pubkey: publicKey, content: message, created_at: Math.floor(Date.now() / 1000), kind: 1, tags: [] }, privateKey);
+  };
+
+  const verify = (message: string, signature: string, pubKey: string) => {
+    return verifySignature({ pubkey: pubKey, content: message, created_at: Math.floor(Date.now() / 1000), kind: 1, tags: [], sig: signature });
+  };
+
+  return { generateKeys, sign, verify, publicKey };
+};
+
+/views/components/app-wrapper/priv-requester.tsx
+
+import React, {useEffect, useMemo, useState} from 'react';
+import {useAtom} from 'jotai';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import {DialogContentText, TextField} from '@mui/material';
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+import {useTheme} from '@mui/material/styles';
+import {getPublicKey, nip19} from 'nostr-tools';
+import {DecodeResult} from 'nostr-tools/lib/nip19';
+import CloseModal from 'components/close-modal';
+import useModal from 'hooks/use-modal';
+import useTranslation from 'hooks/use-translation';
+import {keysAtom, tempPrivAtom} from 'atoms';
+
+
+window.requestPrivateKey = (data: any) => {
+    return new Promise((resolve, reject) => {
+        window.dispatchEvent(new CustomEvent('request-priv', {detail: {data}}));
+
+        const handleResolve = (ev: CustomEvent) => {
+            window.removeEventListener('resolve-priv', handleResolve as EventListener);
+            window.removeEventListener('reject-priv', handleReject);
+            resolve(ev.detail.key);
+        }
+
+        const handleReject = () => {
+            reject('Cancelled');
+            window.removeEventListener('resolve-priv', handleResolve as EventListener);
+            window.removeEventListener('reject-priv', handleReject);
+        }
+
+        window.addEventListener('resolve-priv', handleResolve as EventListener);
+        window.addEventListener('reject-priv', handleReject);
+    })
+}
+
+const PrivRequiredDialog = (props: { data: any, onSuccess: (key: string) => void, onHide: () => void }) => {
+    const {data, onSuccess, onHide} = props;
+    const [, showModal] = useModal();
+    const [t] = useTranslation();
+    const theme = useTheme();
+    const [keys,] = useAtom(keysAtom);
+    const [tempPriv, setTempPriv] = useAtom(tempPrivAtom);
+    const [userKey, setUserKey] = useState(tempPriv ? nip19.nsecEncode(tempPriv) : '');
+    const [isInvalid, setIsInvalid] = useState(false);
+
+    const isObject = typeof data === 'object';
+    const isEvent = isObject && data.id !== undefined && data.sig !== undefined;
+    const dataToRender = useMemo(() => {
+        if (isEvent) {
+            const {id: _, sig: __, ...ev} = data;
+            return JSON.stringify(ev, null, 2);
+        } else if (isObject) {
+            return JSON.stringify(data, null, 2);
+        }
+
+        return null;
+    }, [data]);
+
+    const handleClose = () => {
+        showModal(null);
+        onHide();
+    };
+
+    const handleUserKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setUserKey(e.target.value);
+        setIsInvalid(false);
+    }
+
+    const handleSubmit = () => {
+        if (!userKey.startsWith('nsec')) {
+            setIsInvalid(true);
+            return;
+        }
+
+        if (userKey.startsWith('nsec')) {
+            let dec: DecodeResult;
+            try {
+                dec = nip19.decode(userKey);
+            } catch (e) {
+                setIsInvalid(true);
+                return;
+            }
+
+            const key = dec.data as string;
+            if (dec.type === 'nsec' && keys?.pub === getPublicKey(key)) {
+                onSuccess(key);
+                setTempPriv(key);
+                return;
+            }
+
+            setIsInvalid(true);
+        }
+    }
+
+    let subTitle;
+    if (isEvent) {
+        subTitle = t('Please provide your private key in nsec format to sign this event:');
+    } else if (isObject) {
+        subTitle = t('Please provide your private key in nsec format to encrypt this message:');
+    } else {
+        subTitle = t('Please provide your private key in nsec format for decryption');
+    }
+
+    return (
+        <>
+            <DialogTitle>{t('Private key required')}<CloseModal onClick={handleClose}/></DialogTitle>
+            <DialogContent sx={{pb: '0'}}>
+                <DialogContentText sx={{fontSize: '.8em', mb: '12px'}}>{subTitle}</DialogContentText>
+                {dataToRender && (
+                    <Box component="pre" sx={{
+                        fontSize: '.6em',
+                        overflowY: 'auto',
+                        border: `1px solid ${theme.palette.divider}`,
+                        borderRadius: '6px',
+                        p: '2px',
+                        color: theme.palette.text.secondary
+                    }}>{dataToRender}</Box>
+                )}
+                <TextField fullWidth autoComplete="off" autoFocus={userKey === ''}
+                           value={userKey} onChange={handleUserKeyChange}
+                           placeholder={t('Enter nsec')}
+                           error={isInvalid}
+                           helperText={isInvalid ? t('Invalid key') : <Box component="span" sx={{
+                               background: theme.palette.divider,
+                               fontSize: '.9em'
+                           }}>{t('This will stay in memory and be remembered until you refresh page/app.')} </Box>}
+                           inputProps={{
+                               autoCorrect: 'off',
+                           }}
+                           onKeyPress={(e) => {
+                               if (e.key === 'Enter') {
+                                   handleSubmit()
+                               }
+                           }}/>
+            </DialogContent>
+            <DialogActions sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                mt: '10px'
+            }}>
+                <Button onClick={handleClose} sx={{mr: '6px'}}>{t('Skip')}</Button>
+                <Button variant="contained" onClick={handleSubmit} disableElevation>{t('Submit')}</Button>
+            </DialogActions>
+        </>
+    );
+}
+
+const PrivRequester = () => {
+    const [, showModal] = useModal();
+
+    const rejected = () => {
+        window.dispatchEvent(new Event('reject-priv'));
+        showModal(null);
+    }
+
+    const handleRequest = (ev: CustomEvent) => {
+        setTimeout(() => { // use a timer to solve modal rendering conflicts.
+            showModal({
+                body: <PrivRequiredDialog data={ev.detail.data} onSuccess={(key) => {
+                    window.dispatchEvent(new CustomEvent('resolve-priv', {detail: {key}}));
+                    showModal(null);
+                }} onHide={rejected}/>,
+                onHide: rejected,
+                hideOnBackdrop: true
+            });
+        }, 200);
+    }
+
+    useEffect(() => {
+        window.addEventListener('request-priv', handleRequest as EventListener);
+
+        return () => {
+            window.removeEventListener('request-priv', handleRequest as EventListener);
+        }
+    }, []);
+
+    return null;
+}
+
+
+export default PrivRequester;
+/views/components/profile-card/index.tsx
+
+import React, {useEffect, useMemo, useState} from 'react';
+import {useAtom} from 'jotai';
+import {nip05, nip19} from 'nostr-tools';
+import Box from '@mui/material/Box';
+import Divider from '@mui/material/Divider';
+import Button from '@mui/material/Button';
+import Paper from '@mui/material/Paper';
+import Tooltip from '@mui/material/Tooltip';
+import {useTheme} from '@mui/material/styles';
+import CopyToClipboard from 'components/copy-clipboard';
+import DmInput from 'views/components/dm-input';
+import Avatar from 'views/components/avatar';
+import useTranslation from 'hooks/use-translation';
+import useStyles from 'hooks/use-styles';
+import KeyVariant from 'svg/key-variant';
+import {Profile} from 'types';
+import {keysAtom} from 'atoms';
+import CheckDecagram from 'svg/check-decagram';
+import {truncate} from 'util/truncate';
+
+const ProfileCard = (props: { profile: Profile, pub: string, onDM: () => void }) => {
+    const {profile, pub, onDM} = props;
+    const theme = useTheme();
+    const [t] = useTranslation();
+    const [keys] = useAtom(keysAtom);
+    const styles = useStyles();
+    const [nip05Verified, setNip05Verified] = useState<boolean>(false);
+
+    const npub = useMemo(() => nip19.npubEncode(pub), [pub]);
+    const isMe = keys?.pub === pub;
+
+    useEffect(() => {
+        if (!profile?.nip05) return;
+        nip05.queryProfile(profile.nip05).then((resp) => {
+            setNip05Verified(resp?.pubkey === profile.creator);
+        })
+    }, [profile]);
+
+    return <Paper sx={{textAlign: 'center', p: '20px'}}>
+        <Box sx={{mb: '10px'}}>
+            <Avatar src={profile?.picture} seed={pub} size={140} rounded/>
+        </Box>
+        {(profile.name || nip05Verified) && (<Box sx={{
+            fontFamily: 'Faktum, sans-serif',
+            fontSize: '1.1em',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+        }}>
+            {profile.name ? truncate(profile.name, 60) : ''}
+            {nip05Verified && (<Tooltip title={t('NIP-05 verified')}>
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        ml: '6px'
+                    }}>
+                        <CheckDecagram height={18}/>
+                    </Box>
+                </Tooltip>
+            )}
+        </Box>)}
+        {profile.about && (
+            <>
+                <Divider sx={{m: '12px 0'}}/>
+                <Box sx={{
+                    color: theme.palette.text.secondary,
+                    fontSize: '0.9em',
+                }}>{truncate(profile.about, 360)}</Box>
+            </>
+        )}
+        <CopyToClipboard copy={pub}>
+            <Box sx={{
+                m: '16px 0',
+                fontSize: '0.9em',
+                display: 'flex',
+                alignItems: 'center',
+                cursor: 'pointer',
+                minWidth: '0'
+            }}>
+                <Box sx={{
+                    mr: '4px',
+                    display: 'flex',
+                    color: theme.palette.warning.main
+                }}><KeyVariant height={14}/></Box>
+                <Box sx={{
+                    color: theme.palette.primary.dark,
+                    fontSize: '0.9em',
+                    ...styles.ellipsis
+                }}>{npub}</Box>
+            </Box>
+        </CopyToClipboard>
+        {(() => {
+            if (isMe) return null;
+            if (!keys) return <Button variant="contained" size="small" onClick={onDM}>{t('Login to send DM')}</Button>;
+            return <DmInput pubkey={pub} onDM={onDM}/>;
+        })()}
+    </Paper>
+}
+
+export default ProfileCard;
+
+/views/components/app-menu/user-menu.tsx
+
+import React from 'react';
+import {useAtom} from 'jotai';
+import {useNavigate} from '@reach/router';
+import {Box} from '@mui/material';
+import {useTheme} from '@mui/material/styles';
+import {nip19} from 'nostr-tools';
+
+import Avatar from 'views/components/avatar';
+import useStyles from 'hooks/use-styles';
+import {keysAtom, profileAtom} from 'atoms';
+import {truncateMiddle} from 'util/truncate';
+
+
+const UserMenu = () => {
+    const [profile] = useAtom(profileAtom);
+    const theme = useTheme();
+    const styles = useStyles();
+    const [keys] = useAtom(keysAtom);
+    const navigate = useNavigate();
+
+    if (!keys) {
+        return null;
+    }
+
+    const clicked = () => {
+        navigate('/settings').then();
+    }
+
+    return <Box sx={{
+        height: styles.headerHeight,
+        display: 'flex',
+        alignItems: 'center',
+        flexShrink: 0
+    }}>
+        <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            flexGrow: 1,
+            background: theme.palette.divider,
+            borderRadius: theme.shape.borderRadius,
+            cursor: 'pointer',
+            transition: 'background-color 100ms linear',
+            border: '1px solid transparent',
+            ':hover': {
+                background: 'transparent',
+                border: `1px solid ${theme.palette.divider}`
+            }
+        }} onClick={clicked}>
+            <Box sx={{mr: '8px', display: 'flex'}}>
+                <Avatar src={profile?.picture} seed={keys.pub} size={42} rounded/>
+            </Box>
+            {(() => {
+
+                const sx = {
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    width: '184px',
+                    mr: '6px',
+                }
+
+                if (profile?.name) {
+                    return <Box sx={{
+                        ...sx,
+                        fontFamily: 'Faktum, sans-serif',
+                        fontWeight: 'bold',
+
+                    }}>{profile.name || ''}</Box>
+                }
+
+                return <Box sx={{
+                    ...sx,
+                    fontSize: '90%',
+                    color: theme.palette.primary.dark,
+                    opacity: '0.6',
+                }}>{truncateMiddle(nip19.npubEncode(keys.pub), 20, ':')}</Box>
+            })()}
+        </Box>
+    </Box>
+}
+
+export default UserMenu;

@@ -1,0 +1,22 @@
+[[[SERVERNAME]]] - Notificació del dispositiu
+~<area-header>
+Els dispositius següents han canviat el seu estat de connexió.
+~</area-header>
+~<area-connections>
+~
+Dispositius connectats:
+~
+~[[[CONNECTIONS]]]
+~
+~</area-connections>
+~<area-disconnections>
+~
+Dispositius desconnectats:
+~
+~[[[DISCONNECTIONS]]]
+~
+~</area-disconnections>
+~<area-footer>
+
+Per cancel·lar la subscripció, carregueu aquest enllaç dins d'1 hora després de rebre aquest missatge: [[[SERVERURL]]][[[UNSUBSCRIBELINK]]]
+~</area-footer>

@@ -1,0 +1,106 @@
+<!DOCTYPE html><html lang="ko" dir="ltr" xmlns="http://www.w3.org/1999/xhtml"><head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta name="viewport" content="user-scalable=1.0,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="robots" content="noindex,nofollow">
+    <link type="text/css" href="/styles/style.css" media="screen" rel="stylesheet" title="CSS">
+    <link rel="apple-touch-icon" href="/favicon-303x303.png">
+    <script type="text/javascript" src="scripts/common-0.0.1{{min}}.js"></script>
+    <title id="topTitle">{{{title1}}}</title>
+    <style>
+        body {
+            background-color: cadetblue;
+            background: linear-gradient(to bottom right, #369, #036);
+            height: 100%;
+            overflow: hidden;
+        }
+
+        a:link { color: #c8c8c8; }
+        a:visited { color: #c8c8c8; }
+        a:hover { color: #c8c8c8; }
+        a:active { color: #c8c8c8; }
+    </style>
+</head>
+<body>
+    <img style="position:absolute;left:0;bottom:0;z-index:-1;height:60%;opacity:0.1" src="../../images/login/back.png">
+    <table id="centralTable" class="container" style="height:100%;z-index:1">
+        <tbody><tr>
+            <td style="width:100%;text-align:center;color:#c8c8c8;font-size:larger">
+                <h1 id="mainTitle"></h1>
+                <p id="mainMessage"></p>
+            </td>
+        </tr>
+        <tr style="height:20px">
+            <td>
+                <div>
+                    <div id="flink" style="margin-left:4px">{{{footer}}}</div>
+                    <div id="flink" style="float:right;margin-right:4px">{{{rootCertLink}}}&nbsp;<a href="../../terms">약관과 개인정보</a></div>
+                </div>
+            </td>
+        </tr>
+    </tbody></table>
+    <script>
+        var random = '{{{randomlength}}}' // Random length string for BREACH mitigation
+        var titleid = parseInt('{{{titleid}}}');
+        var msgid = parseInt('{{{msgid}}}');
+        var domainurl = decodeURIComponent('{{{domainurl}}}');
+        var arg1 = decodeURIComponent('{{{arg1}}}');
+        var arg2 = decodeURIComponent('{{{arg2}}}');
+        var urlargs = parseUriArgs();
+
+        var title = '';
+        if (titleid == 1) { title = "계정 확인"; }
+        if (titleid == 2) { title = "데스크탑 공유"; }
+        if (titleid == 3) { title = "유지 관리중인 서버"; }
+        if (titleid == 4) { title = "터미널 공유"; }
+        QH('topTitle', Q('topTitle').innerText + ' - ' + title);
+        QH('mainTitle', title);
+
+        var msg = '';
+        switch (msgid) {
+            case 1: { msg = "오류 : 잘못된 도메인입니다."; break; }
+            case 2: { msg = format("오류 : 잘못된 사용자 이름 \"{0}\"입니다.", arg1); break; }
+            case 3: { msg = format("오류 : 사용자 \"{1}\"에 대한 잘못된 이메일 \"{0}\".", arg1, arg2); break; }
+            case 4: { msg = format("사용자 \"{1}\"의 이메일 \"{0}\"이 (가) 이미 확인되었습니다.", arg1, arg2); break; }
+            case 5: { msg = format("\"{0}\"이메일이 이미 다른 계정에서 사용 중입니다. 이메일 주소를 변경하고 다시 시도하십시오.", arg1); break; }
+            case 6: { msg = format("사용자 계정 {1}에 대해 확인 된 이메일 {0}.", '<b style=color:white>' + arg1 + '</b>', '<b style=color:white>' + arg2 + '</b>'); break; }
+            case 7: { msg = format("사용자 \"{1}\"의 이메일 \"{0}\"이 (가) 확인되지 않았습니다.", arg1, arg2); break; }
+            case 8: {
+                msg = '<div>' + format("계정 {0}의 비밀번호가 다음으로 재설정되었습니다.", '<b style=color:white>' + arg1 + '</b>') + '</div><div style=padding:14px;font-size:18px><b style=color:white>' + arg2 + '</b></div>';
+                msg += "로그인하고 \"내 계정\"탭으로 이동하여 비밀번호를 업데이트하십시오.";
+                break;
+            }
+            case 9: { msg = "오류 : 잘못된 계정 확인입니다."; break; }
+            case 10: { msg = "오류 : 잘못된 계정 확인, 확인 URL은 30 분 동안 만 유효합니다."; break; }
+            case 11: { msg = "공유 링크가 아직 유효하지 않습니다."; break; }
+            case 12: { msg = "공유 링크가 만료되었습니다."; break; }
+            case 13: { msg = "관리자 인 경우 [여기에서 로그인]하세요.".replace('[', '<a href=?loginscreen=1>').replace(']', '</a>'); break; }
+            case 14: { msg = '<a href=' + window.location.href + '&confirm=1>' + "당신의 계정 암호를 초기화하려면 여기를 클릭하십시오." + '</a>'; break; }
+        }
+
+        // Add login page link
+        if ((msgid != 11) && (msgid != 12) && (msgid != 13) && (msgid != 14)) { msg += ' <a href="' + domainurl + (urlargs.key ? ('?key=' + urlargs.key) : '') + '">' + "로그인 페이지로 이동" + '</a>.' }
+        QH('mainMessage', msg);
+
+        function format(format) { var args = Array.prototype.slice.call(arguments, 1); return format.replace(/{(\d+)}/g, function (match, number) { return typeof args[number] != 'undefined' ? args[number] : match; }); };
+
+        // Parse URL arguments, only keep safe values
+        function parseUriArgs() {
+            var href = window.document.location.href;
+            if (href.endsWith('#')) { href = href.substring(0, href.length - 1); }
+            var name, r = {}, parsedUri = href.split(/[\?&|]/);
+            parsedUri.splice(0, 1);
+            for (var j in parsedUri) {
+                var arg = parsedUri[j], i = arg.indexOf('=');
+                name = arg.substring(0, i);
+                r[name] = arg.substring(i + 1);
+                if (!isSafeString(r[name])) { delete r[name]; } else { var x = parseInt(r[name]); if (x == r[name]) { r[name] = x; } }
+            }
+            return r;
+        }
+    </script>
+
+
+</body></html>

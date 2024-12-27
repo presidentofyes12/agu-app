@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ivcs_item_user,ivcs.item user,model_ivcs_item,base.group_user,1,1,1,1
+access_ivcs_version_user,ivcs.version user,model_ivcs_version,base.group_user,1,1,1,1
+access_ivcs_commit_user,ivcs.commit user,model_ivcs_commit,base.group_user,1,1,1,1
+access_git_repository_user,git.repository user,model_git_repository,base.group_user,1,1,1,1
+access_nostr_event_user,nostr.event user,model_nostr_event,base.group_user,1,1,1,1
+access_ivcs_branch_manager_user,ivcs.branch.manager user,model_ivcs_branch_manager,base.group_user,1,1,1,1
+access_create_branch_wizard_user,create.branch.wizard user,model_create_branch_wizard,base.group_user,1,1,1,0
+access_create_commit_wizard_user,create.commit.wizard user,model_create_commit_wizard,base.group_user,1,1,1,0

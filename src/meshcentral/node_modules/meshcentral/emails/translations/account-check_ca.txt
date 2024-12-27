@@ -1,0 +1,6 @@
+[[[SERVERNAME]]] - Verificació del correu electrònic
+Hola, [[[USERNAME]]], [[[SERVERNAME]]] ([[[SERVERURL]]][[[URLARGS1]]]) està realitzant una verificació del correu electrònic. Accedeix al següent enllaç per completar el procés:
+~
+~[[[SERVERURL]]]/checkmail?c=[[[COOKIE]]][[[URLARGS2]]]
+~
+Si no vau iniciar aquesta sol·licitud, ignoreu aquest correu.

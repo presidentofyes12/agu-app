@@ -1,0 +1,41 @@
+[[[SERVERNAME]]] - Invitació
+~<area-name>
+Hola, [[[NAME]]],
+~</area-name>
+L'usuari [[[USERNAME]]] al servidor [[[SERVERNAME]]] ([[[SERVERURL]]]/[[[URLARGS1]]]) us demana que instal·leu programari per iniciar la sessió de control remot.
+~<area-msg>
+~
+Missatge: [[MSG]]]
+~
+~</area-msg>
+~<area-windows>
+Per a Windows, aneu a l'enllaç següent per completar el procés:
+~
+~[[[SERVERURL]]]/meshagents?id=4&meshid=[[[MESHIDHEX]]]&tag=mailto:[[[EMAIL]]]&installflags=[[[INSTALLFLAGS]]]
+~
+~</area-windows>
+~<area-osx>
+Per a Apple OSX, aneu a l'enllaç següent per completar el procés:
+~
+~[[[SERVERURL]]]/meshosxagent?id=16&meshid=[[[MESHIDHEX]]]&tag=mailto:[[[EMAIL]]]&installflags=[[[INSTALLFLAGS]]]
+~
+~</area-osx>
+~<area-linux>
+Per a Linux, retalla i enganxa el següent en un terminal per instal·lar l'agent:
+~
+~wget -q "[[[SERVERURL]]]/meshagents?script=1" --no-check-certificate -O ./meshinstall.sh && chmod 755 ./meshinstall.sh && sudo ./meshinstall.sh [[[SERVERURL]]] '[[[MESHIDHEX]]]'
+~
+~</area-linux>
+~<area-assistant>
+Per a MeshCentral Assistant a Windows, aneu a l'enllaç següent per completar el procés:
+~
+~[[[SERVERURL]]]/meshagents?id=10006&meshid=[[[MESHIDHEX]]]&tag=mailto:[[[EMAIL]]]
+~
+~</area-assistant>
+~<area-link>
+Per instal·lar el programari, aneu a [[[SERVERURL]]][[[LINKURL]]][[[URLARGS2]]] i seguiu les instruccions.
+~</area-link>
+Si no vau iniciar aquesta sol·licitud, ignoreu aquest correu.
+~
+Salutacions cordials,
+~[[[USERNAME]]]

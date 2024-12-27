@@ -1,0 +1,33 @@
+{
+    "name": "Nostr Pulschain App",
+    "short_name": "NostrPulschain",
+    "description": "Its a decentralized  web app based on Nostr and Pulschain",
+    "icons": [
+      {
+        "src": "icon.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      },
+      {
+        "src": "icon-512x512.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      }
+    ],
+    "start_url": ".",
+    "display": "standalone",
+    "theme_color": "#ffffff",
+    "background_color": "#ffffff",
+    "orientation": "portrait",
+    "scope": "/",
+    "prefer_related_applications": false,
+    "related_applications": [],
+    "splash_pages": null,
+    "permissions": [],
+    "serviceworker": {
+      "src": "./service-worker.js",
+      "scope": "/"
+    },
+    "offline_enabled": true
+  }
+  

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_add_remote_wizard_form" model="ir.ui.view">
+        <field name="name">ivcs.add.remote.wizard.form</field>
+        <field name="model">ivcs.add.remote.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="item_id" invisible="1"/>
+                    <field name="remote_name"/>
+                    <field name="remote_url"/>
+                </group>
+                <footer>
+                    <button name="action_add_remote" string="Add Remote" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_add_remote_wizard" model="ir.actions.act_window">
+        <field name="name">Add Remote Repository</field>
+        <field name="res_model">ivcs.add.remote.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

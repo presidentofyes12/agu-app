@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_ivcs_git_nostr" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.ivcs.git.nostr</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="70"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('settings')]" position="inside">
+                <div class="app_settings_block" data-string="IVCS Git Nostr" string="IVCS Git Nostr" data-key="ivcs_git_nostr">
+                    <h2>IVCS Git Nostr Settings</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <span class="o_form_label">Nostr Relay URLs</span>
+                                <div class="text-muted">
+                                    Comma-separated list of Nostr relay URLs
+                                </div>
+                                <div class="content-group">
+                                    <field name="ivcs_git_nostr_relay_urls"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <span class="o_form_label">Log Level</span>
+                                <div class="text-muted">
+                                    Set the log level for IVCS Git Nostr operations
+                                </div>
+                                <div class="content-group">
+                                    <field name="ivcs_git_nostr_log_level"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <span class="o_form_label">Git Operation Timeout</span>
+                                <div class="text-muted">
+                                    Timeout in seconds for Git operations
+                                </div>
+                                <div class="content-group">
+                                    <field name="ivcs_git_nostr_git_timeout"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

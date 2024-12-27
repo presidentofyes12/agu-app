@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_nostr_event_form" model="ir.ui.view">
+        <field name="name">nostr.event.form</field>
+        <field name="model">nostr.event</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_publish" string="Publish" type="object" class="oe_highlight" attrs="{'invisible': [('published', '=', True)]}"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="event_type"/>
+                        <field name="content"/>
+                        <field name="tags"/>
+                        <field name="published"/>
+                        <field name="event_id"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_nostr_event_form_git_nostr" model="ir.ui.view">
+        <field name="name">nostr.event.form.git.nostr</field>
+        <field name="model">nostr.event</field>
+        <field name="inherit_id" ref="integrated_ivcs.view_nostr_event_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='event_type']" position="after">
+                <field name="repository_id" attrs="{'invisible': [('event_type', 'not in', ['repo_anchor', 'branch', 'commit', 'tree', 'blob'])]}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_nostr_event" model="ir.actions.act_window">
+        <field name="name">Nostr Events</field>
+        <field name="res_model">nostr.event</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_nostr_event_git" name="Git Nostr Events" parent="menu_git_nostr_bridge" action="integrated_ivcs.action_nostr_event" sequence="20"/>
+</odoo>

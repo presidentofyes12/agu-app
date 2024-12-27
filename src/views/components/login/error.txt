@@ -1,0 +1,219 @@
+impromise@impromise-OptiPlex-990:~/Downloads/Telegram Desktop/nostr-w-relay-main (2)/nostr-w-relay-main/src/views/components/login/odoo-nostr-project$ sudo docker-compose down
+sudo docker-compose build
+sudo docker-compose up -d
+ping google.com -c 10 # wait 10 seconds
+sudo docker ps
+sudo docker logs odoo-nostr-project-odoo-1
+ping google.com -c 10 # wait 10 seconds
+sudo docker exec -it odoo-nostr-project-odoo-1 /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf -d odoodb -u nostr_bridge
+ping google.com -c 10 # wait 10 seconds
+sudo docker logs odoo-nostr-project-odoo-1
+[+] Running 3/3
+ ✔ Container odoo-nostr-project-odoo-1      Removed                                                                                                                                                      1.0s 
+ ✔ Container odoo-nostr-project-postgres-1  Removed                                                                                                                                                      0.5s 
+ ✔ Network odoo-nostr-project_default       Removed                                                                                                                                                      0.4s 
+[+] Building 0.9s (26/26) FINISHED                                                                                                                                                             docker:default
+ => [odoo internal] load .dockerignore                                                                                                                                                                   0.1s
+ => => transferring context: 2B                                                                                                                                                                          0.0s
+ => [odoo internal] load build definition from Dockerfile                                                                                                                                                0.1s
+ => => transferring dockerfile: 2.02kB                                                                                                                                                                   0.0s
+ => [odoo internal] load metadata for docker.io/library/ubuntu:22.04                                                                                                                                     0.4s
+ => [odoo  1/21] FROM docker.io/library/ubuntu:22.04@sha256:adbb90115a21969d2fe6fa7f9af4253e16d45f8d4c1e930182610c4731962658                                                                             0.0s
+ => [odoo internal] load build context                                                                                                                                                                   0.0s
+ => => transferring context: 76B                                                                                                                                                                         0.0s
+ => CACHED [odoo  2/21] RUN apt-get update && apt-get install -y     python3 python3-pip python3-dev python3-venv     postgresql-client     nodejs npm     git     wget     libxml2-dev libxslt1-dev     0.0s
+ => CACHED [odoo  3/21] RUN useradd -m -d /opt/odoo -U -r -s /bin/bash odoo                                                                                                                              0.0s
+ => CACHED [odoo  4/21] RUN git clone https://github.com/odoo/odoo.git --depth 1 --branch 16.0 /opt/odoo/odoo                                                                                            0.0s
+ => CACHED [odoo  5/21] RUN git clone https://github.com/openeducat/openeducat_erp.git --depth 1 --branch 16.0 /opt/odoo/openeducat                                                                      0.0s
+ => CACHED [odoo  6/21] RUN pip3 install --upgrade pip                                                                                                                                                   0.0s
+ => CACHED [odoo  7/21] RUN pip3 install --no-cache-dir -r /opt/odoo/odoo/requirements.txt                                                                                                               0.0s
+ => CACHED [odoo  8/21] RUN pip3 install cryptography pyopenssl==22.1.0 psycopg2-binary                                                                                                                  0.0s
+ => CACHED [odoo  9/21] RUN pip3 install nostr                                                                                                                                                           0.0s
+ => CACHED [odoo 10/21] RUN cp -r /opt/odoo/openeducat/* /opt/odoo/odoo/addons/                                                                                                                          0.0s
+ => CACHED [odoo 11/21] COPY ./nostr_auth.py /opt/odoo/                                                                                                                                                  0.0s
+ => CACHED [odoo 12/21] COPY ./custom_odoo_server.py /opt/odoo/                                                                                                                                          0.0s
+ => CACHED [odoo 13/21] RUN mkdir -p /etc/odoo                                                                                                                                                           0.0s
+ => CACHED [odoo 14/21] RUN chown -R odoo:odoo /opt/odoo /etc/odoo                                                                                                                                       0.0s
+ => CACHED [odoo 15/21] RUN chmod +x /opt/odoo/custom_odoo_server.py                                                                                                                                     0.0s
+ => CACHED [odoo 16/21] RUN mkdir -p /var/lib/odoo                                                                                                                                                       0.0s
+ => CACHED [odoo 17/21] RUN chown -R odoo:odoo /var/lib/odoo                                                                                                                                             0.0s
+ => CACHED [odoo 18/21] RUN echo "from OpenSSL import crypto" > /tmp/patch_openssl.py                                                                                                                    0.0s
+ => CACHED [odoo 19/21] RUN echo "if not hasattr(crypto, 'X509_V_FLAG_EXPLICIT_POLICY'):" >> /tmp/patch_openssl.py                                                                                       0.0s
+ => CACHED [odoo 20/21] RUN echo "    crypto.X509_V_FLAG_EXPLICIT_POLICY = 0x8000" >> /tmp/patch_openssl.py                                                                                              0.0s
+ => CACHED [odoo 21/21] RUN echo "exec(open('/tmp/patch_openssl.py').read())" >> /opt/odoo/odoo/odoo/addons/base/models/ir_mail_server.py                                                                0.0s
+ => [odoo] exporting to image                                                                                                                                                                            0.0s
+ => => exporting layers                                                                                                                                                                                  0.0s
+ => => writing image sha256:2642ac35ca064d3c728abc1909771b1df63edf809f23eb8da636b218a457ea10                                                                                                             0.0s
+ => => naming to docker.io/library/odoo-nostr-project-odoo                                                                                                                                               0.0s
+[+] Running 3/3
+ ✔ Network odoo-nostr-project_default       Created                                                                                                                                                      0.1s 
+ ✔ Container odoo-nostr-project-postgres-1  Started                                                                                                                                                      0.2s 
+ ✔ Container odoo-nostr-project-odoo-1      Started                                                                                                                                                      0.1s 
+PING google.com (142.250.72.110) 56(84) bytes of data.
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=1 ttl=116 time=16.2 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=2 ttl=116 time=17.5 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=3 ttl=116 time=18.1 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=4 ttl=116 time=18.9 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=5 ttl=116 time=18.9 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=6 ttl=116 time=18.1 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=7 ttl=116 time=18.4 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=8 ttl=116 time=15.2 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=9 ttl=116 time=16.7 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=10 ttl=116 time=18.4 ms
+
+--- google.com ping statistics ---
+10 packets transmitted, 10 received, 0% packet loss, time 9012ms
+rtt min/avg/max/mdev = 15.231/17.637/18.903/1.164 ms
+CONTAINER ID   IMAGE                     COMMAND                  CREATED          STATUS         PORTS                                       NAMES
+4d6d3f1985ef   odoo-nostr-project-odoo   "/opt/odoo/odoo/odoo…"   11 seconds ago   Up 9 seconds   0.0.0.0:8080->8069/tcp, :::8080->8069/tcp   odoo-nostr-project-odoo-1
+527e74c94a17   postgres:14               "docker-entrypoint.s…"   11 seconds ago   Up 9 seconds   5432/tcp                                    odoo-nostr-project-postgres-1
+2024-08-18 19:57:45,189 1 INFO ? odoo: Odoo version 16.0 
+2024-08-18 19:57:45,190 1 INFO ? odoo: Using configuration file at /etc/odoo/odoo.conf 
+2024-08-18 19:57:45,190 1 INFO ? odoo: addons paths: ['/opt/odoo/odoo/odoo/addons', '/opt/odoo/.local/share/Odoo/addons/16.0', '/opt/odoo/odoo/addons', '/opt/odoo/custom_addons'] 
+2024-08-18 19:57:45,190 1 INFO ? odoo: database: odoo@postgres:5432 
+2024-08-18 19:57:45,413 1 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltopdf to print a pdf version of the reports. 
+2024-08-18 19:57:45,796 1 INFO ? odoo.service.server: HTTP service (werkzeug) running on 4d6d3f1985ef:8069 
+2024-08-18 19:57:45,842 1 INFO odoodb odoo.modules.loading: loading 1 modules... 
+2024-08-18 19:57:45,851 1 INFO odoodb odoo.modules.loading: 1 modules loaded in 0.01s, 0 queries (+0 extra) 
+2024-08-18 19:57:45,974 1 WARNING odoodb odoo.modules.module: Missing `license` key in manifest for 'nostr_auth', defaulting to LGPL-3 
+2024-08-18 19:57:45,997 1 INFO odoodb odoo.modules.loading: loading 72 modules... 
+2024-08-18 19:57:47,548 1 INFO odoodb odoo.modules.loading: 72 modules loaded in 1.55s, 0 queries (+0 extra) 
+2024-08-18 19:57:47,718 1 INFO odoodb odoo.modules.loading: Modules loaded. 
+2024-08-18 19:57:47,725 1 INFO odoodb odoo.modules.registry: Registry loaded in 1.930s 
+2024-08-18 19:57:47,748 1 INFO odoodb odoo.addons.base.models.ir_http: Generating routing map for key 1 
+2024-08-18 19:57:48,048 1 INFO odoodb werkzeug: 172.19.0.1 - - [18/Aug/2024 19:57:48] "GET /websocket HTTP/1.1" 101 - 10 0.009 0.591
+2024-08-18 19:57:48,056 1 INFO ? odoo.addons.bus.models.bus: Bus.loop listen imbus on db postgres 
+2024-08-18 19:57:50,877 1 INFO odoodb werkzeug: 172.19.0.1 - - [18/Aug/2024 19:57:50] "GET /websocket HTTP/1.1" 101 - 2 0.001 0.004
+PING google.com (142.250.72.110) 56(84) bytes of data.
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=1 ttl=116 time=16.4 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=2 ttl=116 time=17.7 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=3 ttl=116 time=18.5 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=4 ttl=116 time=18.9 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=5 ttl=116 time=18.2 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=6 ttl=116 time=19.8 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=7 ttl=116 time=17.5 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=8 ttl=116 time=18.8 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=9 ttl=116 time=18.9 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=10 ttl=116 time=14.3 ms
+
+--- google.com ping statistics ---
+10 packets transmitted, 10 received, 0% packet loss, time 9012ms
+rtt min/avg/max/mdev = 14.295/17.901/19.811/1.496 ms
+2024-08-18 19:58:03,265 13 INFO ? odoo: Odoo version 16.0 
+2024-08-18 19:58:03,265 13 INFO ? odoo: Using configuration file at /etc/odoo/odoo.conf 
+2024-08-18 19:58:03,266 13 INFO ? odoo: addons paths: ['/opt/odoo/odoo/odoo/addons', '/opt/odoo/.local/share/Odoo/addons/16.0', '/opt/odoo/odoo/addons', '/opt/odoo/custom_addons'] 
+2024-08-18 19:58:03,266 13 INFO ? odoo: database: odoo@postgres:5432 
+2024-08-18 19:58:03,422 13 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltopdf to print a pdf version of the reports. 
+Exception in thread odoo.service.httpd:
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/threading.py", line 1016, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.10/threading.py", line 953, in run
+    self._target(*self._args, **self._kwargs)
+  File "/opt/odoo/odoo/odoo/service/server.py", line 516, in http_thread
+    self.httpd = ThreadedWSGIServerReloadable(self.interface, self.port, self.app)
+  File "/opt/odoo/odoo/odoo/service/server.py", line 181, in __init__
+    super(ThreadedWSGIServerReloadable, self).__init__(host, port, app,
+  File "/usr/local/lib/python3.10/dist-packages/werkzeug/serving.py", line 688, in __init__
+    super().__init__(server_address, handler)  # type: ignore
+  File "/usr/lib/python3.10/socketserver.py", line 452, in __init__
+    self.server_bind()
+  File "/opt/odoo/odoo/odoo/service/server.py", line 197, in server_bind
+    super(ThreadedWSGIServerReloadable, self).server_bind()
+  File "/usr/lib/python3.10/http/server.py", line 137, in server_bind
+    socketserver.TCPServer.server_bind(self)
+  File "/usr/lib/python3.10/socketserver.py", line 466, in server_bind
+    self.socket.bind(self.server_address)
+OSError: [Errno 98] Address already in use
+2024-08-18 19:58:03,632 13 INFO odoodb odoo.modules.loading: loading 1 modules... 
+2024-08-18 19:58:03,642 13 INFO odoodb odoo.modules.loading: 1 modules loaded in 0.01s, 0 queries (+0 extra) 
+2024-08-18 19:58:03,718 13 INFO odoodb odoo.modules.loading: updating modules list 
+2024-08-18 19:58:03,718 13 INFO odoodb odoo.addons.base.models.ir_module: ALLOW access to module.update_list on [] to user __system__ #1 via n/a 
+2024-08-18 19:58:03,863 13 WARNING odoodb odoo.modules.module: Missing `license` key in manifest for 'custom_auth', defaulting to LGPL-3 
+2024-08-18 19:58:04,298 13 WARNING odoodb odoo.modules.module: Missing `license` key in manifest for 'nostr_auth', defaulting to LGPL-3 
+2024-08-18 19:58:04,658 13 INFO odoodb odoo.addons.base.models.ir_module: ALLOW access to module.button_upgrade on ['Nostr Bridge'] to user __system__ #1 via n/a 
+2024-08-18 19:58:04,658 13 INFO odoodb odoo.addons.base.models.ir_module: ALLOW access to module.update_list on ['Nostr Bridge'] to user __system__ #1 via n/a 
+2024-08-18 19:58:05,362 13 INFO odoodb odoo.addons.base.models.ir_module: ALLOW access to module.button_install on [] to user __system__ #1 via n/a 
+2024-08-18 19:58:05,400 13 INFO odoodb odoo.modules.loading: loading 72 modules... 
+2024-08-18 19:58:05,579 13 INFO odoodb odoo.modules.loading: Loading module nostr_bridge (28/72) 
+2024-08-18 19:58:05,774 13 INFO odoodb odoo.modules.registry: module nostr_bridge: creating or updating database tables 
+2024-08-18 19:58:06,052 13 INFO odoodb odoo.modules.loading: loading nostr_bridge/views/res_config_settings_views.xml 
+2024-08-18 19:58:06,142 13 INFO odoodb odoo.modules.loading: loading nostr_bridge/views/res_users_views.xml 
+2024-08-18 19:58:06,221 13 INFO odoodb odoo.modules.loading: loading nostr_bridge/views/res_partner_views.xml 
+2024-08-18 19:58:06,274 13 INFO odoodb odoo.modules.loading: Module nostr_bridge loaded in 0.70s, 191 queries (+191 other) 
+2024-08-18 19:58:06,616 13 INFO odoodb odoo.modules.loading: 72 modules loaded in 1.22s, 191 queries (+191 extra) 
+2024-08-18 19:58:07,234 13 INFO odoodb odoo.modules.registry: verifying fields for every extended model 
+2024-08-18 19:58:07,752 13 INFO odoodb odoo.modules.loading: Modules loaded. 
+2024-08-18 19:58:07,763 13 INFO odoodb odoo.modules.registry: Registry loaded in 4.175s 
+^C2024-08-18 19:58:11,179 13 INFO odoodb odoo.service.server: Initiating shutdown 
+2024-08-18 19:58:11,179 13 INFO odoodb odoo.service.server: Hit CTRL-C again or send a second signal to force the shutdown. 
+2024-08-18 19:58:11,180 13 INFO odoodb odoo.sql_db: ConnectionPool(used=0/count=0/max=64): Closed 3 connections  
+PING google.com (142.250.72.110) 56(84) bytes of data.
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=1 ttl=116 time=15.6 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=2 ttl=116 time=19.0 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=3 ttl=116 time=20.9 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=4 ttl=116 time=19.7 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=5 ttl=116 time=16.5 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=6 ttl=116 time=18.2 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=7 ttl=116 time=17.9 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=8 ttl=116 time=18.3 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=9 ttl=116 time=17.8 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=10 ttl=116 time=17.9 ms
+
+--- google.com ping statistics ---
+10 packets transmitted, 10 received, 0% packet loss, time 9012ms
+rtt min/avg/max/mdev = 15.636/18.173/20.867/1.400 ms
+2024-08-18 19:57:45,189 1 INFO ? odoo: Odoo version 16.0 
+2024-08-18 19:57:45,190 1 INFO ? odoo: Using configuration file at /etc/odoo/odoo.conf 
+2024-08-18 19:57:45,190 1 INFO ? odoo: addons paths: ['/opt/odoo/odoo/odoo/addons', '/opt/odoo/.local/share/Odoo/addons/16.0', '/opt/odoo/odoo/addons', '/opt/odoo/custom_addons'] 
+2024-08-18 19:57:45,190 1 INFO ? odoo: database: odoo@postgres:5432 
+2024-08-18 19:57:45,413 1 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltopdf to print a pdf version of the reports. 
+2024-08-18 19:57:45,796 1 INFO ? odoo.service.server: HTTP service (werkzeug) running on 4d6d3f1985ef:8069 
+2024-08-18 19:57:45,842 1 INFO odoodb odoo.modules.loading: loading 1 modules... 
+2024-08-18 19:57:45,851 1 INFO odoodb odoo.modules.loading: 1 modules loaded in 0.01s, 0 queries (+0 extra) 
+2024-08-18 19:57:45,974 1 WARNING odoodb odoo.modules.module: Missing `license` key in manifest for 'nostr_auth', defaulting to LGPL-3 
+2024-08-18 19:57:45,997 1 INFO odoodb odoo.modules.loading: loading 72 modules... 
+2024-08-18 19:57:47,548 1 INFO odoodb odoo.modules.loading: 72 modules loaded in 1.55s, 0 queries (+0 extra) 
+2024-08-18 19:57:47,718 1 INFO odoodb odoo.modules.loading: Modules loaded. 
+2024-08-18 19:57:47,725 1 INFO odoodb odoo.modules.registry: Registry loaded in 1.930s 
+2024-08-18 19:57:47,748 1 INFO odoodb odoo.addons.base.models.ir_http: Generating routing map for key 1 
+2024-08-18 19:57:48,048 1 INFO odoodb werkzeug: 172.19.0.1 - - [18/Aug/2024 19:57:48] "GET /websocket HTTP/1.1" 101 - 10 0.009 0.591
+2024-08-18 19:57:48,056 1 INFO ? odoo.addons.bus.models.bus: Bus.loop listen imbus on db postgres 
+2024-08-18 19:57:50,877 1 INFO odoodb werkzeug: 172.19.0.1 - - [18/Aug/2024 19:57:50] "GET /websocket HTTP/1.1" 101 - 2 0.001 0.004
+impromise@impromise-OptiPlex-990:~/Downloads/Telegram Desktop/nostr-w-relay-main (2)/nostr-w-relay-main/src/views/components/login/odoo-nostr-project$ sudo docker logs odoo-nostr-project-odoo-1
+2024-08-18 19:57:45,189 1 INFO ? odoo: Odoo version 16.0 
+2024-08-18 19:57:45,190 1 INFO ? odoo: Using configuration file at /etc/odoo/odoo.conf 
+2024-08-18 19:57:45,190 1 INFO ? odoo: addons paths: ['/opt/odoo/odoo/odoo/addons', '/opt/odoo/.local/share/Odoo/addons/16.0', '/opt/odoo/odoo/addons', '/opt/odoo/custom_addons'] 
+2024-08-18 19:57:45,190 1 INFO ? odoo: database: odoo@postgres:5432 
+2024-08-18 19:57:45,413 1 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltopdf to print a pdf version of the reports. 
+2024-08-18 19:57:45,796 1 INFO ? odoo.service.server: HTTP service (werkzeug) running on 4d6d3f1985ef:8069 
+2024-08-18 19:57:45,842 1 INFO odoodb odoo.modules.loading: loading 1 modules... 
+2024-08-18 19:57:45,851 1 INFO odoodb odoo.modules.loading: 1 modules loaded in 0.01s, 0 queries (+0 extra) 
+2024-08-18 19:57:45,974 1 WARNING odoodb odoo.modules.module: Missing `license` key in manifest for 'nostr_auth', defaulting to LGPL-3 
+2024-08-18 19:57:45,997 1 INFO odoodb odoo.modules.loading: loading 72 modules... 
+2024-08-18 19:57:47,548 1 INFO odoodb odoo.modules.loading: 72 modules loaded in 1.55s, 0 queries (+0 extra) 
+2024-08-18 19:57:47,718 1 INFO odoodb odoo.modules.loading: Modules loaded. 
+2024-08-18 19:57:47,725 1 INFO odoodb odoo.modules.registry: Registry loaded in 1.930s 
+2024-08-18 19:57:47,748 1 INFO odoodb odoo.addons.base.models.ir_http: Generating routing map for key 1 
+2024-08-18 19:57:48,048 1 INFO odoodb werkzeug: 172.19.0.1 - - [18/Aug/2024 19:57:48] "GET /websocket HTTP/1.1" 101 - 10 0.009 0.591
+2024-08-18 19:57:48,056 1 INFO ? odoo.addons.bus.models.bus: Bus.loop listen imbus on db postgres 
+2024-08-18 19:57:50,877 1 INFO odoodb werkzeug: 172.19.0.1 - - [18/Aug/2024 19:57:50] "GET /websocket HTTP/1.1" 101 - 2 0.001 0.004
+2024-08-18 19:58:26,742 1 WARNING ? odoo.modules.module: Missing `license` key in manifest for 'custom_auth', defaulting to LGPL-3 
+2024-08-18 19:58:26,764 1 INFO odoodb werkzeug: 172.19.0.1 - - [18/Aug/2024 19:58:26] "POST /mail/channel/notify_typing HTTP/1.1" 200 - 11 0.005 0.303
+2024-08-18 19:58:32,245 1 INFO odoodb odoo.addons.nostr_bridge.models.mail_message: Creating new mail messages 
+2024-08-18 19:58:32,255 1 INFO odoodb odoo.addons.nostr_bridge.models.mail_message: Attempting to publish message to Nostr: 583 
+2024-08-18 19:58:32,255 1 INFO odoodb odoo.addons.nostr_bridge.models.mail_message: Event data prepared: {'kind': 1, 'content': Markup('<p>13th Test from Odoo to Nostr!</p>'), 'tags': [[], [], ['client', 'Odoo Nostr Bridge']]} 
+2024-08-18 19:58:32,255 1 INFO odoodb odoo.addons.nostr_bridge.models.nostr_adapter: Publishing event to Nostr: {'kind': 1, 'content': Markup('<p>13th Test from Odoo to Nostr!</p>'), 'tags': [[], [], ['client', 'Odoo Nostr Bridge']]} 
+2024-08-18 19:58:32,255 1 INFO odoodb odoo.addons.nostr_bridge.models.nostr_adapter: Using private key: nsec1...yn90f 
+2024-08-18 19:58:32,256 1 INFO odoodb odoo.addons.nostr_bridge.models.nostr_adapter: Derived public key: b996f...77569 
+2024-08-18 19:58:32,256 1 INFO odoodb odoo.addons.nostr_bridge.models.nostr_adapter: Created event: <nostr.event.Event object at 0x7f10fd236c20> 
+2024-08-18 19:58:32,256 1 ERROR odoodb odoo.addons.nostr_bridge.models.nostr_adapter: Error publishing event to Nostr: 'Event' object has no attribute 'sign' 
+Traceback (most recent call last):
+  File "/opt/odoo/custom_addons/nostr_bridge/models/nostr_adapter.py", line 53, in publish_event
+    event.sign(private_key.hex())
+AttributeError: 'Event' object has no attribute 'sign'
+2024-08-18 19:58:32,257 1 INFO odoodb odoo.addons.nostr_bridge.models.mail_message: Nostr publish result: False 
+2024-08-18 19:58:32,257 1 INFO odoodb werkzeug: 172.19.0.1 - - [18/Aug/2024 19:58:32] "POST /mail/channel/notify_typing HTTP/1.1" 200 - 11 0.009 0.024
+2024-08-18 19:58:32,287 1 INFO odoodb werkzeug: 172.19.0.1 - - [18/Aug/2024 19:58:32] "POST /mail/message/post HTTP/1.1" 200 - 25 0.018 0.035
+2024-08-18 19:58:32,315 1 INFO odoodb werkzeug: 172.19.0.1 - - [18/Aug/2024 19:58:32] "POST /mail/link_preview HTTP/1.1" 200 - 7 0.005 0.004
+impromise@impromise-OptiPlex-990:~/Downloads/Telegram Desktop/nostr-w-relay-main (2)/nostr-w-relay-main/src/views/components/login/odoo-nostr-project$

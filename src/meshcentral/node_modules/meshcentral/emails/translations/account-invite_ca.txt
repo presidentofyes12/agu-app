@@ -1,0 +1,5 @@
+[[[SERVERNAME]]] - Invitació al compte
+S'ha creat un compte per a tu al servidor [[[SERVERNAME]]] ([[[SERVERURL]]]/[[[URLARGS1]]]), pots accedir-hi ara amb el nom d'usuari "[[[ACCOUNTNAME]]]" i contrasenya "[[[CONTRAsenya]]]".
+~
+Salutacions cordials,
+~[[[USERNAME]]]

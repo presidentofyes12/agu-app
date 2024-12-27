@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_opinion_user,opinion.user,model_opinion_user,base.group_user,1,1,1,1
+access_opinion_question,opinion.question,model_opinion_question,base.group_user,1,1,1,1
+access_opinion_prediction,opinion.prediction,model_opinion_prediction,base.group_user,1,1,1,1
+access_opinion_relationship,opinion.relationship,model_opinion_relationship,base.group_user,1,1,1,1
+access_opinion_relative,opinion.relative,model_opinion_relative,base.group_user,1,1,1,1
+access_load_questions_wizard,load.questions.wizard,model_load_questions_wizard,base.group_user,1,1,1,1
+access_update_relative_wizard,update.relative.wizard,model_update_relative_wizard,base.group_user,1,1,1,1

@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_git_repository,access_git_repository,model_git_repository,base.group_user,1,1,1,1
+access_nostr_event,access_nostr_event,model_nostr_event,base.group_user,1,1,1,1
+access_create_nostr_event_wizard,access_create_nostr_event_wizard,model_create_nostr_event_wizard,base.group_user,1,1,1,0

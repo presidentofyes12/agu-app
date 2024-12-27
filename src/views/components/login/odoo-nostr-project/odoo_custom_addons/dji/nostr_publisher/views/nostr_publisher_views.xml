@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Root menu for Nostr -->
+        <menuitem id="menu_nostr_root"
+                  name="Nostr"
+                  web_icon="nostr_publisher,static/description/icon.png"
+                  sequence="50"/>
+
+        <!-- Submenu for Nostr Publishers -->
+        <menuitem id="menu_nostr_publisher_main"
+                  name="Publishers"
+                  parent="menu_nostr_root"
+                  sequence="10"/>
+
+        <!-- Submenu for Nostr Relays -->
+        <menuitem id="menu_nostr_relay"
+                  name="Relays"
+                  parent="menu_nostr_root"
+                  sequence="20"/>
+
+        <!-- Submenu for Connected Modules -->
+        <menuitem id="menu_nostr_connected_module"
+                  name="Connected Modules"
+                  parent="menu_nostr_root"
+                  sequence="30"/>
+
+        <!-- Submenu for Publish Logs -->
+        <menuitem id="menu_nostr_publish_log"
+                  name="Publish Logs"
+                  parent="menu_nostr_root"
+                  sequence="40"/>
+
+        <!-- Action for Nostr Publisher -->
+        <record id="action_nostr_publisher" model="ir.actions.act_window">
+            <field name="name">Nostr Publishers</field>
+            <field name="res_model">nostr.publisher</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Action for Submit Event Wizard -->
+        <record id="action_submit_event_wizard" model="ir.actions.act_window">
+            <field name="name">Submit Nostr Event</field>
+            <field name="res_model">submit.event.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <!-- Tree View for Nostr Publisher -->
+        <record id="view_nostr_publisher_tree" model="ir.ui.view">
+            <field name="name">nostr.publisher.tree</field>
+            <field name="model">nostr.publisher</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="state"/>
+                    <field name="public_key"/>
+                    <field name="relay_count"/>
+                    <field name="last_publish_date"/>
+                    <field name="total_events_published"/>
+                    <field name="success_rate" widget="percentage"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Form View for Nostr Publisher -->
+        <record id="view_nostr_publisher_form" model="ir.ui.view">
+            <field name="name">nostr.publisher.form</field>
+            <field name="model">nostr.publisher</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <field name="state" widget="statusbar" options="{'clickable': '1'}"/>
+                        <button name="%(action_submit_event_wizard)d" string="Submit Event" type="action" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'active')]}"/>
+                        <button name="action_test_relays" string="Test Relays" type="object" class="btn-primary"/>
+                        <button name="update_active_relays" string="Update Active Relays" type="object" class="btn-secondary"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <h1><field name="name" placeholder="Name"/></h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="public_key"/>
+                                <field name="private_key" password="True"/>
+                            </group>
+                            <group>
+                                <field name="relay_count"/>
+                                <field name="last_publish_date"/>
+                                <field name="total_events_published"/>
+                                <field name="success_rate" widget="percentage"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Relays">
+                                <field name="relay_ids">
+                                    <tree editable="bottom">
+                                        <field name="url"/>
+                                        <field name="is_active"/>
+                                        <field name="last_connection"/>
+                                        <field name="connection_failures"/>
+                                        <field name="response_time" widget="float_time"/>
+                                        <button name="action_test_connection" string="Test" type="object" icon="fa-refresh"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Active Relays">
+                                <field name="active_relay_ids">
+                                    <tree>
+                                        <field name="url"/>
+                                        <field name="last_connection"/>
+                                        <field name="response_time" widget="float_time"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Connected Modules">
+                                <field name="connected_module_ids">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="model_id"/>
+                                        <field name="public_key"/>
+                                        <field name="last_sync_date"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" widget="mail_followers"/>
+                        <field name="message_ids" widget="mail_thread"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <!-- Menu item for Nostr Publisher -->
+        <menuitem id="menu_nostr_publisher"
+                  name="Nostr Publishers"
+                  parent="menu_nostr_publisher_main"
+                  action="action_nostr_publisher"
+                  sequence="10"/>
+    </data>
+</odoo>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ivcs_version_form" model="ir.ui.view">
+        <field name="name">ivcs.version.form</field>
+        <field name="model">ivcs.version</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="description"/>
+                        <field name="item_id"/>
+                        <field name="commit_id"/>
+                        <field name="create_date"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ivcs_version_tree" model="ir.ui.view">
+        <field name="name">ivcs.version.tree</field>
+        <field name="model">ivcs.version</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="item_id"/>
+                <field name="create_date"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_ivcs_version" model="ir.actions.act_window">
+        <field name="name">IVCS Versions</field>
+        <field name="res_model">ivcs.version</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_ivcs_version" name="Versions" parent="menu_ivcs_root" action="action_ivcs_version"/>
+</odoo>

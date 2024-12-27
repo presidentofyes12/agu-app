@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="res_config_settings_view_form" model="ir.ui.view">
+            <field name="name">res.config.settings.view.form.inherit.gitlab.nostr.bridge</field>
+            <field name="model">res.config.settings</field>
+            <field name="priority" eval="70"/>
+            <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[hasclass('settings')]" position="inside">
+                    <div class="app_settings_block" data-string="GitLab-Nostr Bridge" string="GitLab-Nostr Bridge" data-key="gitlab_nostr_bridge">
+                        <h2>GitLab Settings</h2>
+                        <div class="row mt16 o_settings_container" name="gitlab_settings">
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane"/>
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">GitLab URL</span>
+                                    <div class="text-muted">
+                                        Enter your GitLab server URL
+                                    </div>
+                                    <div class="content-group">
+                                        <div class="mt16">
+                                            <field name="gitlab_url" class="o_field_widget oe_inline" placeholder="e.g. https://gitlab.com"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane"/>
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">GitLab Private Token</span>
+                                    <div class="text-muted">
+                                        Enter your GitLab private token for API access
+                                    </div>
+                                    <div class="content-group">
+                                        <div class="mt16">
+                                            <field name="gitlab_private_token" password="True" class="o_field_widget oe_inline"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt16 o_settings_container">
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane"/>
+                                <div class="o_setting_right_pane">
+                                    <button name="test_gitlab_connection" type="object" string="Test GitLab Connection" class="btn-primary"/>
+                                    <button name="action_clear_gitlab_token" type="object" string="Clear GitLab Token" class="btn-secondary"/>
+                                </div>
+                            </div>
+                        </div>
+                        <h2>Nostr Settings</h2>
+                        <div class="row mt16 o_settings_container" name="nostr_settings">
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane">
+                                    <field name="use_alternative_publish"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="use_alternative_publish"/>
+                                    <div class="text-muted">
+                                        Use alternative publish method for Nostr events
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane">
+                                    <field name="use_new_relay_management"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="use_new_relay_management"/>
+                                    <div class="text-muted">
+                                        Use new relay management system
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane"/>
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">Nostr Relay URLs</span>
+                                    <div class="text-muted">
+                                        Enter comma-separated Nostr relay URLs
+                                    </div>
+                                    <div class="content-group">
+                                        <div class="mt16">
+                                            <field name="nostr_relay_urls" class="o_field_widget oe_inline" placeholder="e.g. wss://relay1.com,wss://relay2.com"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt16 o_settings_container">
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane"/>
+                                <div class="o_setting_right_pane">
+                                    <button name="test_nostr_connection" type="object" string="Test Nostr Connection" class="btn-primary"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

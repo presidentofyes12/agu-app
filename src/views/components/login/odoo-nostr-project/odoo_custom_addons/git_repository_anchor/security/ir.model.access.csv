@@ -1,0 +1,15 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_git_repository_user,git.repository user,model_git_repository,group_git_repository_user,1,0,0,0
+access_git_repository_manager,git.repository manager,model_git_repository,group_git_repository_manager,1,1,1,1
+access_git_branch_user,git.branch user,model_git_branch,group_git_repository_user,1,1,1,0
+access_git_branch_manager,git.branch manager,model_git_branch,group_git_repository_manager,1,1,1,1
+access_git_event_user,git.event user,model_git_event,group_git_repository_user,1,0,0,0
+access_git_event_manager,git.event manager,model_git_event,group_git_repository_manager,1,1,1,1
+access_git_repository_manager_user,git.repository.manager user,model_git_repository_manager,group_git_repository_user,1,1,1,0
+access_git_repository_manager_manager,git.repository.manager manager,model_git_repository_manager,group_git_repository_manager,1,1,1,1
+access_nostr_event_user,nostr.event user,model_nostr_event,group_git_repository_user,1,0,0,0
+access_nostr_event_manager,nostr.event manager,model_nostr_event,group_git_repository_manager,1,1,1,1
+access_git_repository_user,git.repository user,model_git_repository,base.group_user,1,1,1,0
+access_git_repository_manager,git.repository manager,model_git_repository,base.group_system,1,1,1,1
+access_nostr_event_user,nostr.event user,model_nostr_event,base.group_user,1,0,0,0
+access_nostr_event_manager,nostr.event manager,model_nostr_event,base.group_system,1,1,1,1

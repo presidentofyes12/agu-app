@@ -1,0 +1,29 @@
+{
+  "settings": {
+    "cert": "meshcentral.example.com",
+    "port": 4430,
+    "aliasPort": 443,
+    "redirPort": 800,
+    "TLSOffload": false,
+    "SelfUpdate": false,
+    "AllowFraming": false,
+    "WebRTC": false,
+    "ExactPorts": true,
+    "LocalNetworkAccess": true,
+    "AllowHighQualityDesktop": true,
+    "UserAllowedIP": "127.0.0.1",
+    "AgentAllowedIP": "127.0.0.1",
+    "TrustedProxy": "127.0.0.1"
+  },
+  "domains": {
+    "": {
+      "title": "MyServer",
+      "title2": "Meshcentral",
+      "newAccounts": true,
+      "userQuota": 0,
+      "meshQuota": 0,
+      "allowLoginToken": true,
+      "authStrengthMin": 1
+    }
+  }
+}

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_gitlab_repository_form" model="ir.ui.view">
+        <field name="name">gitlab.repository.form</field>
+        <field name="model">gitlab.repository</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="sync_with_gitlab" string="Sync with GitLab" type="object" class="oe_highlight"/>
+                    <button name="action_create_commit" string="Create Commit" type="object" class="oe_highlight"/>
+                    <button name="action_test_publish_nostr_event" string="Test Nostr Event Publish" type="object" class="btn-secondary"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="gitlab_id"/>
+                        <field name="url"/>
+                        <field name="project_id"/>
+                    </group>
+                    <notebook>
+                        <page string="Branches">
+                            <field name="branch_ids"/>
+                        </page>
+                        <page string="Commits">
+                            <field name="commit_ids"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_gitlab_repository_tree" model="ir.ui.view">
+        <field name="name">gitlab.repository.tree</field>
+        <field name="model">gitlab.repository</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="gitlab_id"/>
+                <field name="url"/>
+                <field name="project_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_gitlab_repository" model="ir.actions.act_window">
+        <field name="name">GitLab Repositories</field>
+        <field name="res_model">gitlab.repository</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_gitlab_nostr_bridge" name="GitLab-Nostr Bridge" sequence="10"/>
+    <menuitem id="menu_gitlab_repository" name="Repositories" parent="menu_gitlab_nostr_bridge" action="action_gitlab_repository" sequence="10"/>
+</odoo>

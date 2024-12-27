@@ -1,0 +1,4326 @@
+Home dir: ~/Downloads/Telegram Desktop/nostr-w-relay-main (2)/nostr-w-relay-main/src/views/components/login/
+
+Command: find ./ -type f -exec echo "=== {} ===" \; -exec cat {} \; >> allfiles.txt
+
+=== ./odoo.conf ===
+[options]
+addons_path = /opt/odoo/odoo/addons,/opt/odoo/odoo/odoo/addons,/opt/odoo/custom_addons
+admin_passwd = your_secure_admin_password
+db_host = postgres
+db_port = 5432
+db_user = odoo
+db_password = your_secure_password
+db_name = odoodb
+http_port = 8069
+xmlrpc_port = 8069
+gevent_port = 8072
+longpolling_port = 8072
+proxy_mode = True
+workers = 2
+max_cron_threads = 1
+limit_time_cpu = 600
+limit_time_real = 1200
+log_level = info
+log_handler = [':INFO']
+=== ./odoo-nostr-project/odoo.conf ===
+[options]
+addons_path = /opt/odoo/odoo/addons,/opt/odoo/odoo/odoo/addons,/opt/odoo/custom_addons
+admin_passwd = your_secure_admin_password
+db_host = postgres
+db_port = 5432
+db_user = odoo
+db_password = your_secure_password
+db_name = odoodb
+http_port = 8069
+xmlrpc_port = 8069
+gevent_port = 8072
+longpolling_port = 8072
+proxy_mode = True
+workers = 2
+max_cron_threads = 1
+limit_time_cpu = 600
+limit_time_real = 1200
+log_level = info
+log_handler = [':INFO']
+=== ./odoo-nostr-project/patch_openssl.py ===
+
+=== ./odoo-nostr-project/Dockerfile ===
+FROM ubuntu:22.04
+ENV ODOO_VERSION 16.0
+ENV OPENEDUCAT_VERSION 16.0
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt-get update && apt-get install -y \
+    python3 python3-pip python3-dev python3-venv \
+    postgresql-client \
+    nodejs npm \
+    git \
+    wget \
+    libxml2-dev libxslt1-dev \
+    libjpeg-dev libfreetype6-dev \
+    libpq-dev \
+    build-essential \
+    libldap2-dev libsasl2-dev \
+    libssl-dev \
+    libffi-dev \
+    iputils-ping \
+    && rm -rf /var/lib/apt/lists/*
+RUN useradd -m -d /opt/odoo -U -r -s /bin/bash odoo
+RUN git clone https://github.com/odoo/odoo.git --depth 1 --branch ${ODOO_VERSION} /opt/odoo/odoo
+RUN git clone https://github.com/openeducat/openeducat_erp.git --depth 1 --branch ${OPENEDUCAT_VERSION} /opt/odoo/openeducat
+RUN pip3 install --upgrade pip
+RUN pip3 install --no-cache-dir -r /opt/odoo/odoo/requirements.txt
+RUN pip3 install cryptography pyopenssl==22.1.0 psycopg2-binary bs4 BeautifulSoup4 gitpython
+RUN pip3 install nostr
+RUN cp -r /opt/odoo/openeducat/* /opt/odoo/odoo/addons/
+COPY ./nostr_auth.py /opt/odoo/
+COPY ./custom_odoo_server.py /opt/odoo/
+COPY ./odoo_custom_addons /opt/odoo/custom_addons
+RUN mkdir -p /etc/odoo
+RUN mkdir -p /opt/ivcs_repos
+RUN chown -R odoo:odoo /opt/odoo /etc/odoo /opt/ivcs_repos
+RUN chmod +x /opt/odoo/custom_odoo_server.py
+RUN mkdir -p /var/lib/odoo
+RUN chown -R odoo:odoo /var/lib/odoo
+USER odoo
+RUN echo "from OpenSSL import crypto" > /tmp/patch_openssl.py
+RUN echo "if not hasattr(crypto, 'X509_V_FLAG_EXPLICIT_POLICY'):" >> /tmp/patch_openssl.py
+RUN echo "    crypto.X509_V_FLAG_EXPLICIT_POLICY = 0x8000" >> /tmp/patch_openssl.py
+RUN echo "exec(open('/tmp/patch_openssl.py').read())" >> /opt/odoo/odoo/odoo/addons/base/models/ir_mail_server.py
+CMD ["python3", "/opt/odoo/custom_odoo_server.py", "-c", "/etc/odoo/odoo.conf"]
+=== ./odoo-nostr-project/start.sh ===
+#!/bin/bash
+
+docker-compose up -d
+echo "Odoo is starting up. You can access it at http://localhost:8080"
+echo "It may take a few moments for the service to be fully available."
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_auth/__init__.py ===
+from . import models
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_auth/views/res_users_views.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_users_form_nostr" model="ir.ui.view">
+        <field name="name">res.users.form.nostr</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='access_rights']" position="after">
+                <page string="Nostr Authentication" name="nostr_auth">
+                    <group>
+                        <field name="nostr_public_key"/>
+                        <field name="nostr_relay_url"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_auth/models/res_users.py ===
+# File: odoo_custom_addons/nostr_auth/models/res_users.py
+
+from odoo import models, fields, api
+from odoo.exceptions import ValidationError
+from nostr.key import PrivateKey, PublicKey
+
+class ResUsers(models.Model):
+    _inherit = 'res.users'
+
+    nostr_public_key = fields.Char(string='Nostr Public Key')
+    nostr_private_key = fields.Char(string='Nostr Private Key')
+    nostr_relay_url = fields.Char(string='Nostr Relay URL')
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('nostr_private_key'):
+                private_key = PrivateKey()
+                vals['nostr_private_key'] = private_key.bech32()
+                vals['nostr_public_key'] = private_key.public_key.hex()
+        return super(ResUsers, self).create(vals_list)
+
+    @api.constrains('nostr_public_key')
+    def _check_nostr_public_key(self):
+        for user in self:
+            if user.nostr_public_key:
+                try:
+                    PublicKey.from_hex(user.nostr_public_key)
+                except:
+                    raise ValidationError("Invalid Nostr public key format.")
+
+    @api.model
+    def authenticate_nostr(self, public_key, signature, message):
+        user = self.search([('nostr_public_key', '=', public_key)], limit=1)
+        if user:
+            try:
+                pub_key = PublicKey.from_hex(public_key)
+                if pub_key.verify_signed_message_signature(signature, message):
+                    return user.id
+            except:
+                pass
+        return False
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_auth/models/__init__.py ===
+# models/__init__.py
+from . import res_users
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_auth/controllers/main.py ===
+# controllers/main.py
+from odoo import http
+from odoo.http import request
+import json
+
+class NostrAuthController(http.Controller):
+    @http.route('/web/nostr/authenticate', type='json', auth='none')
+    def authenticate(self, public_key, signature, message):
+        uid = request.env['res.users'].sudo().authenticate_nostr(public_key, signature, message)
+        if uid:
+            request.session.authenticate(request.session.db, uid, public_key)
+            return {'success': True, 'uid': uid}
+        return {'success': False, 'error': 'Authentication failed'}
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_auth/controllers/__init__.py ===
+from . import main
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_auth/__manifest__.py ===
+# __manifest__.py
+{
+    'name': 'Nostr Authentication',
+    'version': '1.0',
+    'category': 'Authentication',
+    'summary': 'Extends user model with Nostr fields and authentication',
+    'depends': ['base', 'auth_signup'],
+    'data': [
+        'views/res_users_views.xml',
+    ],
+    'installable': True,
+    'application': False,
+    'auto_install': False,
+}
+=== ./odoo-nostr-project/odoo_custom_addons/custom_auth/models/res_users.py ===
+from odoo import models, api
+from odoo.exceptions import AccessDenied
+import requests
+
+class ResUsers(models.Model):
+    _inherit = 'res.users'
+
+    @classmethod
+    def _login(cls, db, login, password):
+        if not cls.validate_external_auth(login, password):
+            raise AccessDenied()
+        return super(ResUsers, cls)._login(db, login, password)
+
+    @classmethod
+    def validate_external_auth(cls, login, token):
+        # Replace with your actual localhost API endpoint
+        validation_url = 'http://localhost/validate_admin'
+        response = requests.post(validation_url, json={'login': login, 'token': token})
+        return response.status_code == 200 and response.json().get('is_admin', False)
+=== ./odoo-nostr-project/odoo_custom_addons/custom_auth/__manifest__.py ===
+{
+    'name': 'Custom External Authentication',
+    'version': '1.0',
+    'category': 'Hidden',
+    'summary': 'Custom authentication for external admin access',
+    'depends': ['base'],
+    'data': [],
+    'installable': True,
+}
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_bridge/static/src/js/nostr_client.js ===
+odoo.define('nostr_bridge.NostrClient', function (require) {
+    "use strict";
+
+    var Class = require('web.Class');
+
+    var NostrClient = Class.extend({
+        init: function (relayUrls) {
+            this.relayUrls = relayUrls;
+            this.relayPool = new NostrTools.RelayPool(this.relayUrls);
+        },
+
+        subscribe: function (filters, callback) {
+            this.relayPool.subscribe(filters, callback);
+        },
+
+        publish: function (event) {
+            this.relayPool.publish(event);
+        }
+    });
+
+    return NostrClient;
+});
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_bridge/__init__.py ===
+from . import models
+from . import controllers
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_bridge/views/res_users_views.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_users_form_nostr" model="ir.ui.view">
+        <field name="name">res.users.form.nostr</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Nostr Settings" name="nostr_settings">
+                    <group>
+                        <field name="nostr_public_key"/>
+                        <field name="nostr_private_key" password="True"/>
+                        <field name="nostr_relay_url"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_bridge/views/res_config_settings_views.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_nostr" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.nostr</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('settings')]" position="inside">
+                <div class="app_settings_block" data-string="Nostr Bridge" string="Nostr Bridge" data-key="nostr_bridge">
+                    <h2>Nostr Settings</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <span class="o_form_label">Nostr Relay URLs</span>
+                                <div class="text-muted">
+                                    Comma-separated list of Nostr relay URLs
+                                </div>
+                                <div class="content-group">
+                                    <div class="mt16">
+                                        <field name="nostr_relay_urls" class="o_light_label"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_bridge/views/templates.xml ===
+<odoo>
+    <template id="assets_backend" name="nostr_bridge assets" inherit_id="web.assets_backend">
+        <xpath expr="." position="inside">
+            <script type="text/javascript" src="/nostr_bridge/static/src/js/nostr_client.js"/>
+        </xpath>
+    </template>
+</odoo>
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_bridge/views/res_partner_views.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_partner_form_nostr" model="ir.ui.view">
+        <field name="name">res.partner.form.nostr</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Nostr Settings" name="nostr_settings">
+                    <group>
+                        <field name="nostr_public_key"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_bridge/data/ir_cron_data.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="ir_cron_migrate_messages_to_nostr" model="ir.cron">
+            <field name="name">Migrate Messages to Nostr</field>
+            <field name="model_id" ref="model_mail_message"/>
+            <field name="state">code</field>
+            <field name="code">model.migrate_messages_to_nostr()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">1</field>
+            <field name="doall" eval="False"/>
+        </record>
+    </data>
+</odoo>
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_bridge/models/res_config_settings.py ===
+import requests
+import json
+from odoo import fields, models, api
+import logging
+
+_logger = logging.getLogger(__name__)
+
+class ResConfigSettings(models.TransientModel):
+    _inherit = 'res.config.settings'
+
+    def _default_nostr_relays(self):
+        return self._get_top_nostr_relays()
+
+    @api.model
+    def _get_top_nostr_relays(self, limit=108):
+        url = "https://api.nostr.watch/v1/online"
+        try:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+            response = requests.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+            _logger.info(f"Response status code: {response.status_code}")
+            
+            data = response.json()
+            #_logger.info(f"API response (first 108 items): {json.dumps(data)[:1000]}")
+            _logger.info(f"API response (first 108 items): {data[:108]}")
+            
+            relays = data[:108]
+            _logger.info(f"Number of relay links found: {len(relays)}")
+            _logger.info(f"Extracted relays (first 5): {relays[:5]}")
+            
+            relay_urls = ",".join(relays)
+            return relay_urls
+        except requests.RequestException as e:
+            _logger.error(f"Error fetching Nostr relays: {e}")
+            return "wss://nostr-relay.app,wss://nos.lol,wss://relay.snort.social,wss://relay.nostr.net"
+
+    nostr_relay_urls = fields.Char(
+        string="Nostr Relay URLs", 
+        config_parameter='nostr_bridge.relay_urls',
+        default=_default_nostr_relays
+    )
+
+    @api.model
+    def get_values(self):
+        res = super(ResConfigSettings, self).get_values()
+        ICPSudo = self.env['ir.config_parameter'].sudo()
+        
+        relay_urls = ICPSudo.get_param('nostr_bridge.relay_urls')
+        if not relay_urls:
+            relay_urls = self._get_top_nostr_relays()
+            ICPSudo.set_param('nostr_bridge.relay_urls', relay_urls)
+            _logger.info(f"Set new relay URLs: {relay_urls[:100]}...")  # Log first 100 characters
+        else:
+            _logger.info(f"Using existing relay URLs: {relay_urls[:100]}...")  # Log first 100 characters
+        
+        res.update(nostr_relay_urls=relay_urls)
+        return res
+
+    def set_values(self):
+        super(ResConfigSettings, self).set_values()
+        ICPSudo = self.env['ir.config_parameter'].sudo()
+        if self.nostr_relay_urls:
+            ICPSudo.set_param('nostr_bridge.relay_urls', self.nostr_relay_urls)
+            _logger.info(f"Updated relay URLs: {self.nostr_relay_urls[:100]}...")  # Log first 100 characters
+        else:
+            default_urls = self._get_top_nostr_relays()
+            ICPSudo.set_param('nostr_bridge.relay_urls', default_urls)
+            _logger.info(f"Set default relay URLs: {default_urls[:100]}...")  # Log first 100 characters
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_bridge/models/res_users.py ===
+"""from odoo import models, fields, api
+from nostr.key import PrivateKey
+
+class ResUsers(models.Model):
+    _inherit = 'res.users'
+
+    #nostr_private_key = fields.Char(string="Nostr Private Key")
+    #nostr_public_key = fields.Char(string="Nostr Public Key", compute='_compute_public_key')
+    #nostr_relay_url = fields.Char(string="Nostr Relay URL")
+
+    nostr_public_key = fields.Char(string="Nostr Public Key")
+    nostr_private_key = fields.Char(string="Nostr Private Key")
+    nostr_relay_url = fields.Char(string="Nostr Relay URL")
+
+    @api.model
+    def create(self, vals):
+        if not vals.get('nostr_private_key'):
+            private_key = PrivateKey()
+            vals['nostr_private_key'] = private_key.bech32()
+        return super(ResUsers, self).create(vals)
+
+    def write(self, vals):
+        # Here you might want to handle updates to Nostr fields
+        return super(ResUsers, self).write(vals)
+
+    @api.depends('nostr_private_key')
+    def _compute_public_key(self):
+        for user in self:
+            if user.nostr_private_key:
+                private_key = PrivateKey.from_nsec(user.nostr_private_key)
+                user.nostr_public_key = private_key.public_key.bech32()
+            else:
+                user.nostr_public_key = False
+"""
+
+"""from odoo import models, fields, api
+
+class ResUsers(models.Model):
+    _inherit = 'res.users'
+
+    nostr_public_key = fields.Char(string="Nostr Public Key")
+    nostr_private_key = fields.Char(string="Nostr Private Key")
+    nostr_relay_url = fields.Char(string="Nostr Relay URL")
+
+    @api.model
+    def create(self, vals):
+        # Here you might want to generate Nostr keys if they're not provided
+        return super(ResUsers, self).create(vals)
+
+    def write(self, vals):
+        # Here you might want to handle updates to Nostr fields
+        return super(ResUsers, self).write(vals)"""
+        
+        
+from odoo import models, fields
+
+class ResUsers(models.Model):
+    _inherit = 'res.users'
+
+    nostr_public_key = fields.Char(string="Nostr Public Key")
+    nostr_private_key = fields.Char(string="Nostr Private Key")
+    nostr_relay_url = fields.Char(string="Nostr Relay URL")
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_bridge/models/mail_message.py ===
+from odoo import models, api
+import logging
+
+_logger = logging.getLogger(__name__)
+
+class MailMessage(models.Model):
+    _inherit = 'mail.message'
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        _logger.info("Creating new mail messages")
+        messages = super(MailMessage, self).create(vals_list)
+        for message in messages:
+            self._publish_to_nostr(message)
+        return messages
+
+    def _publish_to_nostr(self, message):
+        try:
+            nostr_adapter = self.env['nostr.adapter'].sudo()
+            event_data = {
+                'kind': 1,  # Text note
+                'content': message.body,
+                'tags': [
+                    ['e', str(message.parent_id.id)] if message.parent_id else [],
+                    ['p', message.author_id.nostr_public_key] if message.author_id and message.author_id.nostr_public_key else [],
+                    ['client', 'Odoo Nostr Bridge'],
+                ],
+            }
+            result = nostr_adapter.publish_event(event_data)
+            if result:
+                _logger.info(f"Successfully published message {message.id} to Nostr")
+            else:
+                _logger.warning(f"Failed to publish message {message.id} to Nostr")
+        except Exception as e:
+            _logger.exception(f"Error publishing message {message.id} to Nostr: {str(e)}")
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_bridge/models/nostr_adapter.py ===
+import requests
+import websocket
+from odoo import models, api
+from websocket._exceptions import WebSocketConnectionClosedException
+from odoo.exceptions import UserError
+from nostr.event import Event
+from nostr.key import PrivateKey
+from nostr.relay_manager import RelayManager
+import logging
+import time
+
+_logger = logging.getLogger(__name__)
+
+class NostrAdapter(models.AbstractModel):
+    _name = 'nostr.adapter'
+    _description = 'Nostr Adapter'
+
+    @api.model
+    def get_relay_manager(self):
+        ICPSudo = self.env['ir.config_parameter'].sudo()
+        relay_urls = ICPSudo.get_param('nostr_bridge.relay_urls', '').split(',')
+        if not relay_urls:
+            raise UserError("Nostr relay URL is not configured. Please set it in the settings.")
+        _logger.info(f"Nostr relay URLs: {relay_urls}")
+
+        relay_manager = RelayManager()
+        for url in relay_urls:
+            url = url.strip()
+            if url:  # Only add non-empty URLs
+                _logger.info(f"Adding relay: {url}")
+                relay_manager.add_relay(url)
+        return relay_manager
+
+    @api.model
+    def publish_event(self, event_data, max_retries=3, retry_delay=1):
+        for attempt in range(max_retries):
+            try:
+                private_key = PrivateKey.from_nsec(self.env.user.nostr_private_key)
+                public_key = private_key.public_key.hex()
+                
+                event = Event(
+                    kind=event_data['kind'],
+                    content=event_data['content'],
+                    tags=event_data.get('tags', []),
+                    public_key=public_key
+                )
+                private_key.sign_event(event)
+                
+                relay_manager = self.get_relay_manager()
+                relay_manager.open_connections({"write": True})
+                time.sleep(1)  # Give some time for connections to establish
+                
+                publish_result = relay_manager.publish_event(event)
+                _logger.info(f"Relay publish response: {publish_result}")
+    
+                relay_manager.close_connections()
+                return True
+            except Exception as e:
+                _logger.exception(f"Error publishing event to Nostr: {str(e)}")
+                time.sleep(retry_delay)
+        
+        _logger.error("Failed to publish event after multiple attempts")
+        return False
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_bridge/models/__init__.py ===
+from . import res_users
+from . import mail_message
+from . import nostr_adapter
+from . import res_config_settings
+from . import res_partner
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_bridge/models/res_partner.py ===
+from odoo import models, fields
+
+class ResPartner(models.Model):
+    _inherit = 'res.partner'
+
+    nostr_public_key = fields.Char(string="Nostr Public Key")
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_bridge/models/nostr_event_handler.py ===
+import json
+from odoo import api, models
+
+class NostrEventHandler(models.AbstractModel):
+    _name = 'nostr.event.handler'
+    _description = 'Nostr Event Handler'
+
+    @api.model
+    def handle_event(self, event):
+        content = json.loads(event.content)
+        if event.kind == 1:  # Text note
+            self._handle_message(content)
+        elif event.kind == 7:  # Reaction
+            self._handle_reaction(content)
+
+    def _handle_message(self, content):
+        self.env['mail.message'].create({
+            'body': content['body'],
+            'author_id': self._get_author_id(content['author']),
+            'model': content['channel'],
+            'res_id': content['res_id'],
+        })
+
+    def _handle_reaction(self, content):
+        # Implement reaction handling (e.g., likes, emojis)
+        pass
+
+    def _get_author_id(self, author_name):
+        partner = self.env['res.partner'].search([('name', '=', author_name)], limit=1)
+        if not partner:
+            partner = self.env['res.partner'].create({'name': author_name})
+        return partner.id
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_bridge/controllers/main.py ===
+from odoo import http
+from odoo.http import request
+import json
+from nostr.event import Event
+from nostr.key import PrivateKey
+
+class NostrController(http.Controller):
+
+    @http.route('/nostr/authenticate', type='json', auth='public')
+    def authenticate(self, public_key, signature, message):
+        User = request.env['res.users'].sudo()
+        user_id = User.authenticate_nostr(public_key, signature, message)
+        if user_id:
+            request.session.authenticate(request.db, user_id, public_key)
+            return {'success': True, 'uid': user_id}
+        return {'success': False, 'error': 'Authentication failed'}
+
+    @http.route('/nostr/publish', type='json', auth='user')
+    def publish_event(self, event_data):
+        nostr_adapter = request.env['nostr.adapter'].sudo().get_adapter()
+        try:
+            nostr_adapter.publish_event(event_data)
+            return {'success': True}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    @http.route('/nostr/subscribe', type='json', auth='user')
+    def subscribe_to_events(self, filters):
+        nostr_adapter = request.env['nostr.adapter'].sudo().get_adapter()
+        try:
+            def callback(event):
+                # Process the event, e.g., create a message in Odoo
+                request.env['nostr.event.handler'].sudo().handle_event(event)
+
+            nostr_adapter.subscribe_to_events(filters, callback)
+            return {'success': True}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    @http.route('/nostr/get_public_key', type='json', auth='user')
+    def get_public_key(self):
+        user = request.env.user
+        return {'public_key': user.nostr_public_key}
+
+    @http.route('/nostr/create_event', type='json', auth='user')
+    def create_event(self, kind, content, tags=None):
+        user = request.env.user
+        private_key = PrivateKey.from_nsec(user.nostr_private_key)
+        event = Event(kind=kind, content=json.dumps(content), tags=tags or [])
+        event.sign(private_key.hex())
+        return {
+            'id': event.id,
+            'pubkey': event.public_key,
+            'created_at': event.created_at,
+            'kind': event.kind,
+            'tags': event.tags,
+            'content': event.content,
+            'sig': event.signature,
+        }
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_bridge/controllers/__init__.py ===
+from . import main
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_bridge/__manifest__.py ===
+{
+    'name': 'Nostr Bridge',
+    'version': '1.0',
+    'category': 'Social',
+    'summary': 'Bridge between Odoo messages and Nostr network',
+    'depends': ['base', 'mail', 'web'],
+    'data': [
+        'views/res_config_settings_views.xml',
+        'views/res_users_views.xml',
+        'views/res_partner_views.xml',
+    ],
+    'installable': True,
+    'application': False,
+    'auto_install': False,
+    'license': 'LGPL-3',
+}
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/allfiles.txt ===
+Home dir: ~/Downloads/Telegram Desktop/nostr-w-relay-main (2)/nostr-w-relay-main/src/views/components/login/odoo-nostr-project/odoo_custom_addons/ivcs_git/
+
+=== ./allfiles.txt ===
+=== ./security/ir.model.access.csv ===
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ivcs_item_user,ivcs.item.user,model_ivcs_item,base.group_user,1,1,1,1
+access_ivcs_version_user,ivcs.version.user,model_ivcs_version,base.group_user,1,1,1,1
+access_ivcs_metadata_user,ivcs.metadata.user,model_ivcs_metadata,base.group_user,1,1,1,1
+access_ivcs_file_user,ivcs.file.user,model_ivcs_file,base.group_user,1,1,1,1
+access_ivcs_workflow_user,ivcs.workflow.user,model_ivcs_workflow,base.group_user,1,1,1,1
+access_ivcs_workflow_stage_user,ivcs.workflow.stage.user,model_ivcs_workflow_stage,base.group_user,1,1,1,1
+access_ivcs_item_workflow_user,ivcs.item.workflow.user,model_ivcs_item_workflow,base.group_user,1,1,1,1
+access_ivcs_create_version_wizard,access.ivcs.create.version.wizard,model_ivcs_create_version_wizard,base.group_user,1,1,1,1
+=== ./wizards/create_version_wizard.py ===
+from odoo import models, fields, api
+
+class CreateVersionWizard(models.TransientModel):
+    _name = 'ivcs.create.version.wizard'
+    _description = 'Create New Version Wizard'
+
+    item_id = fields.Many2one('ivcs.item', string='Item', required=True)
+    name = fields.Char('Version Name', required=True)
+    description = fields.Text('Description')
+
+    @api.model
+    def default_get(self, fields):
+        res = super(CreateVersionWizard, self).default_get(fields)
+        active_id = self.env.context.get('active_id')
+        if active_id:
+            item = self.env['ivcs.item'].browse(active_id)
+            res['item_id'] = item.id
+            last_version = item.version_ids.sorted(lambda v: v.create_date, reverse=True)[:1]
+            if last_version:
+                res['name'] = f"v{float(last_version.name[1:]) + 0.1:.1f}"
+        return res
+
+    def create_version(self):
+        self.ensure_one()
+        new_version = self.env['ivcs.version'].create({
+            'item_id': self.item_id.id,
+            'name': self.name,
+            'description': self.description,
+            'parent_id': self.item_id.current_version_id.id,
+        })
+        self.item_id.current_version_id = new_version.id
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'ivcs.version',
+            'res_id': new_version.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+=== ./wizards/__init__.py ===
+from . import create_version_wizard
+=== ./wizards/create_version_wizard_view.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_create_version_wizard_form" model="ir.ui.view">
+        <field name="name">ivcs.create.version.wizard.form</field>
+        <field name="model">ivcs.create.version.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="item_id" invisible="1"/>
+                    <field name="name"/>
+                    <field name="description"/>
+                </group>
+                <footer>
+                    <button name="create_version" string="Create Version" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_create_version_wizard" model="ir.actions.act_window">
+        <field name="name">Create New Version</field>
+        <field name="res_model">ivcs.create.version.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>
+=== ./__init__.py ===
+from . import models
+from . import wizards
+=== ./views/ivcs_workflow_views.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ivcs_workflow_form" model="ir.ui.view">
+        <field name="name">ivcs.workflow.form</field>
+        <field name="model">ivcs.workflow</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="description"/>
+                    </group>
+                    <notebook>
+                        <page string="Stages">
+                            <field name="stage_ids">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ivcs_workflow_tree" model="ir.ui.view">
+        <field name="name">ivcs.workflow.tree</field>
+        <field name="model">ivcs.workflow</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_ivcs_workflow" model="ir.actions.act_window">
+        <field name="name">IVCS Workflows</field>
+        <field name="res_model">ivcs.workflow</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_ivcs_workflow" name="Workflows" parent="menu_ivcs" action="action_ivcs_workflow" sequence="30"/>
+</odoo>
+=== ./views/ivcs_item_views.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ivcs_item_form" model="ir.ui.view">
+        <field name="name">ivcs.item.form</field>
+        <field name="model">ivcs.item</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="sync_repository" string="Sync Repository" type="object" class="oe_highlight"/>
+                    <button name="%(ivcs_git.action_create_version_wizard)d" string="Create New Version" type="action" class="oe_highlight"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="description"/>
+                        <field name="current_version_id"/>
+                        <field name="repo_path"/>
+                    </group>
+                    <notebook>
+                        <page string="Versions">
+                            <field name="version_ids"/>
+                        </page>
+                        <page string="Metadata">
+                            <field name="metadata_ids"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ivcs_item_tree" model="ir.ui.view">
+        <field name="name">ivcs.item.tree</field>
+        <field name="model">ivcs.item</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="current_version_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_ivcs_item" model="ir.actions.act_window">
+        <field name="name">IVCS Items</field>
+        <field name="res_model">ivcs.item</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_ivcs" name="IVCS" sequence="10"/>
+    <menuitem id="menu_ivcs_item" name="Items" parent="menu_ivcs" action="action_ivcs_item" sequence="10"/>
+</odoo>
+=== ./views/res_config_settings_views.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_ivcs" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.ivcs</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('settings')]" position="inside">
+                <div class="app_settings_block" data-string="IVCS" string="IVCS" data-key="ivcs_git">
+                    <h2>IVCS Settings</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <span class="o_form_label">Repository Base Path</span>
+                                <div class="text-muted">
+                                    Set the base path for IVCS repositories
+                                </div>
+                                <div class="content-group">
+                                    <div class="mt16">
+                                        <field name="ivcs_repo_base_path" class="o_light_label"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
+=== ./views/ivcs_item_search_view.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ivcs_item_search" model="ir.ui.view">
+        <field name="name">ivcs.item.search</field>
+        <field name="model">ivcs.item</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="description"/>
+                <field name="current_version_id"/>
+                <filter string="Draft Versions" name="draft_versions" domain="[('current_version_id.state', '=', 'draft')]"/>
+                <filter string="Released Versions" name="released_versions" domain="[('current_version_id.state', '=', 'released')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Current Version" name="group_by_current_version" context="{'group_by': 'current_version_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+</odoo>
+=== ./views/ivcs_version_views.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ivcs_version_form" model="ir.ui.view">
+        <field name="name">ivcs.version.form</field>
+        <field name="model">ivcs.version</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="release_version" string="Release" type="object" states="draft"/>
+                    <button name="deprecate_version" string="Deprecate" type="object" states="released"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="description"/>
+                        <field name="item_id"/>
+                        <field name="parent_id"/>
+                        <field name="commit_hash"/>
+                        <field name="create_date"/>
+                    </group>
+                    <notebook>
+                        <page string="Metadata">
+                            <field name="metadata_ids"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ivcs_version_tree" model="ir.ui.view">
+        <field name="name">ivcs.version.tree</field>
+        <field name="model">ivcs.version</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="item_id"/>
+                <field name="state"/>
+                <field name="create_date"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_ivcs_version" model="ir.actions.act_window">
+        <field name="name">IVCS Versions</field>
+        <field name="res_model">ivcs.version</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_ivcs_version" name="Versions" parent="menu_ivcs" action="action_ivcs_version" sequence="20"/>
+</odoo>
+=== ./data/ir_cron_data.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="ir_cron_ivcs_sync" model="ir.cron">
+            <field name="name">IVCS: Sync Repositories</field>
+            <field name="model_id" ref="model_ivcs_item"/>
+            <field name="state">code</field>
+            <field name="code">model._sync_repositories()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="doall" eval="False"/>
+        </record>
+    </data>
+</odoo>
+=== ./models/ivcs_metadata.py ===
+from odoo import models, fields
+
+class IVCSMetadata(models.Model):
+    _name = 'ivcs.metadata'
+    _description = 'IVCS Metadata'
+
+    item_id = fields.Many2one('ivcs.item', string='Item')
+    version_id = fields.Many2one('ivcs.version', string='Version')
+    key = fields.Char('Key', required=True)
+    value = fields.Text('Value', required=True)
+=== ./models/res_config_settings.py ===
+from odoo import fields, models
+
+class ResConfigSettings(models.TransientModel):
+    _inherit = 'res.config.settings'
+
+    ivcs_repo_base_path = fields.Char('IVCS Repository Base Path', config_parameter='ivcs.repo_base_path')
+=== ./models/ivcs_workflow.py ===
+from odoo import models, fields, api
+from odoo.exceptions import UserError
+
+class IVCSWorkflow(models.Model):
+    _name = 'ivcs.workflow'
+    _description = 'IVCS Workflow'
+
+    name = fields.Char('Workflow Name', required=True)
+    description = fields.Text('Description')
+    stage_ids = fields.One2many('ivcs.workflow.stage', 'workflow_id', string='Stages')
+
+class IVCSWorkflowStage(models.Model):
+    _name = 'ivcs.workflow.stage'
+    _description = 'IVCS Workflow Stage'
+    _order = 'sequence'
+
+    name = fields.Char('Stage Name', required=True)
+    workflow_id = fields.Many2one('ivcs.workflow', string='Workflow', required=True)
+    sequence = fields.Integer('Sequence', default=10)
+
+class IVCSItemWorkflow(models.Model):
+    _name = 'ivcs.item.workflow'
+    _description = 'IVCS Item Workflow'
+
+    item_id = fields.Many2one('ivcs.item', string='Item', required=True)
+    workflow_id = fields.Many2one('ivcs.workflow', string='Workflow', required=True)
+    current_stage_id = fields.Many2one('ivcs.workflow.stage', string='Current Stage')
+
+    def move_to_next_stage(self):
+        self.ensure_one()
+        current_sequence = self.current_stage_id.sequence
+        next_stage = self.workflow_id.stage_ids.filtered(lambda s: s.sequence > current_sequence)
+        if next_stage:
+            self.current_stage_id = next_stage[0]
+        else:
+            raise UserError("This item is already at the final stage of the workflow.")
+=== ./models/ivcs_version.py ===
+from odoo import models, fields, api
+from odoo.exceptions import UserError
+import git
+
+class IVCSVersion(models.Model):
+    _name = 'ivcs.version'
+    _description = 'IVCS Version'
+
+    name = fields.Char('Version Name', required=True)
+    description = fields.Text('Description')
+    item_id = fields.Many2one('ivcs.item', string='Item', required=True)
+    parent_id = fields.Many2one('ivcs.version', string='Parent Version')
+    commit_hash = fields.Char('Commit Hash', readonly=True)
+    create_date = fields.Datetime('Created On', readonly=True, default=fields.Datetime.now)
+    state = fields.Selection([
+        ('draft', 'Draft'),
+        ('released', 'Released'),
+        ('deprecated', 'Deprecated')
+    ], string='Status', default='draft')
+    metadata_ids = fields.One2many('ivcs.metadata', 'version_id', string='Metadata')
+
+    @api.model
+    def create(self, vals):
+        version = super(IVCSVersion, self).create(vals)
+        version._create_commit()
+        return version
+
+    def _create_commit(self):
+        repo = git.Repo(self.item_id.repo_path)
+        readme_path = os.path.join(self.item_id.repo_path, 'README.md')
+        with open(readme_path, 'w') as f:
+            f.write(f"# {self.item_id.name} - {self.name}\n\n{self.description}")
+        repo.index.add(['README.md'])
+        commit = repo.index.commit(f"Version {self.name}: {self.description}")
+        self.commit_hash = commit.hexsha
+
+    def release_version(self):
+        self.ensure_one()
+        if self.state != 'draft':
+            raise UserError("Only draft versions can be released.")
+        self.state = 'released'
+
+    def deprecate_version(self):
+        self.ensure_one()
+        if self.state != 'released':
+            raise UserError("Only released versions can be deprecated.")
+        self.state = 'deprecated'
+=== ./models/__init__.py ===
+from . import ivcs_item
+from . import ivcs_version
+from . import ivcs_metadata
+from . import ivcs_file
+from . import ivcs_workflow
+from . import res_config_settings
+=== ./models/ivcs_item.py ===
+from odoo import models, fields, api, _
+from odoo.exceptions import UserError
+import git
+import os
+
+class IVCSItem(models.Model):
+    _name = 'ivcs.item'
+    _description = 'IVCS Item'
+
+    name = fields.Char('Name', required=True)
+    description = fields.Text('Description')
+    current_version_id = fields.Many2one('ivcs.version', string='Current Version')
+    version_ids = fields.One2many('ivcs.version', 'item_id', string='Versions')
+    metadata_ids = fields.One2many('ivcs.metadata', 'item_id', string='Metadata')
+    repo_path = fields.Char('Repository Path', compute='_compute_repo_path')
+
+    @api.depends('name')
+    def _compute_repo_path(self):
+        for item in self:
+            item.repo_path = os.path.join(self.env['ir.config_parameter'].sudo().get_param('ivcs.repo_base_path', '/opt/ivcs_repos'), f"item_{item.id}")
+
+    @api.model
+    def create(self, vals):
+        item = super(IVCSItem, self).create(vals)
+        item._initialize_repository()
+        return item
+
+    @api.model
+    def _sync_repositories(self):
+        items = self.search([])
+        for item in items:
+            repo = git.Repo(item.repo_path)
+            try:
+                repo.remotes.origin.pull()
+                _logger.info(f"Successfully synced repository for item {item.name}")
+            except Exception as e:
+                _logger.error(f"Failed to sync repository for item {item.name}: {str(e)}")
+
+    def sync_repository(self):
+        self.ensure_one()
+        repo = git.Repo(self.repo_path)
+        try:
+            repo.remotes.origin.pull()
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Repository Synced'),
+                    'message': _('The repository has been successfully synced.'),
+                    'type': 'success',
+                }
+            }
+        except Exception as e:
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Sync Failed'),
+                    'message': _('Failed to sync repository: %s') % str(e),
+                    'type': 'danger',
+                }
+            }
+
+    def _initialize_repository(self):
+        if not os.path.exists(self.repo_path):
+            os.makedirs(self.repo_path)
+            repo = git.Repo.init(self.repo_path)
+            readme_path = os.path.join(self.repo_path, 'README.md')
+            with open(readme_path, 'w') as f:
+                f.write(f"# {self.name}\n\n{self.description}")
+            repo.index.add(['README.md'])
+            repo.index.commit("Initial commit")
+            self._create_initial_version()
+
+    def _create_initial_version(self):
+        version = self.env['ivcs.version'].create({
+            'item_id': self.id,
+            'name': 'v1.0',
+            'description': 'Initial version',
+        })
+        self.current_version_id = version.id
+
+    def create_new_version(self):
+        if not self.current_version_id:
+            raise UserError(_("Cannot create a new version without an existing version."))
+        
+        new_version = self.env['ivcs.version'].create({
+            'item_id': self.id,
+            'name': f"v{len(self.version_ids) + 1}.0",
+            'description': 'New version',
+            'parent_id': self.current_version_id.id,
+        })
+        self.current_version_id = new_version.id
+        return new_version
+
+    def update_metadata(self, key, value):
+        existing_metadata = self.metadata_ids.filtered(lambda m: m.key == key)
+        if existing_metadata:
+            existing_metadata.write({'value': value})
+        else:
+            self.env['ivcs.metadata'].create({
+                'item_id': self.id,
+                'key': key,
+                'value': value,
+            })
+=== ./models/ivcs_file.py ===
+from odoo import models, fields, api
+import base64
+import os
+import git
+
+class IVCSFile(models.Model):
+    _name = 'ivcs.file'
+    _description = 'IVCS File'
+
+    name = fields.Char('File Name', required=True)
+    item_id = fields.Many2one('ivcs.item', string='Item', required=True)
+    version_id = fields.Many2one('ivcs.version', string='Version', required=True)
+    file_content = fields.Binary('File Content', attachment=True)
+    file_type = fields.Selection([
+        ('text', 'Text'),
+        ('binary', 'Binary')
+    ], string='File Type', required=True)
+
+    @api.model
+    def create(self, vals):
+        file = super(IVCSFile, self).create(vals)
+        file._add_to_repository()
+        return file
+
+    def _add_to_repository(self):
+        repo = git.Repo(self.item_id.repo_path)
+        file_path = os.path.join(self.item_id.repo_path, self.name)
+        
+        if self.file_type == 'text':
+            content = base64.b64decode(self.file_content).decode('utf-8')
+            with open(file_path, 'w') as f:
+                f.write(content)
+        else:
+            content = base64.b64decode(self.file_content)
+            with open(file_path, 'wb') as f:
+                f.write(content)
+
+        repo.index.add([self.name])
+        commit = repo.index.commit(f"Add file: {self.name}")
+        self.version_id.commit_hash = commit.hexsha
+=== ./__manifest__.py ===
+{
+    'name': 'Integrated Version Control System with Git',
+    'version': '1.0',
+    'category': 'Tools',
+    'summary': 'Git-based version control system integrated with Odoo',
+    'depends': ['base', 'mail'],
+    'data': [
+        'security/ir.model.access.csv',
+        'views/ivcs_item_views.xml',
+        'views/ivcs_version_views.xml',
+        'views/ivcs_workflow_views.xml',
+        'views/res_config_settings_views.xml',
+        'data/ir_cron_data.xml',
+        'wizards/create_version_wizard_view.xml',
+    ],
+    'installable': True,
+    'application': True,
+    'auto_install': False,
+}
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/security/ir.model.access.csv ===
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ivcs_item_user,ivcs.item.user,model_ivcs_item,base.group_user,1,1,1,1
+access_ivcs_version_user,ivcs.version.user,model_ivcs_version,base.group_user,1,1,1,1
+access_ivcs_metadata_user,ivcs.metadata.user,model_ivcs_metadata,base.group_user,1,1,1,1
+access_ivcs_file_user,ivcs.file.user,model_ivcs_file,base.group_user,1,1,1,1
+access_ivcs_workflow_user,ivcs.workflow.user,model_ivcs_workflow,base.group_user,1,1,1,1
+access_ivcs_workflow_stage_user,ivcs.workflow.stage.user,model_ivcs_workflow_stage,base.group_user,1,1,1,1
+access_ivcs_item_workflow_user,ivcs.item.workflow.user,model_ivcs_item_workflow,base.group_user,1,1,1,1
+access_ivcs_create_version_wizard,access.ivcs.create.version.wizard,model_ivcs_create_version_wizard,base.group_user,1,1,1,1
+access_ivcs_add_remote_wizard,access.ivcs.add.remote.wizard,model_ivcs_add_remote_wizard,base.group_user,1,1,1,1
+access_ivcs_create_file_wizard,access.ivcs.create.file.wizard,model_ivcs_create_file_wizard,base.group_user,1,1,1,1
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/wizards/create_file_wizard.py ===
+from odoo import models, fields, api
+
+class IVCSCreateFileWizard(models.TransientModel):
+    _name = 'ivcs.create.file.wizard'
+    _description = 'Create File Wizard'
+
+    item_id = fields.Many2one('ivcs.item', string='IVCS Item', required=True)
+    filename = fields.Char(string='Filename', required=True)
+    content = fields.Text(string='File Content', required=True)
+
+    def action_create_file(self):
+        self.ensure_one()
+        return self.item_id.create_file(self.filename, self.content)
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/wizards/git ===
+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
+
+odoo@3f681e703508:/opt/ivcs_repos/item_1$ git remote set-url origin https://presidentofyes12:---@github.com/presidentofyes12/test-repo.git
+odoo@3f681e703508:/opt/ivcs_repos/item_1$ git push -u origin master
+remote: Permission to presidentofyes12/test-repo.git denied to presidentofyes12.
+fatal: unable to access 'https://github.com/presidentofyes12/test-repo.git/': The requested URL returned error: 403
+odoo@3f681e703508:/opt/ivcs_repos/item_1$
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/wizards/create_version_wizard.py ===
+from odoo import models, fields, api
+
+class CreateVersionWizard(models.TransientModel):
+    _name = 'ivcs.create.version.wizard'
+    _description = 'Create New Version Wizard'
+
+    item_id = fields.Many2one('ivcs.item', string='Item', required=True)
+    name = fields.Char('Version Name', required=True)
+    description = fields.Text('Description')
+
+    @api.model
+    def default_get(self, fields):
+        res = super(CreateVersionWizard, self).default_get(fields)
+        active_id = self.env.context.get('active_id')
+        if active_id:
+            item = self.env['ivcs.item'].browse(active_id)
+            res['item_id'] = item.id
+            last_version = item.version_ids.sorted(lambda v: v.create_date, reverse=True)[:1]
+            if last_version:
+                res['name'] = f"v{float(last_version.name[1:]) + 0.1:.1f}"
+        return res
+
+    def create_version(self):
+        self.ensure_one()
+        new_version = self.env['ivcs.version'].create({
+            'item_id': self.item_id.id,
+            'name': self.name,
+            'description': self.description,
+            'parent_id': self.item_id.current_version_id.id,
+        })
+        self.item_id.current_version_id = new_version.id
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'ivcs.version',
+            'res_id': new_version.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/wizards/__init__.py ===
+from . import create_version_wizard
+from . import add_remote_wizard
+from . import create_file_wizard
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/wizards/create_version_wizard_view.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_create_version_wizard_form" model="ir.ui.view">
+        <field name="name">ivcs.create.version.wizard.form</field>
+        <field name="model">ivcs.create.version.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="item_id" invisible="1"/>
+                    <field name="name"/>
+                    <field name="description"/>
+                </group>
+                <footer>
+                    <button name="create_version" string="Create Version" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="ivcs_git.action_create_version_wizard" model="ir.actions.act_window">
+        <field name="name">Create New Version</field>
+        <field name="res_model">ivcs.create.version.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/wizards/add_remote_wizard_view.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_add_remote_wizard_form" model="ir.ui.view">
+        <field name="name">ivcs.add.remote.wizard.form</field>
+        <field name="model">ivcs.add.remote.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="item_id" invisible="1"/>
+                    <field name="remote_name"/>
+                    <field name="remote_url"/>
+                </group>
+                <footer>
+                    <button name="action_add_remote" string="Add Remote" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_add_remote_wizard" model="ir.actions.act_window">
+        <field name="name">Add Remote Repository</field>
+        <field name="res_model">ivcs.add.remote.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/wizards/create_file_wizard_view.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ivcs_create_file_wizard_form" model="ir.ui.view">
+        <field name="name">ivcs.create.file.wizard.form</field>
+        <field name="model">ivcs.create.file.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Create File">
+                <group>
+                    <field name="item_id" invisible="1"/>
+                    <field name="filename"/>
+                    <field name="content"/>
+                </group>
+                <footer>
+                    <button name="action_create_file" string="Create File" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/wizards/add_remote_wizard.py ===
+from odoo import models, fields, api
+
+class AddRemoteWizard(models.TransientModel):
+    _name = 'ivcs.add.remote.wizard'
+    _description = 'Add Remote Repository Wizard'
+
+    item_id = fields.Many2one('ivcs.item', string='IVCS Item', required=True)
+    remote_name = fields.Char(string='Remote Name', default='origin', required=True)
+    remote_url = fields.Char(string='Remote URL', required=True)
+
+    def action_add_remote(self):
+        self.ensure_one()
+        return self.item_id.add_remote(self.remote_url, self.remote_name)
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/__init__.py ===
+from . import models
+from . import wizards
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/views/ivcs_workflow_views.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ivcs_workflow_form" model="ir.ui.view">
+        <field name="name">ivcs.workflow.form</field>
+        <field name="model">ivcs.workflow</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="description"/>
+                    </group>
+                    <notebook>
+                        <page string="Stages">
+                            <field name="stage_ids">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ivcs_workflow_tree" model="ir.ui.view">
+        <field name="name">ivcs.workflow.tree</field>
+        <field name="model">ivcs.workflow</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_ivcs_workflow" model="ir.actions.act_window">
+        <field name="name">IVCS Workflows</field>
+        <field name="res_model">ivcs.workflow</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_ivcs_workflow" name="Workflows" parent="menu_ivcs" action="action_ivcs_workflow" sequence="30"/>
+</odoo>
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/views/ivcs_item_views.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ivcs_item_form" model="ir.ui.view">
+        <field name="name">ivcs.item.form</field>
+        <field name="model">ivcs.item</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="sync_repository" string="Sync Repository" type="object" class="oe_highlight"/>
+                    <button name="%(ivcs_git.action_create_version_wizard)d" string="Create New Version" type="action" class="oe_highlight"/>
+                    <button name="action_open_add_remote_wizard" string="Add Remote" type="object" class="oe_highlight"/>
+                    <button name="action_create_file" string="Create File" type="object" class="oe_highlight"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="description"/>
+                        <field name="current_version_id"/>
+                        <field name="repo_path"/>
+                    </group>
+                    <notebook>
+                        <page string="Versions">
+                            <field name="version_ids"/>
+                        </page>
+                        <page string="Metadata">
+                            <field name="metadata_ids"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ivcs_item_tree" model="ir.ui.view">
+        <field name="name">ivcs.item.tree</field>
+        <field name="model">ivcs.item</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="current_version_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_ivcs_item" model="ir.actions.act_window">
+        <field name="name">IVCS Items</field>
+        <field name="res_model">ivcs.item</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_ivcs" name="IVCS" sequence="10"/>
+    <menuitem id="menu_ivcs_item" name="Items" parent="menu_ivcs" action="action_ivcs_item" sequence="10"/>
+</odoo>
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/views/res_config_settings_views.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.ivcs_git</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('settings')]" position="inside">
+                <div class="app_settings_block" data-string="IVCS Git" string="IVCS Git" data-key="ivcs_git">
+                    <h2>GitHub Settings</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <span class="o_form_label">GitHub Token</span>
+                                <div class="text-muted">
+                                    Enter your GitHub Personal Access Token
+                                </div>
+                                <div class="content-group">
+                                    <div class="mt16">
+                                        <field name="github_token" password="True"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/views/ivcs_item_search_view.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ivcs_item_search" model="ir.ui.view">
+        <field name="name">ivcs.item.search</field>
+        <field name="model">ivcs.item</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="description"/>
+                <field name="current_version_id"/>
+                <filter string="Draft Versions" name="draft_versions" domain="[('current_version_id.state', '=', 'draft')]"/>
+                <filter string="Released Versions" name="released_versions" domain="[('current_version_id.state', '=', 'released')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Current Version" name="group_by_current_version" context="{'group_by': 'current_version_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+</odoo>
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/views/ivcs_version_views.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ivcs_version_form" model="ir.ui.view">
+        <field name="name">ivcs.version.form</field>
+        <field name="model">ivcs.version</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="release_version" string="Release" type="object" states="draft"/>
+                    <button name="deprecate_version" string="Deprecate" type="object" states="released"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="description"/>
+                        <field name="item_id"/>
+                        <field name="parent_id"/>
+                        <field name="commit_hash"/>
+                        <field name="create_date"/>
+                    </group>
+                    <notebook>
+                        <page string="Metadata">
+                            <field name="metadata_ids"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ivcs_version_tree" model="ir.ui.view">
+        <field name="name">ivcs.version.tree</field>
+        <field name="model">ivcs.version</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="item_id"/>
+                <field name="state"/>
+                <field name="create_date"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_ivcs_version" model="ir.actions.act_window">
+        <field name="name">IVCS Versions</field>
+        <field name="res_model">ivcs.version</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_ivcs_version" name="Versions" parent="menu_ivcs" action="action_ivcs_version" sequence="20"/>
+</odoo>
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/views/create_file_wizard_view.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ivcs_create_file_wizard_form" model="ir.ui.view">
+        <field name="name">ivcs.create.file.wizard.form</field>
+        <field name="model">ivcs.create.file.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Create File">
+                <group>
+                    <field name="item_id" invisible="1"/>
+                    <field name="filename"/>
+                    <field name="content"/>
+                </group>
+                <footer>
+                    <button name="action_create_file" string="Create File" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/data/ir_cron_data.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="ir_cron_ivcs_sync" model="ir.cron">
+            <field name="name">IVCS: Sync Repositories</field>
+            <field name="model_id" ref="model_ivcs_item"/>
+            <field name="state">code</field>
+            <field name="code">model._sync_repositories()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="doall" eval="False"/>
+        </record>
+    </data>
+</odoo>
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/models/ivcs_metadata.py ===
+from odoo import models, fields
+
+class IVCSMetadata(models.Model):
+    _name = 'ivcs.metadata'
+    _description = 'IVCS Metadata'
+
+    item_id = fields.Many2one('ivcs.item', string='Item')
+    version_id = fields.Many2one('ivcs.version', string='Version')
+    key = fields.Char('Key', required=True)
+    value = fields.Text('Value', required=True)
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/models/res_config_settings.py ===
+from odoo import fields, models
+
+class ResConfigSettings(models.TransientModel):
+    _inherit = 'res.config.settings'
+
+    ivcs_repo_base_path = fields.Char('IVCS Repository Base Path', config_parameter='ivcs.repo_base_path')
+    github_token = fields.Char(string="GitHub Token", config_parameter='ivcs_git.github_token')
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/models/ivcs_workflow.py ===
+from odoo import models, fields, api
+from odoo.exceptions import UserError
+
+class IVCSWorkflow(models.Model):
+    _name = 'ivcs.workflow'
+    _description = 'IVCS Workflow'
+
+    name = fields.Char('Workflow Name', required=True)
+    description = fields.Text('Description')
+    stage_ids = fields.One2many('ivcs.workflow.stage', 'workflow_id', string='Stages')
+
+class IVCSWorkflowStage(models.Model):
+    _name = 'ivcs.workflow.stage'
+    _description = 'IVCS Workflow Stage'
+    _order = 'sequence'
+
+    name = fields.Char('Stage Name', required=True)
+    workflow_id = fields.Many2one('ivcs.workflow', string='Workflow', required=True)
+    sequence = fields.Integer('Sequence', default=10)
+
+class IVCSItemWorkflow(models.Model):
+    _name = 'ivcs.item.workflow'
+    _description = 'IVCS Item Workflow'
+
+    item_id = fields.Many2one('ivcs.item', string='Item', required=True)
+    workflow_id = fields.Many2one('ivcs.workflow', string='Workflow', required=True)
+    current_stage_id = fields.Many2one('ivcs.workflow.stage', string='Current Stage')
+
+    def move_to_next_stage(self):
+        self.ensure_one()
+        current_sequence = self.current_stage_id.sequence
+        next_stage = self.workflow_id.stage_ids.filtered(lambda s: s.sequence > current_sequence)
+        if next_stage:
+            self.current_stage_id = next_stage[0]
+        else:
+            raise UserError("This item is already at the final stage of the workflow.")
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/models/ivcs_version.py ===
+from odoo import models, fields, api
+from odoo.exceptions import UserError
+import git
+import os
+
+class IVCSVersion(models.Model):
+    _name = 'ivcs.version'
+    _description = 'IVCS Version'
+
+    name = fields.Char('Version Name', required=True)
+    description = fields.Text('Description')
+    item_id = fields.Many2one('ivcs.item', string='Item', required=True)
+    parent_id = fields.Many2one('ivcs.version', string='Parent Version')
+    commit_hash = fields.Char('Commit Hash', readonly=True)
+    create_date = fields.Datetime('Created On', readonly=True, default=fields.Datetime.now)
+    state = fields.Selection([
+        ('draft', 'Draft'),
+        ('released', 'Released'),
+        ('deprecated', 'Deprecated')
+    ], string='Status', default='draft')
+    metadata_ids = fields.One2many('ivcs.metadata', 'version_id', string='Metadata')
+
+    @api.model
+    def create(self, vals):
+        version = super(IVCSVersion, self).create(vals)
+        version._create_commit()
+        return version
+
+    def _create_commit(self):
+        repo = git.Repo(self.item_id.repo_path)
+        readme_path = os.path.join(self.item_id.repo_path, 'README.md')
+        with open(readme_path, 'w') as f:
+            f.write(f"# {self.item_id.name} - {self.name}\n\n{self.description}")
+        repo.index.add(['README.md'])
+        commit = repo.index.commit(f"Version {self.name}: {self.description}")
+        self.commit_hash = commit.hexsha
+
+    def release_version(self):
+        self.ensure_one()
+        if self.state != 'draft':
+            raise UserError("Only draft versions can be released.")
+        self.state = 'released'
+
+    def deprecate_version(self):
+        self.ensure_one()
+        if self.state != 'released':
+            raise UserError("Only released versions can be deprecated.")
+        self.state = 'deprecated'
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/models/__init__.py ===
+from . import ivcs_item
+from . import ivcs_version
+from . import ivcs_metadata
+from . import ivcs_file
+from . import ivcs_workflow
+from . import res_config_settings
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/models/ivcs_item.py ===
+from odoo import _, models, fields, api
+from odoo.exceptions import UserError
+import git
+import os
+import logging
+
+_logger = logging.getLogger(__name__)
+
+class IVCSItem(models.Model):
+    _name = 'ivcs.item'
+    _description = 'IVCS Item'
+
+    name = fields.Char('Name', required=True)
+    description = fields.Text('Description')
+    current_version_id = fields.Many2one('ivcs.version', string='Current Version')
+    version_ids = fields.One2many('ivcs.version', 'item_id', string='Versions')
+    metadata_ids = fields.One2many('ivcs.metadata', 'item_id', string='Metadata')
+    repo_path = fields.Char('Repository Path', compute='_compute_repo_path')
+
+    @api.depends('name')
+    def _compute_repo_path(self):
+        for item in self:
+            item.repo_path = os.path.join(self.env['ir.config_parameter'].sudo().get_param('ivcs.repo_base_path', '/opt/ivcs_repos'), f"item_{item.id}")
+
+    def _initialize_repository(self):
+        if not os.path.exists(self.repo_path):
+            os.makedirs(self.repo_path)
+            repo = git.Repo.init(self.repo_path)
+            readme_path = os.path.join(self.repo_path, 'README.md')
+            with open(readme_path, 'w') as f:
+                f.write(f"# {self.name}\n\n{self.description}")
+            repo.index.add(['README.md'])
+            repo.index.commit("Initial commit")
+            self._create_initial_version()
+
+    def action_create_file(self):
+        self.ensure_one()
+        return {
+            'name': _('Create File'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'ivcs.create.file.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_item_id': self.id},
+        }
+
+    def create_file(self, filename, content):
+        self.ensure_one()
+        file_path = os.path.join(self.repo_path, filename)
+        
+        if os.path.exists(file_path):
+            raise UserError(_("A file with this name already exists."))
+        
+        try:
+            with open(file_path, 'w') as f:
+                f.write(content)
+            
+            repo = git.Repo(self.repo_path)
+            repo.index.add([filename])
+            repo.index.commit(f"Add new file: {filename}")
+            
+            # Sync with remote repository
+            self.sync_repository()
+            
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _("File Created"),
+                    'message': _("File %s has been created and committed.") % filename,
+                    'type': 'success',
+                }
+            }
+        except Exception as e:
+            raise UserError(_("Failed to create file: %s") % str(e))
+
+    @api.model
+    def create(self, vals):
+        item = super(IVCSItem, self).create(vals)
+        item._initialize_repository()
+        return item
+
+    def verify_remote_url(self):
+        self.ensure_one()
+        repo = git.Repo(self.repo_path)
+        remote_url = repo.remotes.origin.url
+        
+        # Remove any existing token from the URL
+        from urllib.parse import urlparse, urlunparse
+        parsed_url = urlparse(remote_url)
+        clean_url = urlunparse(parsed_url._replace(netloc=parsed_url.netloc.split('@')[-1]))
+    
+        # Update the remote URL without the token
+        repo.remotes.origin.set_url(clean_url)
+        
+        _logger.info(f"Verified remote URL: {clean_url}")
+        return self._return_success('Remote URL Verified', 'The remote URL has been verified and updated if necessary.')
+
+    def _create_initial_version(self):
+        version = self.env['ivcs.version'].create({
+            'item_id': self.id,
+            'name': 'v1.0',
+            'description': 'Initial version',
+        })
+        self.current_version_id = version.id
+
+    def setup_git_auth(self):
+        git_token = self.env['ir.config_parameter'].sudo().get_param('ivcs_git.github_token')
+        if not git_token:
+            raise UserError(_("GitHub token not configured. Please set it in the settings."))
+        
+        repo = git.Repo(self.repo_path)
+        with repo.config_writer() as git_config:
+            git_config.set_value('user', 'name', 'Odoo IVCS')
+            git_config.set_value('user', 'email', 'odoo@example.com')
+        
+        remote_url = repo.remotes.origin.url
+        if not remote_url.startswith('https://'):
+            raise UserError(_("Remote URL is not using HTTPS. Please update the remote URL."))
+        
+        # Parse the existing URL
+        from urllib.parse import urlparse, urlunparse
+        parsed_url = urlparse(remote_url)
+        
+        # Reconstruct the URL with the token
+        new_netloc = f"{git_token}@{parsed_url.netloc}"
+        new_url = urlunparse(parsed_url._replace(netloc=new_netloc))
+        
+        # Set the new URL for the origin remote
+        repo.remotes.origin.set_url(new_url)
+        
+        # Log the URL (without the token) for debugging
+        _logger.info(f"Updated remote URL: https://{parsed_url.netloc}{parsed_url.path}")
+    
+    @api.model
+    def _sync_repositories(self):
+        items = self.search([])
+        for item in items:
+            repo = git.Repo(item.repo_path)
+            try:
+                repo.remotes.origin.pull()
+                _logger.info(f"Successfully synced repository for item {item.name}")
+            except Exception as e:
+                _logger.error(f"Failed to sync repository for item {item.name}: {str(e)}")
+
+    def sync_repository(self):
+        self.ensure_one()
+        self.verify_remote_url()
+        self.setup_git_auth()
+        try:
+            repo = git.Repo(self.repo_path)
+            if not repo.remotes:
+                return self._return_warning('No Remote Repository', 'This repository does not have a remote configured. Please add a remote repository first.')
+            
+            origin = repo.remotes.origin
+            if not origin.exists():
+                return self._return_warning('Remote Not Found', 'The remote "origin" does not exist. Please configure the remote repository.')
+            
+            # Fetch the latest changes
+            origin.fetch()
+            
+            # Get the current branch name
+            current_branch = repo.active_branch.name
+            
+            # Check if the remote branch exists
+            remote_branch = f'origin/{current_branch}'
+            if remote_branch not in repo.references:
+                # If remote branch doesn't exist, push the current branch to create it
+                origin.push(current_branch)
+                return self._return_success('Branch Created', f'The branch "{current_branch}" has been created on the remote repository.')
+            
+            # Check if we need to pull changes
+            if repo.is_dirty() or repo.untracked_files:
+                # There are local changes, commit them first
+                repo.git.add(A=True)
+                repo.index.commit("Local changes before sync")
+            
+            # Pull changes
+            origin.pull(current_branch)
+            
+            # Push any local commits
+            origin.push(current_branch)
+            
+            return self._return_success('Repository Synced', 'The repository has been successfully synced.')
+        except git.GitCommandError as e:
+            _logger.error(f"Git command error: {str(e)}")
+            return self._return_error('Sync Failed', f'Failed to sync repository: {str(e)}')
+        except Exception as e:
+            _logger.error(f"Error syncing repository: {str(e)}")
+            return self._return_error('Sync Failed', f'An unexpected error occurred: {str(e)}')
+
+    def _return_warning(self, title, message):
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _(title),
+                'message': _(message),
+                'type': 'warning',
+            }
+        }
+
+    def _return_success(self, title, message):
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _(title),
+                'message': _(message),
+                'type': 'success',
+            }
+        }
+
+    def _return_error(self, title, message):
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _(title),
+                'message': _(message),
+                'type': 'danger',
+            }
+        }
+
+    def setup_git_auth(self):
+        git_token = self.env['ir.config_parameter'].sudo().get_param('ivcs_git.github_token')
+        if not git_token:
+            raise UserError(_("GitHub token not configured. Please set it in the settings."))
+        
+        repo = git.Repo(self.repo_path)
+        with repo.config_writer() as git_config:
+            git_config.set_value('user', 'name', 'Odoo IVCS')
+            git_config.set_value('user', 'email', 'odoo@example.com')
+        
+        remote_url = repo.remotes.origin.url
+        if not remote_url.startswith('https://'):
+            raise UserError(_("Remote URL is not using HTTPS. Please update the remote URL."))
+        
+        new_url = f'https://{git_token}@' + remote_url[8:]
+        repo.remotes.origin.set_url(new_url)
+
+    def action_open_add_remote_wizard(self):
+        self.ensure_one()
+        return {
+            'name': _('Add Remote Repository'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'ivcs.add.remote.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_item_id': self.id},
+        }
+
+    def add_remote(self, remote_url, remote_name='origin'):
+        self.ensure_one()
+        try:
+            repo = git.Repo(self.repo_path)
+            if remote_name in repo.remotes:
+                repo.delete_remote(remote_name)
+            repo.create_remote(remote_name, remote_url)
+            return self._return_success('Remote Added', 'Remote repository has been added successfully.')
+        except Exception as e:
+            return self._return_error('Failed to Add Remote', f'An error occurred while adding the remote: {str(e)}')
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/models/ivcs_file.py ===
+from odoo import models, fields, api
+import base64
+import os
+import git
+
+class IVCSFile(models.Model):
+    _name = 'ivcs.file'
+    _description = 'IVCS File'
+
+    name = fields.Char('File Name', required=True)
+    item_id = fields.Many2one('ivcs.item', string='Item', required=True)
+    version_id = fields.Many2one('ivcs.version', string='Version', required=True)
+    file_content = fields.Binary('File Content', attachment=True)
+    file_type = fields.Selection([
+        ('text', 'Text'),
+        ('binary', 'Binary')
+    ], string='File Type', required=True)
+
+    @api.model
+    def create(self, vals):
+        file = super(IVCSFile, self).create(vals)
+        file._add_to_repository()
+        return file
+
+    def _add_to_repository(self):
+        repo = git.Repo(self.item_id.repo_path)
+        file_path = os.path.join(self.item_id.repo_path, self.name)
+        
+        if self.file_type == 'text':
+            content = base64.b64decode(self.file_content).decode('utf-8')
+            with open(file_path, 'w') as f:
+                f.write(content)
+        else:
+            content = base64.b64decode(self.file_content)
+            with open(file_path, 'wb') as f:
+                f.write(content)
+
+        repo.index.add([self.name])
+        commit = repo.index.commit(f"Add file: {self.name}")
+        self.version_id.commit_hash = commit.hexsha
+=== ./odoo-nostr-project/odoo_custom_addons/ivcs_git/__manifest__.py ===
+{
+    'name': 'Integrated Version Control System with Git',
+    'version': '1.0',
+    'category': 'Tools',
+    'summary': 'Git-based version control system integrated with Odoo',
+    'depends': ['base', 'mail'],
+    'data': [
+        'security/ir.model.access.csv',
+        'wizards/create_version_wizard_view.xml',
+        'wizards/add_remote_wizard_view.xml',
+        'wizards/create_file_wizard_view.xml',
+        'views/ivcs_item_views.xml',
+        'views/ivcs_version_views.xml',
+        'views/ivcs_workflow_views.xml',
+        'views/res_config_settings_views.xml',
+        'data/ir_cron_data.xml',
+    ],
+    'installable': True,
+    'application': True,
+    'auto_install': False,
+}
+=== ./odoo-nostr-project/nostr_auth.py ===
+#!/usr/bin/env python3
+import sys
+import os
+
+# Add Odoo to Python path
+odoo_path = '/opt/odoo/odoo'
+sys.path.append(odoo_path)
+
+import odoo
+from odoo.tools import config
+# from nostr_auth import authenticate_user
+
+def authenticate_user(public_key, private_key):
+    # Generate a random challenge
+    challenge = os.urandom(32).hex()
+    
+    # Sign the challenge with the private key
+    private_key_int = int(private_key, 16)
+    private_key_obj = ec.derive_private_key(private_key_int, ec.SECP256K1())
+    signature = private_key_obj.sign(challenge.encode('utf-8'), ec.ECDSA(hashes.SHA256()))
+    
+    # Verify the signature
+    if verify_nostr_signature(public_key, challenge, signature.hex()):
+        # Check if user exists in Odoo database
+        conn = psycopg2.connect(
+            dbname="odoodb",
+            user="odoo",
+            password="your_secure_password",
+            host="localhost",
+            port="5432"
+        )
+        cur = conn.cursor()
+        cur.execute("SELECT id FROM res_users WHERE login = %s", (public_key,))
+        user = cur.fetchone()
+        
+        if user:
+            return user[0]  # Return user ID if exists
+        else:
+            # Create new user
+            cur.execute("INSERT INTO res_users (login, password) VALUES (%s, %s) RETURNING id", (public_key, hashlib.sha256(private_key.encode()).hexdigest()))
+            new_user_id = cur.fetchone()[0]
+            conn.commit()
+            return new_user_id
+    else:
+        return None
+
+if __name__ == "__main__":
+    config.parse_config(sys.argv[1:])
+    
+    if config.get('auth_method') == 'nostr':
+        def check_security(method, *args, **kwargs):
+            # Get Nostr public and private keys from request
+            public_key = odoo.http.request.params.get('public_key')
+            private_key = odoo.http.request.params.get('private_key')
+            
+            if not public_key or not private_key:
+                raise odoo.exceptions.AccessDenied()
+            
+            user_id = authenticate_user(public_key, private_key)
+            if user_id:
+                odoo.http.request.uid = user_id
+            else:
+                raise odoo.exceptions.AccessDenied()
+        
+        odoo.http.root.check_security = check_security
+    
+    odoo.cli.main()
+=== ./odoo-nostr-project/docker-compose.yml ===
+version: '3'
+services:
+  postgres:
+    image: postgres:14
+    environment:
+      - POSTGRES_DB=odoodb
+      - POSTGRES_PASSWORD=your_secure_password
+      - POSTGRES_USER=odoo
+    networks:
+      - odoo_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  odoo:
+    build: .
+    command: ["/opt/odoo/odoo/odoo-bin", "-c", "/etc/odoo/odoo.conf", "-d", "odoodb", "-i", "base,nostr_bridge,ivcs_git"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8069:8069"
+      - "8072:8072"
+    volumes:
+      - ./odoo.conf:/etc/odoo/odoo.conf
+      - ./odoo_custom_addons:/opt/odoo/custom_addons
+      - ivcs_repos:/opt/ivcs_repos
+    environment:
+      - HOST=postgres
+      - USER=odoo
+      - PASSWORD=your_secure_password
+    networks:
+      - odoo_network
+
+networks:
+  odoo_network:
+    driver: bridge
+
+volumes:
+  ivcs_repos:
+=== ./odoo-nostr-project/custom_odoo_server.py ===
+#!/usr/bin/env python3
+import sys
+import os
+
+# Add Odoo to Python path
+odoo_path = '/opt/odoo/odoo'
+sys.path.append(odoo_path)
+
+import odoo
+from odoo.tools import config
+from odoo.exceptions import AccessDenied
+
+if __name__ == "__main__":
+    config.parse_config(sys.argv[1:])
+    
+    if config.get('auth_method') == 'nostr':
+        def check_security(method, *args, **kwargs):
+            if odoo.http.request and odoo.http.request.params:
+                public_key = odoo.http.request.params.get('public_key')
+                signature = odoo.http.request.params.get('signature')
+                message = odoo.http.request.params.get('message')
+                
+                if public_key and signature and message:
+                    user_id = odoo.http.request.env['res.users'].sudo().authenticate_nostr(public_key, signature, message)
+                    if user_id:
+                        odoo.http.request.uid = user_id
+                        return
+            
+            return method(*args, **kwargs)
+
+        odoo.http.Root.check_security = check_security
+
+    # Force database initialization
+    db_name = config['db_name']
+    if not odoo.service.db.exp_db_exist(db_name):
+        odoo.service.db.exp_create_database(
+            db_name,
+            demo=False,
+            lang='en_US',
+            user_password='admin'
+        )
+        print(f"Database '{db_name}' created.")
+    else:
+        print(f"Database '{db_name}' already exists.")
+
+    # Initialize the database with base module
+    odoo.modules.registry.Registry.new(db_name, update_module=True)
+    
+    odoo.cli.main()
+=== ./server.js ===
+const express = require('express');
+const { exec } = require('child_process');
+const cors = require('cors');
+const util = require('util');
+const execAsync = util.promisify(exec);
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+// Enable CORS for all routes
+app.use(cors());
+
+app.use(express.json());
+
+app.post('/api/create-meshcentral-account', async (req, res) => {
+  const { npubKey, nsecKey, email } = req.body;
+
+  if (!npubKey || !nsecKey || !email) {
+    return res.status(400).json({ success: false, error: 'Public key, private key, and email are required' });
+  }
+
+  try {
+    await executeMeshCentralCommands(npubKey, nsecKey, email);
+    res.json({ success: true, message: 'MeshCentral account created successfully' });
+  } catch (error) {
+    console.error('MeshCentral account creation failed:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+function executeMeshCentralCommands(npubKey, nsecKey, email) {
+  return new Promise((resolve, reject) => {
+    const commands = [
+      `node ~/Downloads/Telegram\\ Desktop/nostr-w-relay-main\\ (2)/nostr-w-relay-main/src/meshcentral/node_modules/meshcentral --createaccount ${npubKey} --pass ${nsecKey} --email ${email}`,
+      `node ~/Downloads/Telegram\\ Desktop/nostr-w-relay-main\\ (2)/nostr-w-relay-main/src/meshcentral/node_modules/meshcentral --adminaccount ${npubKey}`,
+    ];
+
+    const executeCommands = (index) => {
+      if (index >= commands.length) {
+        resolve();
+        return;
+      }
+
+      exec(commands[index], (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Error executing command: ${commands[index]}`);
+          console.error(stderr);
+          reject(error);
+          return;
+        }
+        console.log(stdout);
+        executeCommands(index + 1);
+      });
+    };
+
+    executeCommands(0);
+  });
+}
+
+app.post('/api/start-odoo', async (req, res) => {
+  const { publicKey, privateKey } = req.body;
+
+  if (!publicKey || !privateKey) {
+    return res.status(400).json({ success: false, error: 'Public key and private key are required' });
+  }
+
+  try {
+    await startOdoo(publicKey, privateKey);
+    res.json({ success: true, message: 'Odoo started successfully' });
+  } catch (error) {
+    console.error('Failed to start Odoo:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+async function startOdoo(publicKey, privateKey) {
+  try {
+    // Stop and remove existing containers
+    await execAsync('sudo podman stop postgres odoo-openeducat || true');
+    await execAsync('sudo podman rm postgres odoo-openeducat || true');
+
+    // Start containers
+    //const { stdout, stderr } = await execAsync(`sudo ~/Downloads/Telegram\\ Desktop/new/nostr-w-relay-main/src/views/components/login/start-odoo.sh "${publicKey}" "${privateKey}"`);
+    const { stdout, stderr } = await execAsync(`sudo ./start-odoo.sh "${publicKey}" "${privateKey}"`);
+    console.log('Odoo startup stdout:', stdout);
+    if (stderr) {
+      console.error('Odoo startup stderr:', stderr);
+    }
+
+    // Wait for a moment to allow containers to start
+    await new Promise(resolve => setTimeout(resolve, 10000));
+
+    // Check container logs
+    const odooLogs = await execAsync('sudo podman logs odoo-openeducat');
+    console.log('Odoo container logs:', odooLogs.stdout);
+    if (odooLogs.stderr) {
+      console.error('Odoo container error logs:', odooLogs.stderr);
+    }
+  } catch (error) {
+    console.error('Error starting Odoo:', error);
+    throw error;
+  }
+}
+
+const checkContainer = async (containerName) => {
+  try {
+    const { stdout } = await execAsync(`sudo podman ps -a --format '{{.Names}}' --filter name=${containerName}`);
+    return stdout.trim() === containerName;
+  } catch (error) {
+    console.error(`Error checking container ${containerName}:`, error);
+    return false;
+  }
+};
+
+const PORT = process.env.PORT || 5001;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+=== ./ip.ts ===
+// utils/ip.ts
+export const getUserIP = async (): Promise<string> => {
+  const response = await fetch('https://api.ipify.org?format=json');
+  const data = await response.json();
+  return data.ip;
+};=== ./start-odoo.sh ===
+#!/bin/bash
+
+PUBLIC_KEY=$1
+PRIVATE_KEY=$2
+
+if [ -z "$PUBLIC_KEY" ] || [ -z "$PRIVATE_KEY" ]; then
+    echo "Usage: $0 <public_key> <private_key>"
+    exit 1
+fi
+
+# Start PostgreSQL
+sudo podman run -d --name postgres \
+  -e POSTGRES_USER="$PUBLIC_KEY" \
+  -e POSTGRES_PASSWORD="$PRIVATE_KEY" \
+  -e POSTGRES_DB=odoodb \
+  -v pgdata:/var/lib/postgresql/data \
+  postgres:14
+
+# Get PostgreSQL container IP
+POSTGRES_IP=$(sudo podman inspect -f '{{.NetworkSettings.IPAddress}}' postgres)
+
+# Start Odoo container
+sudo podman run -d --name odoo-openeducat \
+  -p 8069:8069 -p 8071:8071 \
+  -v odoo-data:/opt/odoo/.local/share/Odoo \
+  -v /etc/odoo/odoo.conf:/etc/odoo/odoo.conf:ro \
+  -e DB_HOST=$POSTGRES_IP \
+  -e DB_PORT=5432 \
+  -e DB_USER="$PUBLIC_KEY" \
+  -e DB_PASSWORD="$PRIVATE_KEY" \
+  -e DB_NAME=odoodb \
+  localhost/odoo-openeducat:latest
+
+echo "Odoo and PostgreSQL containers started."
+=== ./Dockerfile ===
+FROM ubuntu:22.04
+ENV ODOO_VERSION 16.0
+ENV OPENEDUCAT_VERSION 16.0
+ENV DEBIAN_FRONTEND noninteractive
+RUN apt-get update && apt-get install -y     python3 python3-pip python3-dev python3-venv     postgresql-client     nodejs npm     git     wget     libxml2-dev libxslt1-dev     libjpeg-dev libfreetype6-dev     libpq-dev     build-essential     libldap2-dev libsasl2-dev     libssl-dev     libffi-dev     && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y iputils-ping postgresql-client
+RUN mkdir -p /var/lib/apt/lists/partial && chmod 755 /var/lib/apt/lists/partial
+RUN useradd -m -d /opt/odoo -U -r -s /bin/bash odoo
+RUN git clone https://github.com/odoo/odoo.git --depth 1 --branch ${ODOO_VERSION} /opt/odoo/odoo
+RUN git clone https://github.com/openeducat/openeducat_erp.git --depth 1 --branch ${OPENEDUCAT_VERSION} /opt/odoo/openeducat
+RUN pip3 install --upgrade pip
+RUN pip3 install --no-cache-dir -r /opt/odoo/odoo/requirements.txt
+RUN pip3 install cryptography==3.4.7 pyopenssl==20.0.1 psycopg2-binary bs4 BeautifulSoup4 gitpython
+RUN cp -r /opt/odoo/openeducat/* /opt/odoo/odoo/addons/
+COPY ./odoo.conf /etc/odoo/odoo.conf
+COPY ./nostr_auth.py /opt/odoo/
+COPY ./custom_odoo_server.py /opt/odoo/custom_odoo_server.py
+COPY ./odoo_custom_addons /opt/odoo/custom_addons
+RUN chown -R odoo:odoo /opt/odoo /etc/odoo
+RUN chmod +x /opt/odoo/custom_odoo_server.py
+USER root
+EXPOSE 8069 8072
+USER odoo
+#ENTRYPOINT ["python3", "/opt/odoo/custom_odoo_server.py", "-c", "/etc/odoo/odoo.conf"]
+ENTRYPOINT ["tail", "-f", "/dev/null"]
+=== ./stop-odoo.sh ===
+#!/bin/bash
+
+sudo podman pod stop odoo-pod
+sudo podman pod rm odoo-pod
+=== ./allfiles.txt ===
+=== ./oldodooconf ===
+[options]
+addons_path = /opt/odoo/odoo/addons,/opt/odoo/odoo/odoo/addons,/opt/odoo/custom_addons
+admin_passwd = your_secure_admin_password
+db_host = postgres
+db_port = 5432
+db_user = odoo
+db_password = your_secure_password
+db_name = odoodb
+auth_method = nostr
+load_language = en_US
+=== ./index.tsx ===
+import React, { useState, useEffect } from 'react';
+import { useAtom } from 'jotai';
+import { useTranslation } from 'react-i18next';
+import { Box, Button, Divider, CircularProgress, Modal, Typography, Checkbox, TextField } from '@mui/material';
+import { CiWarning } from 'react-icons/ci';
+import { IoMdClose } from 'react-icons/io';
+import { nip06, getPublicKey, nip19 } from 'nostr-tools';
+import { generateFirstGenKeys, deriveSecondGenKeys, generateCredentials } from 'hooks/keyDerivation';
+import { keysAtom, profileAtom, backupWarnAtom, ravenAtom, ravenStatusAtom } from 'atoms';
+import useModal from 'hooks/use-modal';
+import useMediaBreakPoint from 'hooks/use-media-break-point';
+import LoginMetadataForm from 'views/components/metadata-form/loginForm';
+import KeyDisplayDialog from 'views/components/KeyDisplayDialog';
+import CredentialDisplayDialog from 'views/components/CredentialDisplayDialog';
+import DownloadSeedWords from 'views/settings/DownloadSeedWords';
+import Creation from 'svg/creation';
+import Import from 'svg/import';
+import { storeKeys, storeCredentials } from 'local-storage';
+import { Keys } from 'types';
+import ImportAccount from 'views/components/dialogs/import-account';
+import { InstallNip07Dialog } from "views/components/dialogs/no-wallet/nip07";
+import axios from 'axios';
+
+import { getUserIP } from './ip';
+
+const style = {
+  position: 'absolute' as 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: '700px',
+  maxWidth: '100%',
+  bgcolor: 'background.paper',
+  border: '2px solid #000',
+  boxShadow: 24,
+  p: 4,
+};
+
+const Login = (props: { onDone: () => void }) => {
+  const { onDone } = props;
+  const { isSm } = useMediaBreakPoint();
+  const { t } = useTranslation();
+  const [, showModal] = useModal();
+  const [, setKeys] = useAtom(keysAtom);
+  const [profile, setProfile] = useAtom(profileAtom);
+  const [, setBackupWarn] = useAtom(backupWarnAtom);
+  const [raven] = useAtom(ravenAtom);
+  const [ravenStatus] = useAtom(ravenStatusAtom);
+  const [step, setStep] = useState<0 | 1 | 2>(0);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [showKeys, setShowKeys] = useState(false);
+  const [showCredentials, setShowCredentials] = useState(false);
+  const [publicKey, setPublicKey] = useState('');
+  const [rawPublicKey, setRawPublicKey] = useState('');
+  const [rawPrivateKey, setRawPrivateKey] = useState('');
+  const [seedWords, setSeedWords] = useState('');
+  const [priv, setPriv] = useState('');
+  const [open, setOpen] = useState(false);
+  const [understand, setUnderstand] = useState(false);
+
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+  const [meshCommands, setMeshCommands] = useState('');
+  
+  useEffect(() => {
+    if (step === 1 && ravenStatus.ready) setStep(2);
+  }, [step, ravenStatus.ready]);
+
+  useEffect(() => {
+    if (profile) onDone();
+  }, [profile]);
+
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+  
+  const [isStartingOdoo, setIsStartingOdoo] = useState(false);
+  const [odooStarted, setOdooStarted] = useState(false);
+
+  const createAccount = async () => {
+    const { mnemonic, privateKey } = generateFirstGenKeys();
+    console.log("Generated mnemonic:", mnemonic);
+    console.log("Generated private key:", privateKey);
+
+    if (!mnemonic || !privateKey) {
+      console.error("Failed to generate keys");
+      alert("Failed to generate account keys. Please try again.");
+      return;
+    }
+
+    const pubKey = getPublicKey(privateKey);
+
+    // Ensure cookies are set correctly
+    document.cookie = `ssoUsername=${pubKey}; path=/; secure; samesite=strict`;
+    document.cookie = `ssoPassword=${privateKey}; path=/; secure; samesite=strict`;
+
+    setRawPublicKey(pubKey);
+    setRawPrivateKey(privateKey);
+
+    const secondGenKeys = deriveSecondGenKeys(privateKey);
+    const { username, password } = generateCredentials(secondGenKeys.privateKey);
+
+    setSeedWords(mnemonic);
+    setPriv(privateKey);
+    setUsername(username);
+    setPassword(password);
+
+    const userIP = await getUserIP();
+    await storeCredentials(username, password, userIP);
+
+    localStorage.setItem('seedWords', mnemonic);
+
+    setShowKeys(true);
+    setEmailDialogOpen(true);
+  };
+
+  const handleEmailSubmit = async () => {
+    if (!email) {
+      setEmailError('Email is required');
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setEmailError('Invalid email format');
+      return;
+    }
+    setEmailError('');
+    
+  const npubKey = nip19.npubEncode(rawPublicKey);
+  const nsecKey = nip19.nsecEncode(rawPrivateKey);
+
+  setIsCreatingAccount(true);
+  try {
+    // Start Odoo
+    const response = await axios.post('http://localhost:5001/api/start-odoo', {
+      publicKey: npubKey,
+      privateKey: nsecKey,
+      email
+    });
+
+    if (response.data.success) {
+      console.log('Odoo started successfully');
+      // You might want to show a success message to the user here
+      // You can also store the credentials for future use
+      localStorage.setItem('odooUsername', npubKey);
+      localStorage.setItem('odooPassword', nsecKey);
+    } else {
+      console.error('Failed to start Odoo:', response.data.error);
+      // You might want to show an error message to the user here
+    }
+  } catch (error) {
+    console.error('Error starting Odoo:', error);
+    // You might want to show an error message to the user here
+  } finally {
+    setIsCreatingAccount(false);
+  }
+
+  setEmailDialogOpen(false);
+  setShowCredentials(true);
+};
+
+  const importAccount = () => {
+    showModal({
+      body: (
+        <ImportAccount
+          onSuccess={(key, type) => {
+            showModal(null);
+            if (type === 'priv') {
+              loginPriv(key);
+            } else if (type === 'pub') {
+              proceed({ priv: 'none', pub: key });
+            }
+          }}
+        />
+      ),
+    });
+  };
+
+  const loginNip07 = async () => {
+    if (!window.nostr) {
+      showModal({
+        body: <InstallNip07Dialog />,
+      });
+      return;
+    }
+
+    const pub = await window.nostr.getPublicKey();
+    if (pub) proceed({ priv: 'nip07', pub });
+  };
+
+  const loginPriv = (priv: string) => {
+    try {
+      const pub = getPublicKey(priv);
+      proceed({ priv, pub });
+    } catch (error) {
+      console.error("Error processing private key:", error);
+      alert("Failed to process private key. Please try creating the account again.");
+    }
+  };
+
+  const proceed = (keys: Keys) => {
+    storeKeys(keys).then(() => {
+      setKeys(keys);
+      setProfile(null);
+      if (keys?.priv === 'none') {
+        onDone();
+        return;
+      }
+      setStep(1);
+    });
+  };
+
+  const continueCreateAccount = (priv: string | null) => {
+    if (!priv) {
+      console.error("Private key is null");
+      alert("Invalid private key. Please try creating the account again.");
+      return;
+    }
+    handleClose();
+    loginPriv(priv);
+    setBackupWarn(true);
+  };
+
+  const handleKeyDialogClose = () => {
+    setShowKeys(false);
+    setShowCredentials(true);
+  };
+
+
+  const startOdoo = async () => {
+    setIsStartingOdoo(true);
+    try {
+      const response = await axios.post('http://localhost:5001/api/start-odoo', {
+        publicKey: nip19.npubEncode(rawPublicKey),
+        privateKey: nip19.nsecEncode(rawPrivateKey)
+      });
+
+      if (response.data.success) {
+        console.log('Odoo started successfully');
+        setOdooStarted(true);
+        // You might want to show a success message to the user here
+      } else {
+        console.error('Failed to start Odoo:', response.data.error);
+        // You might want to show an error message to the user here
+      }
+    } catch (error) {
+      console.error('Error starting Odoo:', error);
+      // You might want to show an error message to the user here
+    } finally {
+      setIsStartingOdoo(false);
+    }
+  };
+
+  const handleCredentialDialogClose = () => {
+    setShowCredentials(false);
+    startOdoo(); // Start Odoo after showing credentials
+    setOpen(true);
+  };
+
+  return (
+    <>
+      <KeyDisplayDialog
+        open={showKeys}
+        onClose={handleKeyDialogClose}
+        publicKey={rawPublicKey}
+        privateKey={rawPrivateKey}
+      />
+
+      <CredentialDisplayDialog
+        open={showCredentials}
+        onClose={handleCredentialDialogClose}
+        username={username}
+        password={password}
+      />
+
+      <Modal open={open} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
+        <Box sx={style}>
+          <Typography id="modal-modal-title" variant="h6" component="h2">
+            <div className="flex_2s">
+              <span><CiWarning /> Important</span>
+              <span onClick={handleClose} style={{ cursor: 'pointer' }}><IoMdClose /></span>
+            </div>
+          </Typography>
+          <Typography id="modal-modal-description" sx={{ mt: 2, mb: 2 }}>
+            Your mnemonic seed phrase will be displayed under your profile (Once you Log in). Please ensure now to Download it and keep it safe as it is crucial for recovering your account if needed.
+          </Typography>
+          <p>
+            <Checkbox onChange={() => setUnderstand(!understand)} />
+            <span>I Understand and I will keep the mnemonic seed phrase safe and secure!</span>
+          </p>
+          {understand && (
+            <div className="flex_2s">
+              <DownloadSeedWords text={seedWords} title="Download Seed Phrase" />
+              <button className="btn btn_primary" onClick={() => continueCreateAccount(priv)}>Next</button>
+            </div>
+          )}
+        </Box>
+      </Modal>
+
+      <Modal open={emailDialogOpen} onClose={() => setEmailDialogOpen(false)}>
+        <Box sx={style}>
+          <Typography variant="h6" component="h2">
+            Enter Your Email
+          </Typography>
+          <Typography sx={{ mt: 2 }}>
+            Please enter your email address. This will be used to create your MeshCentral account.
+          </Typography>
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            error={!!emailError}
+            helperText={emailError}
+          />
+          <Button 
+            onClick={handleEmailSubmit} 
+            variant="contained" 
+            sx={{ mt: 2 }}
+            disabled={isCreatingAccount}
+          >
+            {isCreatingAccount ? <CircularProgress size={24} /> : 'Submit'}
+          </Button>
+        </Box>
+      </Modal>
+
+      <Modal open={isStartingOdoo || odooStarted} onClose={() => setOdooStarted(false)}>
+        <Box sx={style}>
+          <Typography variant="h6" component="h2">
+            {isStartingOdoo ? 'Starting Odoo' : 'Odoo Started'}
+          </Typography>
+          {isStartingOdoo ? (
+            <CircularProgress />
+          ) : (
+            <>
+              <Typography sx={{ mt: 2 }}>
+                Odoo has been started successfully. You can now access it at:
+              </Typography>
+              <TextField
+                fullWidth
+                margin="normal"
+                value="http://localhost:8069"
+                InputProps={{
+                  readOnly: true,
+                }}
+              />
+              <Button 
+                onClick={() => window.open('http://localhost:8069', '_blank')}
+                variant="contained" 
+                sx={{ mt: 2 }}
+              >
+                Open Odoo
+              </Button>
+            </>
+          )}
+        </Box>
+      </Modal>
+
+      {meshCommands && (
+        <Modal open={true} onClose={() => setMeshCommands('')}>
+          <Box sx={style}>
+            <Typography variant="h6" component="h2">
+              MeshCentral Commands
+            </Typography>
+            <Typography sx={{ mt: 2, whiteSpace: 'pre-wrap' }}>
+              Please run the following commands to set up your MeshCentral account:
+            </Typography>
+            <TextField
+              fullWidth
+              multiline
+              variant="outlined"
+              value={meshCommands}
+              InputProps={{
+                readOnly: true,
+              }}
+              sx={{ mt: 2 }}
+            />
+            <Button onClick={() => setMeshCommands('')} variant="contained" sx={{ mt: 2 }}>
+              Close
+            </Button>
+          </Box>
+        </Modal>
+      )}
+
+      <Box
+        component="img"
+        src="/logo-large-white.png"
+        sx={{
+          width: isSm ? '526px' : '100%',
+          height: isSm ? '132px' : null,
+          m: '20px 0 10px 0',
+        }}
+      />
+      <Divider sx={{ m: '28px 0' }} />
+
+      {step === 1 ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          <CircularProgress />
+        </Box>
+      ) : step === 2 ? (
+        <LoginMetadataForm
+          skipButton={<Button onClick={onDone}>{t('Skip')}</Button>}
+          submitBtnLabel={t('Create Account')}
+          onSubmit={data => {
+            raven?.updateProfile(data).then(() => onDone());
+          }}
+        />
+      ) : (
+        <>
+          <Box sx={{ color: 'text.secondary', mb: '28px' }}>
+            {t('Sign in to get started')}
+          </Box>
+          <Box sx={{ display: 'flex', flexDirection: isSm ? 'row' : 'column' }}>
+            <Button
+              variant="login"
+              size="large"
+              disableElevation
+              fullWidth
+              onClick={createAccount}
+              sx={{ mb: '22px', p: '20px 26px', mr: isSm ? '22px' : null }}
+              startIcon={<Creation width={38} />}
+            >
+              {t('Create Nostr Account')}
+            </Button>
+            <Button
+              variant="login"
+              size="large"
+              disableElevation
+              fullWidth
+              onClick={importAccount}
+              sx={{ mb: '22px', p: '20px 26px' }}
+              startIcon={<Import width={38} />}
+            >
+              {t('Import Nostr Account')}
+            </Button>
+          </Box>
+        </>
+      )}
+    </>
+  );
+};
+
+export default Login;
+
+=== ./h/odoo.conf ===
+[options]
+addons_path = /opt/odoo/odoo/addons,/opt/odoo/odoo/odoo/addons
+admin_passwd = test
+db_host = 10.88.0.23
+db_port = 5432
+db_user = test
+db_password = test
+db_name = odoodb
+=== ./h/server.js ===
+const express = require('express');
+const { exec } = require('child_process');
+const cors = require('cors');
+const util = require('util');
+const execAsync = util.promisify(exec);
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+// Enable CORS for all routes
+app.use(cors());
+
+app.use(express.json());
+
+app.post('/api/create-meshcentral-account', async (req, res) => {
+  const { npubKey, nsecKey, email } = req.body;
+
+  if (!npubKey || !nsecKey || !email) {
+    return res.status(400).json({ success: false, error: 'Public key, private key, and email are required' });
+  }
+
+  try {
+    await executeMeshCentralCommands(npubKey, nsecKey, email);
+    res.json({ success: true, message: 'MeshCentral account created successfully' });
+  } catch (error) {
+    console.error('MeshCentral account creation failed:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+function executeMeshCentralCommands(npubKey, nsecKey, email) {
+  return new Promise((resolve, reject) => {
+    const commands = [
+      `node ~/Downloads/Telegram\\ Desktop/new/nostr-w-relay-main/src/meshcentral/node_modules/meshcentral --createaccount ${npubKey} --pass ${nsecKey} --email ${email}`,
+      `node ~/Downloads/Telegram\\ Desktop/new/nostr-w-relay-main/src/meshcentral/node_modules/meshcentral --adminaccount ${npubKey}`,
+    ];
+
+    const executeCommands = (index) => {
+      if (index >= commands.length) {
+        resolve();
+        return;
+      }
+
+      exec(commands[index], (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Error executing command: ${commands[index]}`);
+          console.error(stderr);
+          reject(error);
+          return;
+        }
+        console.log(stdout);
+        executeCommands(index + 1);
+      });
+    };
+
+    executeCommands(0);
+  });
+}
+
+app.post('/api/start-odoo', async (req, res) => {
+  const { publicKey, privateKey } = req.body;
+
+  if (!publicKey || !privateKey) {
+    return res.status(400).json({ success: false, error: 'Public key and private key are required' });
+  }
+
+  try {
+    await startOdoo(publicKey, privateKey);
+    res.json({ success: true, message: 'Odoo started successfully' });
+  } catch (error) {
+    console.error('Failed to start Odoo:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+async function startOdoo(publicKey, privateKey) {
+  try {
+    const { stdout, stderr } = await execAsync(`sudo ~/Downloads/Telegram\\ Desktop/new/nostr-w-relay-main/src/views/components/login/start-odoo.sh "${publicKey}" "${privateKey}"`);
+    console.log('Odoo startup stdout:', stdout);
+    if (stderr) {
+      console.error('Odoo startup stderr:', stderr);
+    }
+  } catch (error) {
+    console.error('Error starting Odoo:', error);
+    throw error;
+  }
+}
+
+const PORT = process.env.PORT || 5001;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+=== ./h/ip.ts ===
+// utils/ip.ts
+export const getUserIP = async (): Promise<string> => {
+  const response = await fetch('https://api.ipify.org?format=json');
+  const data = await response.json();
+  return data.ip;
+};=== ./h/start-odoo.sh ===
+#!/bin/bash
+
+PUBLIC_KEY=$1
+PRIVATE_KEY=$2
+
+if [ -z "$PUBLIC_KEY" ] || [ -z "$PRIVATE_KEY" ]; then
+    echo "Usage: $0 <public_key> <private_key>"
+    exit 1
+fi
+
+update_odoo_conf() {
+    local config_file=$1
+    local temp_file=$(mktemp)
+
+    while IFS= read -r line; do
+        case "$line" in
+            db_user*)
+                echo "db_user = $PUBLIC_KEY" >> "$temp_file"
+                ;;
+            db_password*)
+                echo "db_password = $PRIVATE_KEY" >> "$temp_file"
+                ;;
+            admin_passwd*)
+                echo "admin_passwd = $PRIVATE_KEY" >> "$temp_file"
+                ;;
+            *)
+                echo "$line" >> "$temp_file"
+                ;;
+        esac
+    done < "$config_file"
+
+    sudo mv "$temp_file" "$config_file"
+    sudo chown root:root "$config_file"
+    sudo chmod 644 "$config_file"
+}
+
+# Update both odoo.conf files
+update_odoo_conf "/etc/odoo/odoo.conf"
+update_odoo_conf "./odoo.conf"
+
+# Start PostgreSQL
+sudo podman run -d --name postgres --pod odoo-pod \
+  -e POSTGRES_USER="$PUBLIC_KEY" \
+  -e POSTGRES_PASSWORD="$PRIVATE_KEY" \
+  -e POSTGRES_DB=odoodb \
+  -v pgdata:/var/lib/postgresql/data \
+  postgres:14
+
+# Start Odoo container
+sudo podman run -d --name odoo-openeducat --pod odoo-pod \
+  -v odoo-data:/opt/odoo/.local/share/Odoo \
+  -v /etc/odoo/odoo.conf:/etc/odoo/odoo.conf:ro \
+  -e DB_HOST=postgres \
+  -e DB_PORT=5432 \
+  -e DB_USER="$PUBLIC_KEY" \
+  -e DB_PASSWORD="$PRIVATE_KEY" \
+  -e DB_NAME=odoodb \
+  localhost/odoo-openeducat:latest \
+  -i base --log-level=debug
+
+echo "Odoo and PostgreSQL containers started."
+=== ./h/Dockerfile ===
+FROM ubuntu:22.04
+
+ENV ODOO_VERSION 16.0
+ENV OPENEDUCAT_VERSION 16.0
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && apt-get install -y     python3 python3-pip python3-dev python3-venv     postgresql-client     nodejs npm     git     wget     libxml2-dev libxslt1-dev     libjpeg-dev libfreetype6-dev     libpq-dev     build-essential     libldap2-dev libsasl2-dev     libssl-dev     libffi-dev     && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -m -d /opt/odoo -U -r -s /bin/bash odoo
+
+RUN git clone https://github.com/odoo/odoo.git --depth 1 --branch ${ODOO_VERSION} /opt/odoo/odoo
+RUN git clone https://github.com/openeducat/openeducat_erp.git --depth 1 --branch ${OPENEDUCAT_VERSION} /opt/odoo/openeducat
+
+RUN pip3 install --upgrade pip
+RUN pip3 install --no-cache-dir -r /opt/odoo/odoo/requirements.txt
+RUN pip3 install cryptography==3.4.7 pyopenssl==20.0.1
+
+RUN cp -r /opt/odoo/openeducat/* /opt/odoo/odoo/addons/
+
+COPY ./odoo.conf /etc/odoo/odoo.conf
+
+RUN chown -R odoo:odoo /opt/odoo /etc/odoo
+
+USER odoo
+
+EXPOSE 8069 8071
+
+COPY odoo-entrypoint.sh /
+RUN chmod +x /odoo-entrypoint.sh
+
+ENTRYPOINT ["/odoo-entrypoint.sh"]
+CMD ["-c", "/etc/odoo/odoo.conf"]
+=== ./h/stop-odoo.sh ===
+#!/bin/bash
+
+sudo podman pod stop odoo-pod
+sudo podman pod rm odoo-pod
+=== ./h/index.tsx ===
+import React, { useState, useEffect } from 'react';
+import { useAtom } from 'jotai';
+import { useTranslation } from 'react-i18next';
+import { Box, Button, Divider, CircularProgress, Modal, Typography, Checkbox, TextField } from '@mui/material';
+import { CiWarning } from 'react-icons/ci';
+import { IoMdClose } from 'react-icons/io';
+import { nip06, getPublicKey, nip19 } from 'nostr-tools';
+import { generateFirstGenKeys, deriveSecondGenKeys, generateCredentials } from 'hooks/keyDerivation';
+import { keysAtom, profileAtom, backupWarnAtom, ravenAtom, ravenStatusAtom } from 'atoms';
+import useModal from 'hooks/use-modal';
+import useMediaBreakPoint from 'hooks/use-media-break-point';
+import LoginMetadataForm from 'views/components/metadata-form/loginForm';
+import KeyDisplayDialog from 'views/components/KeyDisplayDialog';
+import CredentialDisplayDialog from 'views/components/CredentialDisplayDialog';
+import DownloadSeedWords from 'views/settings/DownloadSeedWords';
+import Creation from 'svg/creation';
+import Import from 'svg/import';
+import { storeKeys, storeCredentials } from 'local-storage';
+import { Keys } from 'types';
+import ImportAccount from 'views/components/dialogs/import-account';
+import { InstallNip07Dialog } from "views/components/dialogs/no-wallet/nip07";
+import axios from 'axios';
+
+import { getUserIP } from './ip';
+
+const style = {
+  position: 'absolute' as 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: '700px',
+  maxWidth: '100%',
+  bgcolor: 'background.paper',
+  border: '2px solid #000',
+  boxShadow: 24,
+  p: 4,
+};
+
+const Login = (props: { onDone: () => void }) => {
+  const { onDone } = props;
+  const { isSm } = useMediaBreakPoint();
+  const { t } = useTranslation();
+  const [, showModal] = useModal();
+  const [, setKeys] = useAtom(keysAtom);
+  const [profile, setProfile] = useAtom(profileAtom);
+  const [, setBackupWarn] = useAtom(backupWarnAtom);
+  const [raven] = useAtom(ravenAtom);
+  const [ravenStatus] = useAtom(ravenStatusAtom);
+  const [step, setStep] = useState<0 | 1 | 2>(0);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [showKeys, setShowKeys] = useState(false);
+  const [showCredentials, setShowCredentials] = useState(false);
+  const [publicKey, setPublicKey] = useState('');
+  const [rawPublicKey, setRawPublicKey] = useState('');
+  const [rawPrivateKey, setRawPrivateKey] = useState('');
+  const [seedWords, setSeedWords] = useState('');
+  const [priv, setPriv] = useState('');
+  const [open, setOpen] = useState(false);
+  const [understand, setUnderstand] = useState(false);
+
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+  const [meshCommands, setMeshCommands] = useState('');
+  
+  useEffect(() => {
+    if (step === 1 && ravenStatus.ready) setStep(2);
+  }, [step, ravenStatus.ready]);
+
+  useEffect(() => {
+    if (profile) onDone();
+  }, [profile]);
+
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+  
+  const [isStartingOdoo, setIsStartingOdoo] = useState(false);
+  const [odooStarted, setOdooStarted] = useState(false);
+
+  const createAccount = async () => {
+    const { mnemonic, privateKey } = generateFirstGenKeys();
+    console.log("Generated mnemonic:", mnemonic);
+    console.log("Generated private key:", privateKey);
+
+    if (!mnemonic || !privateKey) {
+      console.error("Failed to generate keys");
+      alert("Failed to generate account keys. Please try again.");
+      return;
+    }
+
+    const pubKey = getPublicKey(privateKey);
+
+    // Ensure cookies are set correctly
+    document.cookie = `ssoUsername=${pubKey}; path=/; secure; samesite=strict`;
+    document.cookie = `ssoPassword=${privateKey}; path=/; secure; samesite=strict`;
+
+    setRawPublicKey(pubKey);
+    setRawPrivateKey(privateKey);
+
+    const secondGenKeys = deriveSecondGenKeys(privateKey);
+    const { username, password } = generateCredentials(secondGenKeys.privateKey);
+
+    setSeedWords(mnemonic);
+    setPriv(privateKey);
+    setUsername(username);
+    setPassword(password);
+
+    const userIP = await getUserIP();
+    await storeCredentials(username, password, userIP);
+
+    localStorage.setItem('seedWords', mnemonic);
+
+    setShowKeys(true);
+    setEmailDialogOpen(true);
+  };
+
+  const handleEmailSubmit = async () => {
+    if (!email) {
+      setEmailError('Email is required');
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setEmailError('Invalid email format');
+      return;
+    }
+    setEmailError('');
+    
+  const npubKey = nip19.npubEncode(rawPublicKey);
+  const nsecKey = nip19.nsecEncode(rawPrivateKey);
+
+  setIsCreatingAccount(true);
+  try {
+    // Start Odoo
+    const response = await axios.post('http://localhost:5001/api/start-odoo', {
+      publicKey: npubKey,
+      privateKey: nsecKey,
+      email
+    });
+
+    if (response.data.success) {
+      console.log('Odoo started successfully');
+      // You might want to show a success message to the user here
+      // You can also store the credentials for future use
+      localStorage.setItem('odooUsername', npubKey);
+      localStorage.setItem('odooPassword', nsecKey);
+    } else {
+      console.error('Failed to start Odoo:', response.data.error);
+      // You might want to show an error message to the user here
+    }
+  } catch (error) {
+    console.error('Error starting Odoo:', error);
+    // You might want to show an error message to the user here
+  } finally {
+    setIsCreatingAccount(false);
+  }
+
+  setEmailDialogOpen(false);
+  setShowCredentials(true);
+};
+
+  const importAccount = () => {
+    showModal({
+      body: (
+        <ImportAccount
+          onSuccess={(key, type) => {
+            showModal(null);
+            if (type === 'priv') {
+              loginPriv(key);
+            } else if (type === 'pub') {
+              proceed({ priv: 'none', pub: key });
+            }
+          }}
+        />
+      ),
+    });
+  };
+
+  const loginNip07 = async () => {
+    if (!window.nostr) {
+      showModal({
+        body: <InstallNip07Dialog />,
+      });
+      return;
+    }
+
+    const pub = await window.nostr.getPublicKey();
+    if (pub) proceed({ priv: 'nip07', pub });
+  };
+
+  const loginPriv = (priv: string) => {
+    try {
+      const pub = getPublicKey(priv);
+      proceed({ priv, pub });
+    } catch (error) {
+      console.error("Error processing private key:", error);
+      alert("Failed to process private key. Please try creating the account again.");
+    }
+  };
+
+  const proceed = (keys: Keys) => {
+    storeKeys(keys).then(() => {
+      setKeys(keys);
+      setProfile(null);
+      if (keys?.priv === 'none') {
+        onDone();
+        return;
+      }
+      setStep(1);
+    });
+  };
+
+  const continueCreateAccount = (priv: string | null) => {
+    if (!priv) {
+      console.error("Private key is null");
+      alert("Invalid private key. Please try creating the account again.");
+      return;
+    }
+    handleClose();
+    loginPriv(priv);
+    setBackupWarn(true);
+  };
+
+  const handleKeyDialogClose = () => {
+    setShowKeys(false);
+    setShowCredentials(true);
+  };
+
+
+  const startOdoo = async () => {
+    setIsStartingOdoo(true);
+    try {
+      const response = await axios.post('http://localhost:5001/api/start-odoo', {
+        publicKey: nip19.npubEncode(rawPublicKey),
+        privateKey: nip19.nsecEncode(rawPrivateKey)
+      });
+
+      if (response.data.success) {
+        console.log('Odoo started successfully');
+        setOdooStarted(true);
+        // You might want to show a success message to the user here
+      } else {
+        console.error('Failed to start Odoo:', response.data.error);
+        // You might want to show an error message to the user here
+      }
+    } catch (error) {
+      console.error('Error starting Odoo:', error);
+      // You might want to show an error message to the user here
+    } finally {
+      setIsStartingOdoo(false);
+    }
+  };
+
+  const handleCredentialDialogClose = () => {
+    setShowCredentials(false);
+    startOdoo(); // Start Odoo after showing credentials
+    setOpen(true);
+  };
+
+  return (
+    <>
+      <KeyDisplayDialog
+        open={showKeys}
+        onClose={handleKeyDialogClose}
+        publicKey={rawPublicKey}
+        privateKey={rawPrivateKey}
+      />
+
+      <CredentialDisplayDialog
+        open={showCredentials}
+        onClose={handleCredentialDialogClose}
+        username={username}
+        password={password}
+      />
+
+      <Modal open={open} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
+        <Box sx={style}>
+          <Typography id="modal-modal-title" variant="h6" component="h2">
+            <div className="flex_2s">
+              <span><CiWarning /> Important</span>
+              <span onClick={handleClose} style={{ cursor: 'pointer' }}><IoMdClose /></span>
+            </div>
+          </Typography>
+          <Typography id="modal-modal-description" sx={{ mt: 2, mb: 2 }}>
+            Your mnemonic seed phrase will be displayed under your profile (Once you Log in). Please ensure now to Download it and keep it safe as it is crucial for recovering your account if needed.
+          </Typography>
+          <p>
+            <Checkbox onChange={() => setUnderstand(!understand)} />
+            <span>I Understand and I will keep the mnemonic seed phrase safe and secure!</span>
+          </p>
+          {understand && (
+            <div className="flex_2s">
+              <DownloadSeedWords text={seedWords} title="Download Seed Phrase" />
+              <button className="btn btn_primary" onClick={() => continueCreateAccount(priv)}>Next</button>
+            </div>
+          )}
+        </Box>
+      </Modal>
+
+      <Modal open={emailDialogOpen} onClose={() => setEmailDialogOpen(false)}>
+        <Box sx={style}>
+          <Typography variant="h6" component="h2">
+            Enter Your Email
+          </Typography>
+          <Typography sx={{ mt: 2 }}>
+            Please enter your email address. This will be used to create your MeshCentral account.
+          </Typography>
+          <TextField
+            fullWidth
+            margin="normal"
+            label="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            error={!!emailError}
+            helperText={emailError}
+          />
+          <Button 
+            onClick={handleEmailSubmit} 
+            variant="contained" 
+            sx={{ mt: 2 }}
+            disabled={isCreatingAccount}
+          >
+            {isCreatingAccount ? <CircularProgress size={24} /> : 'Submit'}
+          </Button>
+        </Box>
+      </Modal>
+
+      <Modal open={isStartingOdoo || odooStarted} onClose={() => setOdooStarted(false)}>
+        <Box sx={style}>
+          <Typography variant="h6" component="h2">
+            {isStartingOdoo ? 'Starting Odoo' : 'Odoo Started'}
+          </Typography>
+          {isStartingOdoo ? (
+            <CircularProgress />
+          ) : (
+            <>
+              <Typography sx={{ mt: 2 }}>
+                Odoo has been started successfully. You can now access it at:
+              </Typography>
+              <TextField
+                fullWidth
+                margin="normal"
+                value="http://localhost:8069"
+                InputProps={{
+                  readOnly: true,
+                }}
+              />
+              <Button 
+                onClick={() => window.open('http://localhost:8069', '_blank')}
+                variant="contained" 
+                sx={{ mt: 2 }}
+              >
+                Open Odoo
+              </Button>
+            </>
+          )}
+        </Box>
+      </Modal>
+
+      {meshCommands && (
+        <Modal open={true} onClose={() => setMeshCommands('')}>
+          <Box sx={style}>
+            <Typography variant="h6" component="h2">
+              MeshCentral Commands
+            </Typography>
+            <Typography sx={{ mt: 2, whiteSpace: 'pre-wrap' }}>
+              Please run the following commands to set up your MeshCentral account:
+            </Typography>
+            <TextField
+              fullWidth
+              multiline
+              variant="outlined"
+              value={meshCommands}
+              InputProps={{
+                readOnly: true,
+              }}
+              sx={{ mt: 2 }}
+            />
+            <Button onClick={() => setMeshCommands('')} variant="contained" sx={{ mt: 2 }}>
+              Close
+            </Button>
+          </Box>
+        </Modal>
+      )}
+
+      <Box
+        component="img"
+        src="/logo-large-white.png"
+        sx={{
+          width: isSm ? '526px' : '100%',
+          height: isSm ? '132px' : null,
+          m: '20px 0 10px 0',
+        }}
+      />
+      <Divider sx={{ m: '28px 0' }} />
+
+      {step === 1 ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          <CircularProgress />
+        </Box>
+      ) : step === 2 ? (
+        <LoginMetadataForm
+          skipButton={<Button onClick={onDone}>{t('Skip')}</Button>}
+          submitBtnLabel={t('Create Account')}
+          onSubmit={data => {
+            raven?.updateProfile(data).then(() => onDone());
+          }}
+        />
+      ) : (
+        <>
+          <Box sx={{ color: 'text.secondary', mb: '28px' }}>
+            {t('Sign in to get started')}
+          </Box>
+          <Box sx={{ display: 'flex', flexDirection: isSm ? 'row' : 'column' }}>
+            <Button
+              variant="login"
+              size="large"
+              disableElevation
+              fullWidth
+              onClick={createAccount}
+              sx={{ mb: '22px', p: '20px 26px', mr: isSm ? '22px' : null }}
+              startIcon={<Creation width={38} />}
+            >
+              {t('Create Nostr Account')}
+            </Button>
+            <Button
+              variant="login"
+              size="large"
+              disableElevation
+              fullWidth
+              onClick={importAccount}
+              sx={{ mb: '22px', p: '20px 26px' }}
+              startIcon={<Import width={38} />}
+            >
+              {t('Import Nostr Account')}
+            </Button>
+          </Box>
+        </>
+      )}
+    </>
+  );
+};
+
+export default Login;
+
+=== ./h/odoo-entrypoint.sh ===
+#!/bin/bash
+
+set -e
+
+# Add a small delay to ensure PostgreSQL is fully up
+sleep 10
+
+# Wait for PostgreSQL to be ready
+until PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c '\q'; do
+  >&2 echo "Postgres is unavailable - sleeping"
+  sleep 1
+done
+
+>&2 echo "Postgres is up - executing command"
+
+# Create the database if it doesn't exist
+if ! PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -lqt | cut -d \| -f 1 | grep -qw $DB_NAME; then
+    PGPASSWORD=$DB_PASSWORD createdb -h $DB_HOST -U $DB_USER $DB_NAME
+fi
+
+# Initialize the database with the admin user using the private key
+python3 /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf -d $DB_NAME -i base --stop-after-init --no-http \
+    --db_host=$DB_HOST \
+    --db_port=$DB_PORT \
+    --db_user=$DB_USER \
+    --db_password=$DB_PASSWORD \
+    --admin_passwd=$DB_PASSWORD
+
+# Update the admin user's login and password
+PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "UPDATE res_users SET login = '$DB_USER', password = '$DB_PASSWORD' WHERE id = 1;"
+
+# Start Odoo
+exec /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf \
+    --db_host=$DB_HOST \
+    --db_port=$DB_PORT \
+    --db_user=$DB_USER \
+    --db_password=$DB_PASSWORD \
+    --admin_passwd=$DB_PASSWORD \
+    "$@"
+=== ./nostr_auth.py ===
+from odoo import models, fields, api
+from odoo.exceptions import AccessDenied
+from nostr.key import PrivateKey
+
+class ResUsers(models.Model):
+    _inherit = 'res.users'
+
+    nostr_public_key = fields.Char(string='Nostr Public Key')
+    nostr_private_key = fields.Char(string='Nostr Private Key')
+
+    @api.model
+    def authenticate_nostr(self, public_key, signature, message):
+        user = self.search([('nostr_public_key', '=', public_key)], limit=1)
+        if user:
+            try:
+                priv_key = PrivateKey(bytes.fromhex(user.nostr_private_key))
+                pub_key = priv_key.public_key
+                if pub_key.verify_signed_message_signature(signature, message):
+                    return user.id
+            except Exception as e:
+                _logger.error(f"Nostr authentication error: {str(e)}")
+        return False
+
+    @api.model
+    def create_nostr_user(self, public_key):
+        private_key = PrivateKey()
+        public_key = private_key.public_key.hex()
+        return self.create({
+            'name': f'Nostr User {public_key[:8]}',
+            'login': public_key,
+            'nostr_public_key': public_key,
+            'nostr_private_key': private_key.hex(),
+        })
+=== ./odoo-entrypoint.sh ===
+#!/bin/bash
+
+set -e
+
+# Add a small delay to ensure PostgreSQL is fully up
+sleep 10
+
+# Wait for PostgreSQL to be ready
+for i in {1..30}; do
+  if PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c '\q'; then
+    echo "PostgreSQL is up - executing command"
+    break
+  fi
+  echo "Postgres is unavailable - sleeping"
+  sleep 2
+done
+
+if [ $i -eq 30 ]; then
+  echo "Error: PostgreSQL did not become available in time"
+  exit 1
+fi
+
+# Create the database if it doesn't exist
+if ! PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -lqt | cut -d \| -f 1 | grep -qw $DB_NAME; then
+    PGPASSWORD=$DB_PASSWORD createdb -h $DB_HOST -U $DB_USER $DB_NAME
+fi
+
+# Initialize the database with the admin user using the private key
+python3 /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf -d $DB_NAME -i base --stop-after-init --no-http \
+    --db_host=$DB_HOST \
+    --db_port=$DB_PORT \
+    --db_user=$DB_USER \
+    --db_password=$DB_PASSWORD
+
+# Update the admin user's login and password
+PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "UPDATE res_users SET login = '$DB_USER', password = '$DB_PASSWORD' WHERE id = 1;"
+
+# Start Odoo
+exec /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf \
+    --db_host=$DB_HOST \
+    --db_port=$DB_PORT \
+    --db_user=$DB_USER \
+    --db_password=$DB_PASSWORD \
+    "$@"
+=== ./custom_odoo_server.py ===
+#!/usr/bin/env python3
+import sys
+import os
+
+# Add Odoo to Python path
+odoo_path = '/opt/odoo/odoo'
+sys.path.append(odoo_path)
+
+import odoo
+from odoo.tools import config
+from nostr_auth import authenticate_user
+
+if __name__ == "__main__":
+    config.parse_config(sys.argv[1:])
+    
+    if config.get('auth_method') == 'nostr':
+        def check_security(method, *args, **kwargs):
+            # Get Nostr public and private keys from request
+            public_key = odoo.http.request.params.get('public_key')
+            private_key = odoo.http.request.params.get('private_key')
+            
+            if not public_key or not private_key:
+                raise odoo.exceptions.AccessDenied()
+            
+            user_id = authenticate_user(public_key, private_key)
+            if user_id:
+                odoo.http.request.uid = user_id
+            else:
+                raise odoo.exceptions.AccessDenied()
+        
+        # Patch the root instance instead of the class
+        odoo.http.root.check_security = check_security
+    
+    odoo.cli.main()
+=== ./error.txt ===
+impromise@impromise-OptiPlex-990:~/Downloads/Telegram Desktop/nostr-w-relay-main (2)/nostr-w-relay-main/src/views/components/login/odoo-nostr-project$ sudo docker-compose down
+sudo docker-compose build
+sudo docker-compose up -d
+ping google.com -c 10 # wait 10 seconds
+sudo docker ps
+sudo docker logs odoo-nostr-project-odoo-1
+ping google.com -c 10 # wait 10 seconds
+sudo docker exec -it odoo-nostr-project-odoo-1 /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf -d odoodb -u nostr_bridge
+ping google.com -c 10 # wait 10 seconds
+sudo docker logs odoo-nostr-project-odoo-1
+[+] Running 3/3
+ ✔ Container odoo-nostr-project-odoo-1      Removed                                                                                                                                                      1.0s 
+ ✔ Container odoo-nostr-project-postgres-1  Removed                                                                                                                                                      0.5s 
+ ✔ Network odoo-nostr-project_default       Removed                                                                                                                                                      0.4s 
+[+] Building 0.9s (26/26) FINISHED                                                                                                                                                             docker:default
+ => [odoo internal] load .dockerignore                                                                                                                                                                   0.1s
+ => => transferring context: 2B                                                                                                                                                                          0.0s
+ => [odoo internal] load build definition from Dockerfile                                                                                                                                                0.1s
+ => => transferring dockerfile: 2.02kB                                                                                                                                                                   0.0s
+ => [odoo internal] load metadata for docker.io/library/ubuntu:22.04                                                                                                                                     0.4s
+ => [odoo  1/21] FROM docker.io/library/ubuntu:22.04@sha256:adbb90115a21969d2fe6fa7f9af4253e16d45f8d4c1e930182610c4731962658                                                                             0.0s
+ => [odoo internal] load build context                                                                                                                                                                   0.0s
+ => => transferring context: 76B                                                                                                                                                                         0.0s
+ => CACHED [odoo  2/21] RUN apt-get update && apt-get install -y     python3 python3-pip python3-dev python3-venv     postgresql-client     nodejs npm     git     wget     libxml2-dev libxslt1-dev     0.0s
+ => CACHED [odoo  3/21] RUN useradd -m -d /opt/odoo -U -r -s /bin/bash odoo                                                                                                                              0.0s
+ => CACHED [odoo  4/21] RUN git clone https://github.com/odoo/odoo.git --depth 1 --branch 16.0 /opt/odoo/odoo                                                                                            0.0s
+ => CACHED [odoo  5/21] RUN git clone https://github.com/openeducat/openeducat_erp.git --depth 1 --branch 16.0 /opt/odoo/openeducat                                                                      0.0s
+ => CACHED [odoo  6/21] RUN pip3 install --upgrade pip                                                                                                                                                   0.0s
+ => CACHED [odoo  7/21] RUN pip3 install --no-cache-dir -r /opt/odoo/odoo/requirements.txt                                                                                                               0.0s
+ => CACHED [odoo  8/21] RUN pip3 install cryptography pyopenssl==22.1.0 psycopg2-binary                                                                                                                  0.0s
+ => CACHED [odoo  9/21] RUN pip3 install nostr                                                                                                                                                           0.0s
+ => CACHED [odoo 10/21] RUN cp -r /opt/odoo/openeducat/* /opt/odoo/odoo/addons/                                                                                                                          0.0s
+ => CACHED [odoo 11/21] COPY ./nostr_auth.py /opt/odoo/                                                                                                                                                  0.0s
+ => CACHED [odoo 12/21] COPY ./custom_odoo_server.py /opt/odoo/                                                                                                                                          0.0s
+ => CACHED [odoo 13/21] RUN mkdir -p /etc/odoo                                                                                                                                                           0.0s
+ => CACHED [odoo 14/21] RUN chown -R odoo:odoo /opt/odoo /etc/odoo                                                                                                                                       0.0s
+ => CACHED [odoo 15/21] RUN chmod +x /opt/odoo/custom_odoo_server.py                                                                                                                                     0.0s
+ => CACHED [odoo 16/21] RUN mkdir -p /var/lib/odoo                                                                                                                                                       0.0s
+ => CACHED [odoo 17/21] RUN chown -R odoo:odoo /var/lib/odoo                                                                                                                                             0.0s
+ => CACHED [odoo 18/21] RUN echo "from OpenSSL import crypto" > /tmp/patch_openssl.py                                                                                                                    0.0s
+ => CACHED [odoo 19/21] RUN echo "if not hasattr(crypto, 'X509_V_FLAG_EXPLICIT_POLICY'):" >> /tmp/patch_openssl.py                                                                                       0.0s
+ => CACHED [odoo 20/21] RUN echo "    crypto.X509_V_FLAG_EXPLICIT_POLICY = 0x8000" >> /tmp/patch_openssl.py                                                                                              0.0s
+ => CACHED [odoo 21/21] RUN echo "exec(open('/tmp/patch_openssl.py').read())" >> /opt/odoo/odoo/odoo/addons/base/models/ir_mail_server.py                                                                0.0s
+ => [odoo] exporting to image                                                                                                                                                                            0.0s
+ => => exporting layers                                                                                                                                                                                  0.0s
+ => => writing image sha256:2642ac35ca064d3c728abc1909771b1df63edf809f23eb8da636b218a457ea10                                                                                                             0.0s
+ => => naming to docker.io/library/odoo-nostr-project-odoo                                                                                                                                               0.0s
+[+] Running 3/3
+ ✔ Network odoo-nostr-project_default       Created                                                                                                                                                      0.1s 
+ ✔ Container odoo-nostr-project-postgres-1  Started                                                                                                                                                      0.2s 
+ ✔ Container odoo-nostr-project-odoo-1      Started                                                                                                                                                      0.1s 
+PING google.com (142.250.72.110) 56(84) bytes of data.
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=1 ttl=116 time=16.2 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=2 ttl=116 time=17.5 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=3 ttl=116 time=18.1 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=4 ttl=116 time=18.9 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=5 ttl=116 time=18.9 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=6 ttl=116 time=18.1 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=7 ttl=116 time=18.4 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=8 ttl=116 time=15.2 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=9 ttl=116 time=16.7 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=10 ttl=116 time=18.4 ms
+
+--- google.com ping statistics ---
+10 packets transmitted, 10 received, 0% packet loss, time 9012ms
+rtt min/avg/max/mdev = 15.231/17.637/18.903/1.164 ms
+CONTAINER ID   IMAGE                     COMMAND                  CREATED          STATUS         PORTS                                       NAMES
+4d6d3f1985ef   odoo-nostr-project-odoo   "/opt/odoo/odoo/odoo…"   11 seconds ago   Up 9 seconds   0.0.0.0:8080->8069/tcp, :::8080->8069/tcp   odoo-nostr-project-odoo-1
+527e74c94a17   postgres:14               "docker-entrypoint.s…"   11 seconds ago   Up 9 seconds   5432/tcp                                    odoo-nostr-project-postgres-1
+2024-08-18 19:57:45,189 1 INFO ? odoo: Odoo version 16.0 
+2024-08-18 19:57:45,190 1 INFO ? odoo: Using configuration file at /etc/odoo/odoo.conf 
+2024-08-18 19:57:45,190 1 INFO ? odoo: addons paths: ['/opt/odoo/odoo/odoo/addons', '/opt/odoo/.local/share/Odoo/addons/16.0', '/opt/odoo/odoo/addons', '/opt/odoo/custom_addons'] 
+2024-08-18 19:57:45,190 1 INFO ? odoo: database: odoo@postgres:5432 
+2024-08-18 19:57:45,413 1 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltopdf to print a pdf version of the reports. 
+2024-08-18 19:57:45,796 1 INFO ? odoo.service.server: HTTP service (werkzeug) running on 4d6d3f1985ef:8069 
+2024-08-18 19:57:45,842 1 INFO odoodb odoo.modules.loading: loading 1 modules... 
+2024-08-18 19:57:45,851 1 INFO odoodb odoo.modules.loading: 1 modules loaded in 0.01s, 0 queries (+0 extra) 
+2024-08-18 19:57:45,974 1 WARNING odoodb odoo.modules.module: Missing `license` key in manifest for 'nostr_auth', defaulting to LGPL-3 
+2024-08-18 19:57:45,997 1 INFO odoodb odoo.modules.loading: loading 72 modules... 
+2024-08-18 19:57:47,548 1 INFO odoodb odoo.modules.loading: 72 modules loaded in 1.55s, 0 queries (+0 extra) 
+2024-08-18 19:57:47,718 1 INFO odoodb odoo.modules.loading: Modules loaded. 
+2024-08-18 19:57:47,725 1 INFO odoodb odoo.modules.registry: Registry loaded in 1.930s 
+2024-08-18 19:57:47,748 1 INFO odoodb odoo.addons.base.models.ir_http: Generating routing map for key 1 
+2024-08-18 19:57:48,048 1 INFO odoodb werkzeug: 172.19.0.1 - - [18/Aug/2024 19:57:48] "GET /websocket HTTP/1.1" 101 - 10 0.009 0.591
+2024-08-18 19:57:48,056 1 INFO ? odoo.addons.bus.models.bus: Bus.loop listen imbus on db postgres 
+2024-08-18 19:57:50,877 1 INFO odoodb werkzeug: 172.19.0.1 - - [18/Aug/2024 19:57:50] "GET /websocket HTTP/1.1" 101 - 2 0.001 0.004
+PING google.com (142.250.72.110) 56(84) bytes of data.
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=1 ttl=116 time=16.4 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=2 ttl=116 time=17.7 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=3 ttl=116 time=18.5 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=4 ttl=116 time=18.9 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=5 ttl=116 time=18.2 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=6 ttl=116 time=19.8 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=7 ttl=116 time=17.5 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=8 ttl=116 time=18.8 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=9 ttl=116 time=18.9 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=10 ttl=116 time=14.3 ms
+
+--- google.com ping statistics ---
+10 packets transmitted, 10 received, 0% packet loss, time 9012ms
+rtt min/avg/max/mdev = 14.295/17.901/19.811/1.496 ms
+2024-08-18 19:58:03,265 13 INFO ? odoo: Odoo version 16.0 
+2024-08-18 19:58:03,265 13 INFO ? odoo: Using configuration file at /etc/odoo/odoo.conf 
+2024-08-18 19:58:03,266 13 INFO ? odoo: addons paths: ['/opt/odoo/odoo/odoo/addons', '/opt/odoo/.local/share/Odoo/addons/16.0', '/opt/odoo/odoo/addons', '/opt/odoo/custom_addons'] 
+2024-08-18 19:58:03,266 13 INFO ? odoo: database: odoo@postgres:5432 
+2024-08-18 19:58:03,422 13 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltopdf to print a pdf version of the reports. 
+Exception in thread odoo.service.httpd:
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/threading.py", line 1016, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.10/threading.py", line 953, in run
+    self._target(*self._args, **self._kwargs)
+  File "/opt/odoo/odoo/odoo/service/server.py", line 516, in http_thread
+    self.httpd = ThreadedWSGIServerReloadable(self.interface, self.port, self.app)
+  File "/opt/odoo/odoo/odoo/service/server.py", line 181, in __init__
+    super(ThreadedWSGIServerReloadable, self).__init__(host, port, app,
+  File "/usr/local/lib/python3.10/dist-packages/werkzeug/serving.py", line 688, in __init__
+    super().__init__(server_address, handler)  # type: ignore
+  File "/usr/lib/python3.10/socketserver.py", line 452, in __init__
+    self.server_bind()
+  File "/opt/odoo/odoo/odoo/service/server.py", line 197, in server_bind
+    super(ThreadedWSGIServerReloadable, self).server_bind()
+  File "/usr/lib/python3.10/http/server.py", line 137, in server_bind
+    socketserver.TCPServer.server_bind(self)
+  File "/usr/lib/python3.10/socketserver.py", line 466, in server_bind
+    self.socket.bind(self.server_address)
+OSError: [Errno 98] Address already in use
+2024-08-18 19:58:03,632 13 INFO odoodb odoo.modules.loading: loading 1 modules... 
+2024-08-18 19:58:03,642 13 INFO odoodb odoo.modules.loading: 1 modules loaded in 0.01s, 0 queries (+0 extra) 
+2024-08-18 19:58:03,718 13 INFO odoodb odoo.modules.loading: updating modules list 
+2024-08-18 19:58:03,718 13 INFO odoodb odoo.addons.base.models.ir_module: ALLOW access to module.update_list on [] to user __system__ #1 via n/a 
+2024-08-18 19:58:03,863 13 WARNING odoodb odoo.modules.module: Missing `license` key in manifest for 'custom_auth', defaulting to LGPL-3 
+2024-08-18 19:58:04,298 13 WARNING odoodb odoo.modules.module: Missing `license` key in manifest for 'nostr_auth', defaulting to LGPL-3 
+2024-08-18 19:58:04,658 13 INFO odoodb odoo.addons.base.models.ir_module: ALLOW access to module.button_upgrade on ['Nostr Bridge'] to user __system__ #1 via n/a 
+2024-08-18 19:58:04,658 13 INFO odoodb odoo.addons.base.models.ir_module: ALLOW access to module.update_list on ['Nostr Bridge'] to user __system__ #1 via n/a 
+2024-08-18 19:58:05,362 13 INFO odoodb odoo.addons.base.models.ir_module: ALLOW access to module.button_install on [] to user __system__ #1 via n/a 
+2024-08-18 19:58:05,400 13 INFO odoodb odoo.modules.loading: loading 72 modules... 
+2024-08-18 19:58:05,579 13 INFO odoodb odoo.modules.loading: Loading module nostr_bridge (28/72) 
+2024-08-18 19:58:05,774 13 INFO odoodb odoo.modules.registry: module nostr_bridge: creating or updating database tables 
+2024-08-18 19:58:06,052 13 INFO odoodb odoo.modules.loading: loading nostr_bridge/views/res_config_settings_views.xml 
+2024-08-18 19:58:06,142 13 INFO odoodb odoo.modules.loading: loading nostr_bridge/views/res_users_views.xml 
+2024-08-18 19:58:06,221 13 INFO odoodb odoo.modules.loading: loading nostr_bridge/views/res_partner_views.xml 
+2024-08-18 19:58:06,274 13 INFO odoodb odoo.modules.loading: Module nostr_bridge loaded in 0.70s, 191 queries (+191 other) 
+2024-08-18 19:58:06,616 13 INFO odoodb odoo.modules.loading: 72 modules loaded in 1.22s, 191 queries (+191 extra) 
+2024-08-18 19:58:07,234 13 INFO odoodb odoo.modules.registry: verifying fields for every extended model 
+2024-08-18 19:58:07,752 13 INFO odoodb odoo.modules.loading: Modules loaded. 
+2024-08-18 19:58:07,763 13 INFO odoodb odoo.modules.registry: Registry loaded in 4.175s 
+^C2024-08-18 19:58:11,179 13 INFO odoodb odoo.service.server: Initiating shutdown 
+2024-08-18 19:58:11,179 13 INFO odoodb odoo.service.server: Hit CTRL-C again or send a second signal to force the shutdown. 
+2024-08-18 19:58:11,180 13 INFO odoodb odoo.sql_db: ConnectionPool(used=0/count=0/max=64): Closed 3 connections  
+PING google.com (142.250.72.110) 56(84) bytes of data.
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=1 ttl=116 time=15.6 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=2 ttl=116 time=19.0 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=3 ttl=116 time=20.9 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=4 ttl=116 time=19.7 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=5 ttl=116 time=16.5 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=6 ttl=116 time=18.2 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=7 ttl=116 time=17.9 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=8 ttl=116 time=18.3 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=9 ttl=116 time=17.8 ms
+64 bytes from lga34s32-in-f14.1e100.net (142.250.72.110): icmp_seq=10 ttl=116 time=17.9 ms
+
+--- google.com ping statistics ---
+10 packets transmitted, 10 received, 0% packet loss, time 9012ms
+rtt min/avg/max/mdev = 15.636/18.173/20.867/1.400 ms
+2024-08-18 19:57:45,189 1 INFO ? odoo: Odoo version 16.0 
+2024-08-18 19:57:45,190 1 INFO ? odoo: Using configuration file at /etc/odoo/odoo.conf 
+2024-08-18 19:57:45,190 1 INFO ? odoo: addons paths: ['/opt/odoo/odoo/odoo/addons', '/opt/odoo/.local/share/Odoo/addons/16.0', '/opt/odoo/odoo/addons', '/opt/odoo/custom_addons'] 
+2024-08-18 19:57:45,190 1 INFO ? odoo: database: odoo@postgres:5432 
+2024-08-18 19:57:45,413 1 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltopdf to print a pdf version of the reports. 
+2024-08-18 19:57:45,796 1 INFO ? odoo.service.server: HTTP service (werkzeug) running on 4d6d3f1985ef:8069 
+2024-08-18 19:57:45,842 1 INFO odoodb odoo.modules.loading: loading 1 modules... 
+2024-08-18 19:57:45,851 1 INFO odoodb odoo.modules.loading: 1 modules loaded in 0.01s, 0 queries (+0 extra) 
+2024-08-18 19:57:45,974 1 WARNING odoodb odoo.modules.module: Missing `license` key in manifest for 'nostr_auth', defaulting to LGPL-3 
+2024-08-18 19:57:45,997 1 INFO odoodb odoo.modules.loading: loading 72 modules... 
+2024-08-18 19:57:47,548 1 INFO odoodb odoo.modules.loading: 72 modules loaded in 1.55s, 0 queries (+0 extra) 
+2024-08-18 19:57:47,718 1 INFO odoodb odoo.modules.loading: Modules loaded. 
+2024-08-18 19:57:47,725 1 INFO odoodb odoo.modules.registry: Registry loaded in 1.930s 
+2024-08-18 19:57:47,748 1 INFO odoodb odoo.addons.base.models.ir_http: Generating routing map for key 1 
+2024-08-18 19:57:48,048 1 INFO odoodb werkzeug: 172.19.0.1 - - [18/Aug/2024 19:57:48] "GET /websocket HTTP/1.1" 101 - 10 0.009 0.591
+2024-08-18 19:57:48,056 1 INFO ? odoo.addons.bus.models.bus: Bus.loop listen imbus on db postgres 
+2024-08-18 19:57:50,877 1 INFO odoodb werkzeug: 172.19.0.1 - - [18/Aug/2024 19:57:50] "GET /websocket HTTP/1.1" 101 - 2 0.001 0.004
+impromise@impromise-OptiPlex-990:~/Downloads/Telegram Desktop/nostr-w-relay-main (2)/nostr-w-relay-main/src/views/components/login/odoo-nostr-project$ sudo docker logs odoo-nostr-project-odoo-1
+2024-08-18 19:57:45,189 1 INFO ? odoo: Odoo version 16.0 
+2024-08-18 19:57:45,190 1 INFO ? odoo: Using configuration file at /etc/odoo/odoo.conf 
+2024-08-18 19:57:45,190 1 INFO ? odoo: addons paths: ['/opt/odoo/odoo/odoo/addons', '/opt/odoo/.local/share/Odoo/addons/16.0', '/opt/odoo/odoo/addons', '/opt/odoo/custom_addons'] 
+2024-08-18 19:57:45,190 1 INFO ? odoo: database: odoo@postgres:5432 
+2024-08-18 19:57:45,413 1 INFO ? odoo.addons.base.models.ir_actions_report: You need Wkhtmltopdf to print a pdf version of the reports. 
+2024-08-18 19:57:45,796 1 INFO ? odoo.service.server: HTTP service (werkzeug) running on 4d6d3f1985ef:8069 
+2024-08-18 19:57:45,842 1 INFO odoodb odoo.modules.loading: loading 1 modules... 
+2024-08-18 19:57:45,851 1 INFO odoodb odoo.modules.loading: 1 modules loaded in 0.01s, 0 queries (+0 extra) 
+2024-08-18 19:57:45,974 1 WARNING odoodb odoo.modules.module: Missing `license` key in manifest for 'nostr_auth', defaulting to LGPL-3 
+2024-08-18 19:57:45,997 1 INFO odoodb odoo.modules.loading: loading 72 modules... 
+2024-08-18 19:57:47,548 1 INFO odoodb odoo.modules.loading: 72 modules loaded in 1.55s, 0 queries (+0 extra) 
+2024-08-18 19:57:47,718 1 INFO odoodb odoo.modules.loading: Modules loaded. 
+2024-08-18 19:57:47,725 1 INFO odoodb odoo.modules.registry: Registry loaded in 1.930s 
+2024-08-18 19:57:47,748 1 INFO odoodb odoo.addons.base.models.ir_http: Generating routing map for key 1 
+2024-08-18 19:57:48,048 1 INFO odoodb werkzeug: 172.19.0.1 - - [18/Aug/2024 19:57:48] "GET /websocket HTTP/1.1" 101 - 10 0.009 0.591
+2024-08-18 19:57:48,056 1 INFO ? odoo.addons.bus.models.bus: Bus.loop listen imbus on db postgres 
+2024-08-18 19:57:50,877 1 INFO odoodb werkzeug: 172.19.0.1 - - [18/Aug/2024 19:57:50] "GET /websocket HTTP/1.1" 101 - 2 0.001 0.004
+2024-08-18 19:58:26,742 1 WARNING ? odoo.modules.module: Missing `license` key in manifest for 'custom_auth', defaulting to LGPL-3 
+2024-08-18 19:58:26,764 1 INFO odoodb werkzeug: 172.19.0.1 - - [18/Aug/2024 19:58:26] "POST /mail/channel/notify_typing HTTP/1.1" 200 - 11 0.005 0.303
+2024-08-18 19:58:32,245 1 INFO odoodb odoo.addons.nostr_bridge.models.mail_message: Creating new mail messages 
+2024-08-18 19:58:32,255 1 INFO odoodb odoo.addons.nostr_bridge.models.mail_message: Attempting to publish message to Nostr: 583 
+2024-08-18 19:58:32,255 1 INFO odoodb odoo.addons.nostr_bridge.models.mail_message: Event data prepared: {'kind': 1, 'content': Markup('<p>13th Test from Odoo to Nostr!</p>'), 'tags': [[], [], ['client', 'Odoo Nostr Bridge']]} 
+2024-08-18 19:58:32,255 1 INFO odoodb odoo.addons.nostr_bridge.models.nostr_adapter: Publishing event to Nostr: {'kind': 1, 'content': Markup('<p>13th Test from Odoo to Nostr!</p>'), 'tags': [[], [], ['client', 'Odoo Nostr Bridge']]} 
+2024-08-18 19:58:32,255 1 INFO odoodb odoo.addons.nostr_bridge.models.nostr_adapter: Using private key: nsec1...yn90f 
+2024-08-18 19:58:32,256 1 INFO odoodb odoo.addons.nostr_bridge.models.nostr_adapter: Derived public key: b996f...77569 
+2024-08-18 19:58:32,256 1 INFO odoodb odoo.addons.nostr_bridge.models.nostr_adapter: Created event: <nostr.event.Event object at 0x7f10fd236c20> 
+2024-08-18 19:58:32,256 1 ERROR odoodb odoo.addons.nostr_bridge.models.nostr_adapter: Error publishing event to Nostr: 'Event' object has no attribute 'sign' 
+Traceback (most recent call last):
+  File "/opt/odoo/custom_addons/nostr_bridge/models/nostr_adapter.py", line 53, in publish_event
+    event.sign(private_key.hex())
+AttributeError: 'Event' object has no attribute 'sign'
+2024-08-18 19:58:32,257 1 INFO odoodb odoo.addons.nostr_bridge.models.mail_message: Nostr publish result: False 
+2024-08-18 19:58:32,257 1 INFO odoodb werkzeug: 172.19.0.1 - - [18/Aug/2024 19:58:32] "POST /mail/channel/notify_typing HTTP/1.1" 200 - 11 0.009 0.024
+2024-08-18 19:58:32,287 1 INFO odoodb werkzeug: 172.19.0.1 - - [18/Aug/2024 19:58:32] "POST /mail/message/post HTTP/1.1" 200 - 25 0.018 0.035
+2024-08-18 19:58:32,315 1 INFO odoodb werkzeug: 172.19.0.1 - - [18/Aug/2024 19:58:32] "POST /mail/link_preview HTTP/1.1" 200 - 7 0.005 0.004
+impromise@impromise-OptiPlex-990:~/Downloads/Telegram Desktop/nostr-w-relay-main (2)/nostr-w-relay-main/src/views/components/login/odoo-nostr-project$
+=== ./info.txt ===
+=== ./odoo-nostr-project/odoo.conf ===
+[options]
+addons_path = /opt/odoo/odoo/addons,/opt/odoo/odoo/odoo/addons,/opt/odoo/custom_addons
+admin_passwd = your_secure_admin_password
+db_host = postgres
+db_port = 5432
+db_user = odoo
+db_password = your_secure_password
+db_name = odoodb
+auth_method = nostr
+load_language = en_US
+=== ./odoo-nostr-project/patch_openssl.py ===
+
+=== ./odoo-nostr-project/Dockerfile ===
+FROM ubuntu:22.04
+
+ENV ODOO_VERSION 16.0
+ENV OPENEDUCAT_VERSION 16.0
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && apt-get install -y \
+    python3 python3-pip python3-dev python3-venv \
+    postgresql-client \
+    nodejs npm \
+    git \
+    wget \
+    libxml2-dev libxslt1-dev \
+    libjpeg-dev libfreetype6-dev \
+    libpq-dev \
+    build-essential \
+    libldap2-dev libsasl2-dev \
+    libssl-dev \
+    libffi-dev \
+    iputils-ping \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -m -d /opt/odoo -U -r -s /bin/bash odoo
+RUN git clone https://github.com/odoo/odoo.git --depth 1 --branch ${ODOO_VERSION} /opt/odoo/odoo
+RUN git clone https://github.com/openeducat/openeducat_erp.git --depth 1 --branch ${OPENEDUCAT_VERSION} /opt/odoo/openeducat
+
+RUN pip3 install --upgrade pip
+RUN pip3 install --no-cache-dir -r /opt/odoo/odoo/requirements.txt
+RUN pip3 install cryptography pyopenssl==22.1.0 psycopg2-binary
+RUN pip3 install nostr
+
+RUN cp -r /opt/odoo/openeducat/* /opt/odoo/odoo/addons/
+
+COPY ./nostr_auth.py /opt/odoo/
+COPY ./custom_odoo_server.py /opt/odoo/
+
+RUN mkdir -p /etc/odoo
+RUN chown -R odoo:odoo /opt/odoo /etc/odoo
+RUN chmod +x /opt/odoo/custom_odoo_server.py
+
+# Add this line before the USER odoo line
+RUN mkdir -p /var/lib/odoo
+RUN chown -R odoo:odoo /var/lib/odoo
+USER odoo
+
+RUN echo "from OpenSSL import crypto" > /tmp/patch_openssl.py
+RUN echo "if not hasattr(crypto, 'X509_V_FLAG_EXPLICIT_POLICY'):" >> /tmp/patch_openssl.py
+RUN echo "    crypto.X509_V_FLAG_EXPLICIT_POLICY = 0x8000" >> /tmp/patch_openssl.py
+# Replace the invalid import with an exec() call in the main script
+RUN echo "exec(open('/tmp/patch_openssl.py').read())" >> /opt/odoo/odoo/odoo/addons/base/models/ir_mail_server.py
+
+CMD ["python3", "/opt/odoo/custom_odoo_server.py", "-c", "/etc/odoo/odoo.conf"]
+=== ./odoo-nostr-project/start.sh ===
+#!/bin/bash
+
+docker-compose up -d
+echo "Odoo is starting up. You can access it at http://localhost:8080"
+echo "It may take a few moments for the service to be fully available."
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_auth/__init__.py ===
+from . import models
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_auth/views/res_users_views.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_users_form_nostr" model="ir.ui.view">
+        <field name="name">res.users.form.nostr</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='access_rights']" position="after">
+                <page string="Nostr Authentication" name="nostr_auth">
+                    <group>
+                        <field name="nostr_public_key"/>
+                        <field name="nostr_relay_url"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_auth/models/res_users.py ===
+# models/res_users.py
+from odoo import models, fields, api
+from odoo.exceptions import ValidationError
+import nostr  # You'll need to install the nostr library
+
+class ResUsers(models.Model):
+    _inherit = 'res.users'
+
+    nostr_public_key = fields.Char(string='Nostr Public Key', readonly=True)
+    nostr_relay_url = fields.Char(string='Nostr Relay URL')
+
+    @api.constrains('nostr_public_key')
+    def _check_nostr_public_key(self):
+        for user in self:
+            if user.nostr_public_key:
+                try:
+                    # Validate the public key format
+                    nostr.key.pub_key_from_hex(user.nostr_public_key)
+                except:
+                    raise ValidationError("Invalid Nostr public key format.")
+
+    @api.model
+    def authenticate_nostr(self, public_key, signature, message):
+        user = self.search([('nostr_public_key', '=', public_key)], limit=1)
+        if user and nostr.key.verify_signed_message_signature(signature, message, public_key):
+            return user.id
+        return False
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_auth/models/__init__.py ===
+# models/__init__.py
+from . import res_users
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_auth/controllers/main.py ===
+# controllers/main.py
+from odoo import http
+from odoo.http import request
+import json
+
+class NostrAuthController(http.Controller):
+    @http.route('/web/nostr/authenticate', type='json', auth='none')
+    def authenticate(self, public_key, signature, message):
+        uid = request.env['res.users'].sudo().authenticate_nostr(public_key, signature, message)
+        if uid:
+            request.session.authenticate(request.session.db, uid, public_key)
+            return {'success': True, 'uid': uid}
+        return {'success': False, 'error': 'Authentication failed'}
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_auth/controllers/__init__.py ===
+from . import main
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_auth/__manifest__.py ===
+# __manifest__.py
+{
+    'name': 'Nostr Authentication',
+    'version': '1.0',
+    'category': 'Authentication',
+    'summary': 'Extends user model with Nostr fields and authentication',
+    'depends': ['base', 'auth_signup'],
+    'data': [
+        'views/res_users_views.xml',
+    ],
+    'installable': True,
+    'application': False,
+    'auto_install': False,
+}
+=== ./odoo-nostr-project/odoo_custom_addons/custom_auth/models/res_users.py ===
+from odoo import models, api
+from odoo.exceptions import AccessDenied
+import requests
+
+class ResUsers(models.Model):
+    _inherit = 'res.users'
+
+    @classmethod
+    def _login(cls, db, login, password):
+        if not cls.validate_external_auth(login, password):
+            raise AccessDenied()
+        return super(ResUsers, cls)._login(db, login, password)
+
+    @classmethod
+    def validate_external_auth(cls, login, token):
+        # Replace with your actual localhost API endpoint
+        validation_url = 'http://localhost/validate_admin'
+        response = requests.post(validation_url, json={'login': login, 'token': token})
+        return response.status_code == 200 and response.json().get('is_admin', False)
+=== ./odoo-nostr-project/odoo_custom_addons/custom_auth/__manifest__.py ===
+{
+    'name': 'Custom External Authentication',
+    'version': '1.0',
+    'category': 'Hidden',
+    'summary': 'Custom authentication for external admin access',
+    'depends': ['base'],
+    'data': [],
+    'installable': True,
+}
+=== ./odoo-nostr-project/nostr_auth.py ===
+#!/usr/bin/env python3
+import sys
+import os
+
+# Add Odoo to Python path
+odoo_path = '/opt/odoo/odoo'
+sys.path.append(odoo_path)
+
+import odoo
+from odoo.tools import config
+# from nostr_auth import authenticate_user
+
+def authenticate_user(public_key, private_key):
+    # Generate a random challenge
+    challenge = os.urandom(32).hex()
+    
+    # Sign the challenge with the private key
+    private_key_int = int(private_key, 16)
+    private_key_obj = ec.derive_private_key(private_key_int, ec.SECP256K1())
+    signature = private_key_obj.sign(challenge.encode('utf-8'), ec.ECDSA(hashes.SHA256()))
+    
+    # Verify the signature
+    if verify_nostr_signature(public_key, challenge, signature.hex()):
+        # Check if user exists in Odoo database
+        conn = psycopg2.connect(
+            dbname="odoodb",
+            user="odoo",
+            password="your_secure_password",
+            host="localhost",
+            port="5432"
+        )
+        cur = conn.cursor()
+        cur.execute("SELECT id FROM res_users WHERE login = %s", (public_key,))
+        user = cur.fetchone()
+        
+        if user:
+            return user[0]  # Return user ID if exists
+        else:
+            # Create new user
+            cur.execute("INSERT INTO res_users (login, password) VALUES (%s, %s) RETURNING id", (public_key, hashlib.sha256(private_key.encode()).hexdigest()))
+            new_user_id = cur.fetchone()[0]
+            conn.commit()
+            return new_user_id
+    else:
+        return None
+
+if __name__ == "__main__":
+    config.parse_config(sys.argv[1:])
+    
+    if config.get('auth_method') == 'nostr':
+        def check_security(method, *args, **kwargs):
+            # Get Nostr public and private keys from request
+            public_key = odoo.http.request.params.get('public_key')
+            private_key = odoo.http.request.params.get('private_key')
+            
+            if not public_key or not private_key:
+                raise odoo.exceptions.AccessDenied()
+            
+            user_id = authenticate_user(public_key, private_key)
+            if user_id:
+                odoo.http.request.uid = user_id
+            else:
+                raise odoo.exceptions.AccessDenied()
+        
+        odoo.http.root.check_security = check_security
+    
+    odoo.cli.main()
+=== ./odoo-nostr-project/docker-compose.yml ===
+version: '3'
+services:
+  postgres:
+    image: postgres:14
+    environment:
+      - POSTGRES_DB=odoodb
+      - POSTGRES_PASSWORD=your_secure_password
+      - POSTGRES_USER=odoo
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  odoo:
+    build: .
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8069"
+    volumes:
+      - odoo-data:/opt/odoo/.local/share/Odoo
+      - ./odoo.conf:/etc/odoo/odoo.conf
+      - ./odoo_custom_addons:/opt/odoo/custom_addons
+      - ./custom_odoo_server.py:/opt/odoo/custom_odoo_server.py
+      - ./patch_openssl.py:/tmp/patch_openssl.py
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=odoo
+      - DB_PASSWORD=your_secure_password
+      - DB_NAME=odoodb
+
+volumes:
+  pgdata:
+  odoo-data:
+=== ./odoo-nostr-project/custom_odoo_server.py ===
+#!/usr/bin/env python3
+#import sys
+#import os
+
+import sys
+import os
+import ssl
+import OpenSSL
+
+print("Python version:", sys.version)
+print("OpenSSL version:", ssl.OPENSSL_VERSION)
+print("pyOpenSSL version:", OpenSSL.__version__)
+print("OpenSSL crypto attributes:", dir(OpenSSL.crypto))
+
+# Add Odoo to Python path
+odoo_path = '/opt/odoo/odoo'
+sys.path.append(odoo_path)
+
+import odoo
+from odoo.tools import config
+from nostr_auth import authenticate_user
+
+if __name__ == "__main__":
+    config.parse_config(sys.argv[1:])
+    
+    if 'load_language' not in config.options:
+        config.options['load_language'] = None
+    
+    if config.get('auth_method') == 'nostr':
+        def check_security(method, *args, **kwargs):
+            # Get Nostr public and private keys from request
+            public_key = odoo.http.request.params.get('public_key')
+            private_key = odoo.http.request.params.get('private_key')
+            
+            if not public_key or not private_key:
+                raise odoo.exceptions.AccessDenied()
+            
+            user_id = authenticate_user(public_key, private_key)
+            if user_id:
+                odoo.http.request.uid = user_id
+            else:
+                raise odoo.exceptions.AccessDenied()
+        
+        odoo.http.root.check_security = check_security
+
+    # Force database initialization
+    db_name = config['db_name']
+    if not odoo.service.db.exp_db_exist(db_name):
+        odoo.service.db.exp_create_database(
+            db_name,
+            demo=False,
+            lang='en_US',
+            user_password='admin'
+        )
+        print(f"Database '{db_name}' created.")
+    else:
+        print(f"Database '{db_name}' already exists.")
+
+    # Initialize the database with base module
+    odoo.modules.registry.Registry.new(db_name, update_module=True)
+    
+    odoo.cli.main()

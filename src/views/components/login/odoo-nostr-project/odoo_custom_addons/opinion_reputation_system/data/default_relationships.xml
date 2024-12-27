@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="relationship_father" model="opinion.relationship">
+            <field name="name">Father</field>
+        </record>
+        <record id="relationship_mother" model="opinion.relationship">
+            <field name="name">Mother</field>
+        </record>
+        <record id="relationship_son" model="opinion.relationship">
+            <field name="name">Son</field>
+        </record>
+        <record id="relationship_daughter" model="opinion.relationship">
+            <field name="name">Daughter</field>
+        </record>
+        <record id="relationship_stepfather" model="opinion.relationship">
+            <field name="name">Stepfather</field>
+        </record>
+        <record id="relationship_stepmother" model="opinion.relationship">
+            <field name="name">Stepmother</field>
+        </record>
+        <record id="relationship_brother" model="opinion.relationship">
+            <field name="name">Brother</field>
+        </record>
+        <record id="relationship_sister" model="opinion.relationship">
+            <field name="name">Sister</field>
+        </record>
+        <!-- Add more relationships as needed -->
+    </data>
+</odoo>

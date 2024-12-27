@@ -1,0 +1,105 @@
+<!DOCTYPE html><html dir="ltr" xmlns="http://www.w3.org/1999/xhtml"><head lang="en">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta name="viewport" content="user-scalable=1.0,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="robots" content="noindex,nofollow">
+    <link type="text/css" href="/styles/style.css" media="screen" rel="stylesheet" title="CSS">
+    <link rel="apple-touch-icon" href="/favicon-303x303.png">
+    <script type="text/javascript" src="scripts/common-0.0.1{{min}}.js"></script>
+    <title id="topTitle">{{{title}}}</title>
+</head>
+<body>
+    <div id="container" style="max-height:100vh">
+        <div id="mastheadx"></div>
+        <div id="masthead" style="background:url(logo.png) 0px 0px;background-color:#036;background-repeat:no-repeat;height:66px;width:100%;overflow:hidden">
+            <div style="float:left;text-shadow: 1px 1px 2px #000">{{{titlehtml}}}</div>
+            <div style="float:left;height:66px;color:#c8c8c8;padding-left:14px;padding-top:7px">
+                <strong><font style="font-size:46px;font-family:Arial,Helvetica,sans-serif;text-shadow: 1px 1px 2px #000">{{{title1}}}</font></strong>
+            </div>
+            <div style="float:left;height:66px;color:#c8c8c8;padding-left:5px;padding-top:14px">
+                <strong><font style="font-size:14px;font-family:Arial,Helvetica,sans-serif;text-shadow: 1px 1px 2px #000">{{{title2}}}</font></strong>
+            </div>
+        </div>
+        <div id="page_content" style="max-height:calc(100vh-138px)">
+            <div id="column_l">
+                <h1 id="mainTitle"></h1>
+                <p id="mainMessage"></p>
+                <br>
+            </div>
+            <div id="footer">
+                <table cellpadding="0" cellspacing="10" style="width:100%">
+                    <tbody><tr>
+                        <td style="text-align:left"></td>
+                        <td style="text-align:right">
+                            <a href="terms">Termos e Privacidade</a>
+                        </td>
+                    </tr>
+                </tbody></table>
+            </div>
+        </div>
+    </div>
+    <script>
+        var random = '{{{randomlength}}}' // Random length string for BREACH mitigation
+        var titleid = parseInt('{{{titleid}}}');
+        var msgid = parseInt('{{{msgid}}}');
+        var domainurl = decodeURIComponent('{{{domainurl}}}');
+        var arg1 = decodeURIComponent('{{{arg1}}}');
+        var arg2 = decodeURIComponent('{{{arg2}}}');
+        var urlargs = parseUriArgs();
+
+        var title = '';
+        if (titleid == 1) { title = "Verificação de conta"; }
+        if (titleid == 2) { title = "Compartilhamento de área de trabalho"; }
+        if (titleid == 3) { title = "Servidor em manutenção"; }
+        if (titleid == 4) { title = "Compartilhamento de terminal"; }
+        QH('topTitle', Q('topTitle').innerText + ' - ' + title);
+        QH('mainTitle', title);
+
+        var msg = '';
+        switch (msgid) {
+            case 1: { msg = "ERROR: Domínio inválido."; break; }
+            case 2: { msg = format("ERRO: Nome de usuário inválido \"{0}\".", arg1); break; }
+            case 3: { msg = format("ERRO: E-mail inválido \"{0}\" para o usuário \"{1}\".", arg1, arg2); break; }
+            case 4: { msg = format("E-mail \"{0}\" para o usuário \"{1}\" já verificado.", arg1, arg2); break; }
+            case 5: { msg = format("E-mail \"{0}\" já em uso em uma conta diferente. Altere o endereço de e-mail e tente novamente.", arg1); break; }
+            case 6: { msg = format("E-mail verificado {0} para conta de usuário {1}.", '<b>' + arg1 + '</b>', '<b>' + arg2 + '</b>'); break; }
+            case 7: { msg = format("E-mail \"{0}\" para o usuário \"{1}\" não verificado.", arg1, arg2); break; }
+            case 8: {
+                msg = '<div>' + format("A senha da conta {0} foi redefinida para:", '<b>' + arg1 + '</b>') + '</div><div style=padding:14px;font-size:18px><b>' + arg2 + '</b></div>';
+                msg += "Faça login e vá para a guia \"Minha conta\" para atualizar sua senha.";
+                break;
+            }
+            case 9: { msg = "ERRO: verificação de conta inválida."; break; }
+            case 10: { msg = "ERRO: verificação de conta inválida, url de verificação só é válido por 30 minutos."; break; }
+            case 11: { msg = "O link de compartilhamento ainda não é válido."; break; }
+            case 12: { msg = "O link de compartilhamento expirou."; break; }
+            case 13: { msg = "Se você é um administrador, [faça o login aqui].".replace('[', '<a href=login?loginscreen=1>').replace(']', '</a>'); break; }
+            case 14: { msg = '<a href=' + window.location.href + '&confirm=1>' + "Clique aqui para redefinir a senha da sua conta." + '</a>'; break; }
+        }
+
+        // Add login page link
+        if ((msgid != 11) && (msgid != 12) && (msgid != 13) && (msgid != 14)) { msg += ' <a href="' + domainurl + (urlargs.key ? ('?key=' + urlargs.key) : '') + '">' + "Vá para a página de login" + '</a>.' }
+        QH('mainMessage', msg);
+
+        function format(format) { var args = Array.prototype.slice.call(arguments, 1); return format.replace(/{(\d+)}/g, function (match, number) { return typeof args[number] != 'undefined' ? args[number] : match; }); };
+
+        // Parse URL arguments, only keep safe values
+        function parseUriArgs() {
+            var href = window.document.location.href;
+            if (href.endsWith('#')) { href = href.substring(0, href.length - 1); }
+            var name, r = {}, parsedUri = href.split(/[\?&|]/);
+            parsedUri.splice(0, 1);
+            for (var j in parsedUri) {
+                var arg = parsedUri[j], i = arg.indexOf('=');
+                name = arg.substring(0, i);
+                r[name] = arg.substring(i + 1);
+                if (!isSafeString(r[name])) { delete r[name]; } else { var x = parseInt(r[name]); if (x == r[name]) { r[name] = x; } }
+            }
+            return r;
+        }
+
+    </script>
+
+</body></html>

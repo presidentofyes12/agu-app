@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Nostr Identity Views -->
+    <record id="view_nostr_identity_tree" model="ir.ui.view">
+        <field name="name">nostr.identity.tree</field>
+        <field name="model">nostr.identity</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="public_key"/>
+                <field name="public_key_bech32"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_nostr_identity_form" model="ir.ui.view">
+        <field name="name">nostr.identity.form</field>
+        <field name="model">nostr.identity</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="public_key"/>
+                        <field name="public_key_bech32"/>
+                        <field name="relay_urls"/>
+                        <field name="profile_data"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- The rest of the XML remains unchanged -->
+    <!-- Nostr Identity Verifier Views -->
+    <record id="view_nostr_identity_verifier_tree" model="ir.ui.view">
+        <field name="name">nostr.identity.verifier.tree</field>
+        <field name="model">nostr.identity.verifier</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="relay_url"/>
+                <field name="websocket_state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_nostr_identity_verifier_form" model="ir.ui.view">
+        <field name="name">nostr.identity.verifier.form</field>
+        <field name="model">nostr.identity.verifier</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="connect_to_relay" string="Connect" type="object" class="oe_highlight" attrs="{'invisible': [('websocket_state', '=', 'connected')]}"/>
+                    <button name="close_connection" string="Disconnect" type="object" attrs="{'invisible': [('websocket_state', '!=', 'connected')]}"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="relay_url"/>
+                        <field name="active"/>
+                        <field name="websocket_state"/>
+                        <field name="last_error"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action Windows -->
+    <record id="action_nostr_identity" model="ir.actions.act_window">
+        <field name="name">Nostr Identities</field>
+        <field name="res_model">nostr.identity</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_nostr_identity_verifier" model="ir.actions.act_window">
+        <field name="name">Nostr Identity Verifiers</field>
+        <field name="res_model">nostr.identity.verifier</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_nostr_root" name="Nostr" sequence="10"/>
+    <menuitem id="menu_nostr_identity" name="Identities" parent="menu_nostr_root" action="action_nostr_identity" sequence="10"/>
+    <menuitem id="menu_nostr_identity_verifier" name="Verifiers" parent="menu_nostr_root" action="action_nostr_identity_verifier" sequence="20"/>
+</odoo>

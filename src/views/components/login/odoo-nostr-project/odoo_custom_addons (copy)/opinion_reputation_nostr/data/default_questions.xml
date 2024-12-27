@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Add your default questions here -->
+        <record id="question_1" model="opinion.question">
+            <field name="text">Do life's challenges sometimes lead to self-doubt?</field>
+            <field name="explanation">Sometimes when things get tough, we might wonder if we're good enough or if we can handle it.</field>
+        </record>
+        <!-- Add more questions as needed -->
+    </data>
+</odoo>

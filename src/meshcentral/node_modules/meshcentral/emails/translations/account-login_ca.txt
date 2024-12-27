@@ -1,0 +1,4 @@
+[[[SERVERNAME]]] - Inici de sessió al compte
+El vostre testimoni d'inici de sessió és: [[[TOKEN]]]
+~
+Aquest testimoni només es pot utilitzar una vegada i té una validesa de 5 minuts.

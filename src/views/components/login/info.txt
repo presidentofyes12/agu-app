@@ -1,0 +1,350 @@
+=== ./odoo-nostr-project/odoo.conf ===
+[options]
+addons_path = /opt/odoo/odoo/addons,/opt/odoo/odoo/odoo/addons,/opt/odoo/custom_addons
+admin_passwd = your_secure_admin_password
+db_host = postgres
+db_port = 5432
+db_user = odoo
+db_password = your_secure_password
+db_name = odoodb
+auth_method = nostr
+load_language = en_US
+=== ./odoo-nostr-project/patch_openssl.py ===
+
+=== ./odoo-nostr-project/Dockerfile ===
+FROM ubuntu:22.04
+
+ENV ODOO_VERSION 16.0
+ENV OPENEDUCAT_VERSION 16.0
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && apt-get install -y \
+    python3 python3-pip python3-dev python3-venv \
+    postgresql-client \
+    nodejs npm \
+    git \
+    wget \
+    libxml2-dev libxslt1-dev \
+    libjpeg-dev libfreetype6-dev \
+    libpq-dev \
+    build-essential \
+    libldap2-dev libsasl2-dev \
+    libssl-dev \
+    libffi-dev \
+    iputils-ping \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -m -d /opt/odoo -U -r -s /bin/bash odoo
+RUN git clone https://github.com/odoo/odoo.git --depth 1 --branch ${ODOO_VERSION} /opt/odoo/odoo
+RUN git clone https://github.com/openeducat/openeducat_erp.git --depth 1 --branch ${OPENEDUCAT_VERSION} /opt/odoo/openeducat
+
+RUN pip3 install --upgrade pip
+RUN pip3 install --no-cache-dir -r /opt/odoo/odoo/requirements.txt
+RUN pip3 install cryptography pyopenssl==22.1.0 psycopg2-binary
+RUN pip3 install nostr
+
+RUN cp -r /opt/odoo/openeducat/* /opt/odoo/odoo/addons/
+
+COPY ./nostr_auth.py /opt/odoo/
+COPY ./custom_odoo_server.py /opt/odoo/
+
+RUN mkdir -p /etc/odoo
+RUN chown -R odoo:odoo /opt/odoo /etc/odoo
+RUN chmod +x /opt/odoo/custom_odoo_server.py
+
+# Add this line before the USER odoo line
+RUN mkdir -p /var/lib/odoo
+RUN chown -R odoo:odoo /var/lib/odoo
+USER odoo
+
+RUN echo "from OpenSSL import crypto" > /tmp/patch_openssl.py
+RUN echo "if not hasattr(crypto, 'X509_V_FLAG_EXPLICIT_POLICY'):" >> /tmp/patch_openssl.py
+RUN echo "    crypto.X509_V_FLAG_EXPLICIT_POLICY = 0x8000" >> /tmp/patch_openssl.py
+# Replace the invalid import with an exec() call in the main script
+RUN echo "exec(open('/tmp/patch_openssl.py').read())" >> /opt/odoo/odoo/odoo/addons/base/models/ir_mail_server.py
+
+CMD ["python3", "/opt/odoo/custom_odoo_server.py", "-c", "/etc/odoo/odoo.conf"]
+=== ./odoo-nostr-project/start.sh ===
+#!/bin/bash
+
+docker-compose up -d
+echo "Odoo is starting up. You can access it at http://localhost:8080"
+echo "It may take a few moments for the service to be fully available."
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_auth/__init__.py ===
+from . import models
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_auth/views/res_users_views.xml ===
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_users_form_nostr" model="ir.ui.view">
+        <field name="name">res.users.form.nostr</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='access_rights']" position="after">
+                <page string="Nostr Authentication" name="nostr_auth">
+                    <group>
+                        <field name="nostr_public_key"/>
+                        <field name="nostr_relay_url"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_auth/models/res_users.py ===
+# models/res_users.py
+from odoo import models, fields, api
+from odoo.exceptions import ValidationError
+import nostr  # You'll need to install the nostr library
+
+class ResUsers(models.Model):
+    _inherit = 'res.users'
+
+    nostr_public_key = fields.Char(string='Nostr Public Key', readonly=True)
+    nostr_relay_url = fields.Char(string='Nostr Relay URL')
+
+    @api.constrains('nostr_public_key')
+    def _check_nostr_public_key(self):
+        for user in self:
+            if user.nostr_public_key:
+                try:
+                    # Validate the public key format
+                    nostr.key.pub_key_from_hex(user.nostr_public_key)
+                except:
+                    raise ValidationError("Invalid Nostr public key format.")
+
+    @api.model
+    def authenticate_nostr(self, public_key, signature, message):
+        user = self.search([('nostr_public_key', '=', public_key)], limit=1)
+        if user and nostr.key.verify_signed_message_signature(signature, message, public_key):
+            return user.id
+        return False
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_auth/models/__init__.py ===
+# models/__init__.py
+from . import res_users
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_auth/controllers/main.py ===
+# controllers/main.py
+from odoo import http
+from odoo.http import request
+import json
+
+class NostrAuthController(http.Controller):
+    @http.route('/web/nostr/authenticate', type='json', auth='none')
+    def authenticate(self, public_key, signature, message):
+        uid = request.env['res.users'].sudo().authenticate_nostr(public_key, signature, message)
+        if uid:
+            request.session.authenticate(request.session.db, uid, public_key)
+            return {'success': True, 'uid': uid}
+        return {'success': False, 'error': 'Authentication failed'}
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_auth/controllers/__init__.py ===
+from . import main
+=== ./odoo-nostr-project/odoo_custom_addons/nostr_auth/__manifest__.py ===
+# __manifest__.py
+{
+    'name': 'Nostr Authentication',
+    'version': '1.0',
+    'category': 'Authentication',
+    'summary': 'Extends user model with Nostr fields and authentication',
+    'depends': ['base', 'auth_signup'],
+    'data': [
+        'views/res_users_views.xml',
+    ],
+    'installable': True,
+    'application': False,
+    'auto_install': False,
+}
+=== ./odoo-nostr-project/odoo_custom_addons/custom_auth/models/res_users.py ===
+from odoo import models, api
+from odoo.exceptions import AccessDenied
+import requests
+
+class ResUsers(models.Model):
+    _inherit = 'res.users'
+
+    @classmethod
+    def _login(cls, db, login, password):
+        if not cls.validate_external_auth(login, password):
+            raise AccessDenied()
+        return super(ResUsers, cls)._login(db, login, password)
+
+    @classmethod
+    def validate_external_auth(cls, login, token):
+        # Replace with your actual localhost API endpoint
+        validation_url = 'http://localhost/validate_admin'
+        response = requests.post(validation_url, json={'login': login, 'token': token})
+        return response.status_code == 200 and response.json().get('is_admin', False)
+=== ./odoo-nostr-project/odoo_custom_addons/custom_auth/__manifest__.py ===
+{
+    'name': 'Custom External Authentication',
+    'version': '1.0',
+    'category': 'Hidden',
+    'summary': 'Custom authentication for external admin access',
+    'depends': ['base'],
+    'data': [],
+    'installable': True,
+}
+=== ./odoo-nostr-project/nostr_auth.py ===
+#!/usr/bin/env python3
+import sys
+import os
+
+# Add Odoo to Python path
+odoo_path = '/opt/odoo/odoo'
+sys.path.append(odoo_path)
+
+import odoo
+from odoo.tools import config
+# from nostr_auth import authenticate_user
+
+def authenticate_user(public_key, private_key):
+    # Generate a random challenge
+    challenge = os.urandom(32).hex()
+    
+    # Sign the challenge with the private key
+    private_key_int = int(private_key, 16)
+    private_key_obj = ec.derive_private_key(private_key_int, ec.SECP256K1())
+    signature = private_key_obj.sign(challenge.encode('utf-8'), ec.ECDSA(hashes.SHA256()))
+    
+    # Verify the signature
+    if verify_nostr_signature(public_key, challenge, signature.hex()):
+        # Check if user exists in Odoo database
+        conn = psycopg2.connect(
+            dbname="odoodb",
+            user="odoo",
+            password="your_secure_password",
+            host="localhost",
+            port="5432"
+        )
+        cur = conn.cursor()
+        cur.execute("SELECT id FROM res_users WHERE login = %s", (public_key,))
+        user = cur.fetchone()
+        
+        if user:
+            return user[0]  # Return user ID if exists
+        else:
+            # Create new user
+            cur.execute("INSERT INTO res_users (login, password) VALUES (%s, %s) RETURNING id", (public_key, hashlib.sha256(private_key.encode()).hexdigest()))
+            new_user_id = cur.fetchone()[0]
+            conn.commit()
+            return new_user_id
+    else:
+        return None
+
+if __name__ == "__main__":
+    config.parse_config(sys.argv[1:])
+    
+    if config.get('auth_method') == 'nostr':
+        def check_security(method, *args, **kwargs):
+            # Get Nostr public and private keys from request
+            public_key = odoo.http.request.params.get('public_key')
+            private_key = odoo.http.request.params.get('private_key')
+            
+            if not public_key or not private_key:
+                raise odoo.exceptions.AccessDenied()
+            
+            user_id = authenticate_user(public_key, private_key)
+            if user_id:
+                odoo.http.request.uid = user_id
+            else:
+                raise odoo.exceptions.AccessDenied()
+        
+        odoo.http.root.check_security = check_security
+    
+    odoo.cli.main()
+=== ./odoo-nostr-project/docker-compose.yml ===
+version: '3'
+services:
+  postgres:
+    image: postgres:14
+    environment:
+      - POSTGRES_DB=odoodb
+      - POSTGRES_PASSWORD=your_secure_password
+      - POSTGRES_USER=odoo
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  odoo:
+    build: .
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8069"
+    volumes:
+      - odoo-data:/opt/odoo/.local/share/Odoo
+      - ./odoo.conf:/etc/odoo/odoo.conf
+      - ./odoo_custom_addons:/opt/odoo/custom_addons
+      - ./custom_odoo_server.py:/opt/odoo/custom_odoo_server.py
+      - ./patch_openssl.py:/tmp/patch_openssl.py
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=odoo
+      - DB_PASSWORD=your_secure_password
+      - DB_NAME=odoodb
+
+volumes:
+  pgdata:
+  odoo-data:
+=== ./odoo-nostr-project/custom_odoo_server.py ===
+#!/usr/bin/env python3
+#import sys
+#import os
+
+import sys
+import os
+import ssl
+import OpenSSL
+
+print("Python version:", sys.version)
+print("OpenSSL version:", ssl.OPENSSL_VERSION)
+print("pyOpenSSL version:", OpenSSL.__version__)
+print("OpenSSL crypto attributes:", dir(OpenSSL.crypto))
+
+# Add Odoo to Python path
+odoo_path = '/opt/odoo/odoo'
+sys.path.append(odoo_path)
+
+import odoo
+from odoo.tools import config
+from nostr_auth import authenticate_user
+
+if __name__ == "__main__":
+    config.parse_config(sys.argv[1:])
+    
+    if 'load_language' not in config.options:
+        config.options['load_language'] = None
+    
+    if config.get('auth_method') == 'nostr':
+        def check_security(method, *args, **kwargs):
+            # Get Nostr public and private keys from request
+            public_key = odoo.http.request.params.get('public_key')
+            private_key = odoo.http.request.params.get('private_key')
+            
+            if not public_key or not private_key:
+                raise odoo.exceptions.AccessDenied()
+            
+            user_id = authenticate_user(public_key, private_key)
+            if user_id:
+                odoo.http.request.uid = user_id
+            else:
+                raise odoo.exceptions.AccessDenied()
+        
+        odoo.http.root.check_security = check_security
+
+    # Force database initialization
+    db_name = config['db_name']
+    if not odoo.service.db.exp_db_exist(db_name):
+        odoo.service.db.exp_create_database(
+            db_name,
+            demo=False,
+            lang='en_US',
+            user_password='admin'
+        )
+        print(f"Database '{db_name}' created.")
+    else:
+        print(f"Database '{db_name}' already exists.")
+
+    # Initialize the database with base module
+    odoo.modules.registry.Registry.new(db_name, update_module=True)
+    
+    odoo.cli.main()

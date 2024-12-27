@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_nostr_identity_user,nostr.identity user,model_nostr_identity,base.group_user,1,1,1,0
+access_nostr_identity_manager,nostr.identity manager,model_nostr_identity,base.group_system,1,1,1,1
+access_nostr_identity_verifier_user,nostr.identity.verifier user,model_nostr_identity_verifier,base.group_user,1,0,0,0
+access_nostr_identity_verifier_manager,nostr.identity.verifier manager,model_nostr_identity_verifier,base.group_system,1,1,1,1
+access_nostr_message_user,nostr.message user,model_nostr_message,base.group_user,1,0,0,0
+access_nostr_message_manager,nostr.message manager,model_nostr_message,base.group_system,1,1,1,1

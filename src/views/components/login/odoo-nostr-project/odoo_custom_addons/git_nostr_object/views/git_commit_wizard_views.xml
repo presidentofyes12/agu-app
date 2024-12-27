@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_git_commit_wizard_form" model="ir.ui.view">
+        <field name="name">git.commit.wizard.form</field>
+        <field name="model">git.commit.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Create Commit">
+                <group>
+                    <field name="repository_id" invisible="1"/>
+                    <field name="message"/>
+                    <field name="file_name"/>
+                    <field name="file_data"/>
+                </group>
+                <footer>
+                    <button name="action_create_commit" string="Create Commit" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

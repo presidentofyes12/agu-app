@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Initial Elements -->
+        <record id="element_1" model="atom.element">
+            <field name="name">Element 1</field>
+            <field name="sequence">1</field>
+        </record>
+        <record id="element_2" model="atom.element">
+            <field name="name">Element 2</field>
+            <field name="sequence">2</field>
+        </record>
+        <record id="element_3" model="atom.element">
+            <field name="name">Element 3</field>
+            <field name="sequence">3</field>
+        </record>
+
+        <!-- Initial Atoms -->
+        <record id="atom_1" model="atom.atom">
+            <field name="name">Atom 1</field>
+        </record>
+        <record id="atom_2" model="atom.atom">
+            <field name="name">Atom 2</field>
+        </record>
+
+        <!-- Element Values for Atoms -->
+        <record id="atom_1_element_1" model="atom.element.value">
+            <field name="atom_id" ref="atom_1"/>
+            <field name="element_id" ref="element_1"/>
+            <field name="value1">1.0</field>
+            <field name="value2">2.0</field>
+            <field name="value3">3.0</field>
+        </record>
+        <record id="atom_1_element_2" model="atom.element.value">
+            <field name="atom_id" ref="atom_1"/>
+            <field name="element_id" ref="element_2"/>
+            <field name="value1">4.0</field>
+            <field name="value2">5.0</field>
+            <field name="value3">6.0</field>
+        </record>
+
+        <!-- Initial Documentation -->
+        <record id="doc_api_reference" model="atom.documentation">
+            <field name="name">Atom API Reference</field>
+            <field name="type">api</field>
+            <field name="content"><![CDATA[
+                <h1>Atom API Reference</h1>
+                <p>This is the initial API reference for the Atom System.</p>
+            ]]></field>
+            <field name="version">1.0</field>
+        </record>
+
+        <!-- Initial Best Practice -->
+        <record id="best_practice_1" model="atom.best.practice">
+            <field name="name">Use Indexed Search</field>
+            <field name="category">query_optimization</field>
+            <field name="description">When searching large datasets, always use indexed fields in your domain to improve query performance.</field>
+            <field name="example">self.env['atom.atom'].search([('indexed_field', '=', value)])</field>
+        </record>
+
+        <!-- Initial Guideline -->
+        <record id="guideline_1" model="atom.guideline">
+            <field name="name">Adding a New Data Type</field>
+            <field name="category">data_type</field>
+            <field name="description">Follow these steps to add a new data type to the Atom System...</field>
+            <field name="example_code">
+class NewDataType(models.Model):
+    _inherit = 'atom.element.value'
+    
+    new_field = fields.Char(string='New Field')
+            </field>
+        </record>
+    </data>
+</odoo>

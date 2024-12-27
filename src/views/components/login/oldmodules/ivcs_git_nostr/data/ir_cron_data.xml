@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="ir_cron_ivcs_git_nostr_sync" model="ir.cron">
+            <field name="name">IVCS Git Nostr: Sync Repositories</field>
+            <field name="model_id" ref="model_ivcs_item"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_sync_repositories()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">hours</field>
+            <field name="numbercall">-1</field>
+            <field name="doall" eval="False"/>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
+</odoo>

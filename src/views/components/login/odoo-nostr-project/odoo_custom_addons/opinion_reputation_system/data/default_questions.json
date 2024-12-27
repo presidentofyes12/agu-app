@@ -1,0 +1,388 @@
+{
+  "default_questions": [
+    {
+      "question": "Do life's challenges sometimes lead to self-doubt?",
+      "explanation": "Sometimes when things get tough, we might wonder if we're good enough or if we can handle it."
+    },
+    {
+      "question": "Can self-doubt create a desire for approval from others?",
+      "explanation": "When we're not sure about ourselves, we might want other people to tell us we're doing okay."
+    },
+    {
+      "question": "Does the desire for approval make one more susceptible to peer pressure?",
+      "explanation": "If we really want others to like us, we might be more likely to do what they want, even if we're not sure it's right."
+    },
+    {
+      "question": "Can peer pressure lead to compromising one's values in small ways?",
+      "explanation": "Sometimes, to fit in with friends, we might do little things we usually wouldn't do."
+    },
+    {
+      "question": "Do small compromises sometimes evolve into larger ethical dilemmas?",
+      "explanation": "If we start making small bad choices, it might become easier to make bigger bad choices later."
+    },
+    {
+      "question": "Can ethical dilemmas create internal conflict and stress?",
+      "explanation": "When we're not sure if something is right or wrong, it can make us feel worried and upset inside."
+    },
+    {
+      "question": "Does prolonged stress potentially lead to poor decision-making?",
+      "explanation": "If we feel stressed for a long time, it might be harder to make good choices."
+    },
+    {
+      "question": "Can poor decisions result in actions that harm others unintentionally?",
+      "explanation": "Sometimes when we make bad choices, we might accidentally hurt someone's feelings or cause problems we didn't mean to."
+    },
+    {
+      "question": "Do harmful actions, even if unintentional, sometimes lead to guilt?",
+      "explanation": "If we do something that hurts someone, even by accident, we might feel really sorry about it afterwards."
+    },
+    {
+      "question": "Can guilt, if unaddressed, manifest as more severe behavioral issues?",
+      "explanation": "If we keep feeling bad about something we did and don't talk about it, we might start acting out in other ways."
+    },
+    {
+      "question": "Do severe behavioral issues increase the likelihood of intentional wrongdoing?",
+      "explanation": "If someone is already doing a lot of bad things, they might start doing even worse things on purpose."
+    },
+    {
+      "question": "Can intentional wrongdoing lead to legal consequences and societal rejection?",
+      "explanation": "If someone chooses to do something really wrong, they might get in trouble with the law or other people might not want to be around them anymore."
+    },
+    {
+      "question": "Do life's challenges sometimes lead to self-doubt about one's self-concept?",
+      "explanation": "When things are hard, we might start to wonder if we really know who we are."
+    },
+    {
+      "question": "Can self-doubt in one's self-concept create a desire for approval from others?",
+      "explanation": "If we're not sure about who we are, we might really want other people to tell us we're okay."
+    },
+    {
+      "question": "Does the desire for approval make one's self-concept more susceptible to peer pressure?",
+      "explanation": "If we really want people to like us, we might change who we are to fit in with our friends."
+    },
+    {
+      "question": "Can peer pressure lead to compromising one's self-concept in small ways?",
+      "explanation": "To make friends happy, we might act a little different from who we really are."
+    },
+    {
+      "question": "Do small compromises in self-concept sometimes evolve into larger identity dilemmas?",
+      "explanation": "If we keep pretending to be someone we're not, we might start to forget who we really are."
+    },
+    {
+      "question": "Can identity dilemmas create internal conflict and stress about one's self-concept?",
+      "explanation": "Not being sure about who we are can make us feel really confused and worried inside."
+    },
+    {
+      "question": "Does prolonged stress potentially lead to poor decision-making regarding self-concept?",
+      "explanation": "If we feel stressed for a long time about who we are, we might make choices that don't fit with our true selves."
+    },
+    {
+      "question": "Can poor decisions about self-concept result in actions that harm others unintentionally?",
+      "explanation": "If we're confused about who we are, we might accidentally do things that hurt other people's feelings."
+    },
+    {
+      "question": "Do harmful actions stemming from self-concept issues sometimes lead to guilt?",
+      "explanation": "If we hurt someone because we're not sure about who we are, we might feel really bad about it afterwards."
+    },
+    {
+      "question": "Can guilt about one's self-concept, if unaddressed, manifest as more severe behavioral issues?",
+      "explanation": "If we keep feeling bad about who we are and don't talk about it, we might start acting out in other ways."
+    },
+    {
+      "question": "Do severe behavioral issues related to self-concept increase the likelihood of intentional wrongdoing?",
+      "explanation": "If someone is really confused about who they are, they might start doing bad things on purpose."
+    },
+    {
+      "question": "Can intentional wrongdoing due to distorted self-concept lead to legal consequences and societal rejection?",
+      "explanation": "If someone does something really wrong because they're confused about who they are, they might get in trouble with the law or lose friends."
+    },
+    {
+      "question": "Do life's challenges sometimes lead to self-doubt in one's values system?",
+      "explanation": "When things are tough, we might start to wonder if what we believe is right is actually right."
+    },
+    {
+      "question": "Can self-doubt in one's values create a desire for approval from others?",
+      "explanation": "If we're not sure about what we believe, we might want other people to tell us our ideas are good."
+    },
+    {
+      "question": "Does the desire for approval make one's values more susceptible to peer pressure?",
+      "explanation": "If we really want people to like us, we might change what we believe to match what our friends believe."
+    },
+    {
+      "question": "Can peer pressure lead to compromising one's values in small ways?",
+      "explanation": "To fit in with friends, we might do little things that we usually think are wrong."
+    },
+    {
+      "question": "Do small compromises in values sometimes evolve into larger ethical dilemmas?",
+      "explanation": "If we keep doing small things we think are wrong, we might start doing bigger wrong things."
+    },
+    {
+      "question": "Can ethical dilemmas create internal conflict and stress about one's values?",
+      "explanation": "When we're not sure if something is right or wrong, it can make us feel really worried and confused inside."
+    },
+    {
+      "question": "Does prolonged stress potentially lead to poor decision-making regarding values?",
+      "explanation": "If we feel stressed for a long time about what's right and wrong, we might make bad choices."
+    },
+    {
+      "question": "Can poor decisions about values result in actions that harm others unintentionally?",
+      "explanation": "If we're confused about what's right and wrong, we might accidentally do things that hurt other people."
+    },
+    {
+      "question": "Do harmful actions stemming from compromised values sometimes lead to guilt?",
+      "explanation": "If we do something we think is wrong and it hurts someone, we might feel really bad about it afterwards."
+    },
+    {
+      "question": "Can guilt about compromised values, if unaddressed, manifest as more severe behavioral issues?",
+      "explanation": "If we keep feeling bad about doing things we think are wrong and don't talk about it, we might start acting out in other ways."
+    },
+    {
+      "question": "Do severe behavioral issues related to conflicted values increase the likelihood of intentional wrongdoing?",
+      "explanation": "If someone is really confused about what's right and wrong, they might start doing bad things on purpose."
+    },
+    {
+      "question": "Can intentional wrongdoing due to compromised values lead to legal consequences and societal rejection?",
+      "explanation": "If someone does something really wrong because they're confused about what's right and wrong, they might get in trouble with the law or lose friends."
+    },
+    {
+      "question": "Do life's challenges sometimes lead to self-doubt in one's sense of purpose?",
+      "explanation": "When things are hard, we might start to wonder why we're here and what we're supposed to do with our lives."
+    },
+    {
+      "question": "Can self-doubt in one's purpose create a desire for approval from others?",
+      "explanation": "If we're not sure about what we're meant to do in life, we might want other people to tell us we're doing the right things."
+    },
+    {
+      "question": "Does the desire for approval make one's sense of purpose more susceptible to peer pressure?",
+      "explanation": "If we really want people to like us, we might change what we think we should do in life to match what our friends think."
+    },
+    {
+      "question": "Can peer pressure lead to compromising one's purpose in small ways?",
+      "explanation": "To make friends happy, we might do things that don't really fit with what we think we should do in life."
+    },
+    {
+      "question": "Do small compromises in purpose sometimes evolve into larger existential dilemmas?",
+      "explanation": "If we keep doing things that don't fit with what we think we should do in life, we might start to feel really lost and confused."
+    },
+    {
+      "question": "Can existential dilemmas create internal conflict and stress about one's purpose?",
+      "explanation": "When we're not sure why we're here or what we should do with our lives, it can make us feel really worried and upset inside."
+    },
+    {
+      "question": "Does prolonged stress potentially lead to poor decision-making regarding life purpose?",
+      "explanation": "If we feel stressed for a long time about what we should do with our lives, we might make choices that don't really make us happy."
+    },
+    {
+      "question": "Can poor decisions about purpose result in actions that harm others unintentionally?",
+      "explanation": "If we're confused about what we should do in life, we might accidentally do things that cause problems for other people."
+    },
+    {
+      "question": "Do harmful actions stemming from a confused sense of purpose sometimes lead to guilt?",
+      "explanation": "If we hurt someone because we're not sure what we should be doing with our lives, we might feel really bad about it afterwards."
+    },
+    {
+      "question": "Can guilt about one's purpose, if unaddressed, manifest as more severe behavioral issues?",
+      "explanation": "If we keep feeling bad about not knowing what to do with our lives and don't talk about it, we might start acting out in other ways."
+    },
+    {
+      "question": "Do severe behavioral issues related to lack of purpose increase the likelihood of intentional wrongdoing?",
+      "explanation": "If someone is really confused about what they should do in life, they might start doing bad things on purpose."
+    },
+    {
+      "question": "Can intentional wrongdoing due to a distorted sense of purpose lead to legal consequences and societal rejection?",
+      "explanation": "If someone does something really wrong because they're confused about what they should do in life, they might get in trouble with the law or lose friends."
+    },
+    {
+      "question": "Do life's challenges sometimes lead to self-doubt in one's communication abilities?",
+      "explanation": "When things are tough, we might start to wonder if we're good at talking to other people or explaining our ideas."
+    },
+    {
+      "question": "Can self-doubt in communication create a desire for approval from others?",
+      "explanation": "If we're not sure if we're good at talking to people, we might really want others to tell us we're doing a good job."
+    },
+    {
+      "question": "Does the desire for approval make one's communication more susceptible to peer pressure?",
+      "explanation": "If we really want people to like us, we might change how we talk or what we say to match our friends."
+    },
+    {
+      "question": "Can peer pressure lead to compromising one's authentic communication in small ways?",
+      "explanation": "To fit in with friends, we might say things we don't really mean or not say things we do mean."
+    },
+    {
+      "question": "Do small compromises in communication sometimes evolve into larger interpersonal dilemmas?",
+      "explanation": "If we keep not being honest in how we talk to people, it might cause big problems in our friendships."
+    },
+    {
+      "question": "Can interpersonal dilemmas create internal conflict and stress about one's communication?",
+      "explanation": "When we're not sure how to talk to people or what to say, it can make us feel really worried and upset inside."
+    },
+    {
+      "question": "Does prolonged stress potentially lead to poor decision-making in communication?",
+      "explanation": "If we feel stressed for a long time about talking to people, we might say things we don't mean or that hurt others."
+    },
+    {
+      "question": "Can poor communication decisions result in actions that harm others unintentionally?",
+      "explanation": "If we're not good at explaining our ideas or feelings, we might accidentally hurt someone's feelings or cause misunderstandings."
+    },
+    {
+      "question": "Do harmful actions stemming from poor communication sometimes lead to guilt?",
+      "explanation": "If we hurt someone because we didn't communicate well, we might feel really bad about it afterwards."
+    },
+    {
+      "question": "Can guilt about one's communication, if unaddressed, manifest as more severe behavioral issues?",
+      "explanation": "If we keep feeling bad about how we talk to people and don't try to get better, we might start acting out in other ways."
+    },
+    {
+      "question": "Do severe behavioral issues related to communication increase the likelihood of intentional wrongdoing?",
+      "explanation": "If someone has a lot of trouble talking to people, they might start doing bad things on purpose to express themselves."
+    },
+    {
+      "question": "Can intentional wrongdoing due to communication issues lead to legal consequences and societal rejection?",
+      "explanation": "If someone does something really wrong because they can't communicate well, they might get in trouble with the law or lose friends."
+    },
+    {
+      "question": "Do life's challenges sometimes lead to self-doubt in one's ability to connect with others?",
+      "explanation": "When things are tough, we might start to wonder if we're good at making friends or getting along with people."
+    },
+    {
+      "question": "Can self-doubt in connection create a desire for approval from others?",
+      "explanation": "If we're not sure if we're good at making friends, we might really want people to show us they like us."
+    },
+    {
+      "question": "Does the desire for approval make one's connections more susceptible to peer pressure?",
+      "explanation": "If we really want people to like us, we might change how we act with different friends to make them happy."
+    },
+    {
+      "question": "Can peer pressure lead to compromising one's authentic connections in small ways?",
+      "explanation": "To keep our friends happy, we might pretend to like things we don't really like or not spend time with people we do like."
+    },
+    {
+      "question": "Do small compromises in connections sometimes evolve into larger relationship dilemmas?",
+      "explanation": "If we keep pretending in our friendships, it might cause big problems in how we get along with people."
+    },
+    {
+      "question": "Can relationship dilemmas create internal conflict and stress about one's connections?",
+      "explanation": "When we're not sure how to be a good friend or who to be friends with, it can make us feel really worried and upset inside."
+    },
+    {
+      "question": "Does prolonged stress potentially lead to poor decision-making in relationships?",
+      "explanation": "If we feel stressed for a long time about our friendships, we might make choices that hurt our relationships."
+    },
+    {
+      "question": "Can poor decisions about connections result in actions that harm others unintentionally?",
+      "explanation": "If we're not good at being a friend, we might accidentally hurt someone's feelings or make them feel left out."
+    },
+    {
+      "question": "Do harmful actions stemming from compromised connections sometimes lead to guilt?",
+      "explanation": "If we hurt someone because we didn't know how to be a good friend, we might feel really bad about it afterwards."
+    },
+    {
+      "question": "Can guilt about one's connections, if unaddressed, manifest as more severe behavioral issues?",
+      "explanation": "If we keep feeling bad about our friendships and don't try to fix them, we might start acting out in other ways."
+    },
+    {
+      "question": "Do severe behavioral issues related to connections increase the likelihood of intentional wrongdoing?",
+      "explanation": "If someone has a lot of trouble making friends, they might start doing bad things on purpose to get attention."
+    },
+    {
+      "question": "Can intentional wrongdoing due to problematic connections lead to legal consequences and societal rejection?",
+      "explanation": "If someone does something really wrong because they can't make friends, they might get in trouble with the law or lose even more friends."
+    },
+    {
+      "question": "Do life's challenges sometimes lead to self-doubt in one's social awareness?",
+      "explanation": "When things are tough, we might start to wonder if we're good at understanding how other people feel or what they need."
+    },
+    {
+      "question": "Can self-doubt in social awareness create a desire for approval from others?",
+      "explanation": "If we're not sure if we're good at understanding people, we might really want others to tell us we're doing okay in social situations."
+    },
+    {
+      "question": "Does the desire for approval make one's social awareness more susceptible to peer pressure?",
+      "explanation": "If we really want people to like us, we might ignore our own feelings about a situation to go along with what everyone else thinks."
+    },
+    {
+      "question": "Can peer pressure lead to compromising one's social awareness in small ways?",
+      "explanation": "To fit in with friends, we might pretend not to notice when someone is upset or ignore things that we think are wrong."
+    },
+    {
+      "question": "Do small compromises in social awareness sometimes evolve into larger social dilemmas?",
+      "explanation": "If we keep ignoring our feelings about social situations, we might end up in really uncomfortable or unfair situations."
+    },
+    {
+      "question": "Can social dilemmas create internal conflict and stress about one's place in society?",
+      "explanation": "When we're not sure how to act in social situations, it can make us feel really worried and upset about where we fit in with others."
+    },
+    {
+      "question": "Does prolonged stress potentially lead to poor decision-making in social situations?",
+      "explanation": "If we feel stressed for a long time about social stuff, we might make choices that make it hard to get along with others."
+    },
+    {
+      "question": "Can poor decisions due to lack of social awareness result in actions that harm others unintentionally?",
+      "explanation": "If we're not good at understanding how others feel, we might accidentally say or do things that hurt people's feelings."
+    },
+    {
+      "question": "Do harmful actions stemming from poor social awareness sometimes lead to guilt?",
+      "explanation": "If we hurt someone because we didn't understand how they were feeling, we might feel really bad about it afterwards."
+    },
+    {
+      "question": "Can guilt about one's social missteps, if unaddressed, manifest as more severe behavioral issues?",
+      "explanation": "If we keep feeling bad about not understanding social situations and don't try to get better, we might start acting out in other ways."
+    },
+    {
+      "question": "Do severe behavioral issues related to social awareness increase the likelihood of intentional wrongdoing?",
+      "explanation": "If someone has a lot of trouble understanding social situations, they might start doing bad things on purpose because they don't know how else to act."
+    },
+    {
+      "question": "Can intentional wrongdoing due to lack of social awareness lead to legal consequences and societal rejection?",
+      "explanation": "If someone does something really wrong because they don't understand social rules, they might get in trouble with the law or have trouble making friends."
+    },
+    {
+      "question": "Do life's challenges sometimes lead to self-doubt in one's ability to maintain physical health?",
+      "explanation": "When things are tough, we might start to wonder if we're taking good care of our body or if we can stay healthy."
+    },
+    {
+      "question": "Can self-doubt about physical health create a desire for approval from others?",
+      "explanation": "If we're not sure if we're healthy, we might really want other people to tell us we look good or that we're doing a good job staying healthy."
+    },
+    {
+      "question": "Does the desire for approval make one's health choices more susceptible to peer pressure?",
+      "explanation": "If we really want people to like us, we might eat things we shouldn't or do unsafe things just because our friends are doing it."
+    },
+    {
+      "question": "Can peer pressure lead to compromising one's physical health in small ways?",
+      "explanation": "To fit in with friends, we might stay up too late or eat too much junk food, even though we know it's not good for us."
+    },
+    {
+      "question": "Do small compromises in health sometimes evolve into larger health dilemmas?",
+      "explanation": "If we keep doing little things that aren't healthy, it might lead to bigger health problems over time."
+    },
+    {
+      "question": "Can health dilemmas create internal conflict and stress about one's physical well-being?",
+      "explanation": "When we're not sure if we're healthy or how to take care of ourselves, it can make us feel really worried and upset."
+    },
+    {
+      "question": "Does prolonged stress potentially lead to poor decision-making regarding physical health?",
+      "explanation": "If we feel stressed for a long time about our health, we might make choices that actually make us less healthy."
+    },
+    {
+      "question": "Can poor health decisions result in actions that harm others unintentionally?",
+      "explanation": "If we don't take care of our health, we might accidentally get other people sick or not be able to help when others need us."
+    },
+    {
+      "question": "Do harmful actions stemming from poor health sometimes lead to guilt?",
+      "explanation": "If we hurt someone because we didn't take care of our health, we might feel really bad about it afterwards."
+    },
+    {
+      "question": "Can guilt about one's health choices, if unaddressed, manifest as more severe behavioral issues?",
+      "explanation": "If we keep feeling bad about not taking care of our health and don't try to get better, we might start acting out in other ways."
+    },
+    {
+      "question": "Do severe behavioral issues related to physical health increase the likelihood of intentional wrongdoing?",
+      "explanation": "If someone has a lot of trouble taking care of their health, they might start doing bad things on purpose because they feel frustrated or upset."
+    },
+    {
+      "question": "Can intentional wrongdoing due to health issues lead to legal consequences and societal rejection?",
+      "explanation": "If someone does something really wrong because of health problems, they might get in trouble with the law or have trouble keeping friends."
+    }
+  ]
+}

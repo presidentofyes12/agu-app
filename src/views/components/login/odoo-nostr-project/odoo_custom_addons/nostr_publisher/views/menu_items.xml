@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Root menu for Nostr -->
+        <menuitem id="menu_nostr_root"
+                  name="Nostr"
+                  web_icon="nostr_publisher,static/description/icon.png"
+                  sequence="50"/>
+
+        <!-- Submenu for Nostr Publishers -->
+        <menuitem id="menu_nostr_publisher_main"
+                  name="Publishers"
+                  parent="menu_nostr_root"
+                  sequence="10"/>
+
+        <!-- Submenu for Nostr Relays -->
+        <menuitem id="menu_nostr_relay"
+                  name="Relays"
+                  parent="menu_nostr_root"
+                  sequence="20"/>
+
+        <!-- Submenu for Connected Modules -->
+        <menuitem id="menu_nostr_connected_module"
+                  name="Connected Modules"
+                  parent="menu_nostr_root"
+                  sequence="30"/>
+
+        <!-- Submenu for Publish Logs -->
+        <menuitem id="menu_nostr_publish_log"
+                  name="Publish Logs"
+                  parent="menu_nostr_root"
+                  sequence="40"/>
+    </data>
+</odoo>

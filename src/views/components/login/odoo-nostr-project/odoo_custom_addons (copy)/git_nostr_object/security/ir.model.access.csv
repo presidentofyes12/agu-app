@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_git_commit,access_git_commit,model_git_commit,base.group_user,1,1,1,1
+access_git_tree,access_git_tree,model_git_tree,base.group_user,1,1,1,1
+access_git_blob,access_git_blob,model_git_blob,base.group_user,1,1,1,1
+access_git_repository,access_git_repository,model_git_repository,base.group_user,1,1,1,1
+access_nostr_event_object,access_nostr_event_object,model_nostr_event_object,base.group_user,1,1,1,1

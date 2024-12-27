@@ -1,0 +1,8 @@
+<!-- views/actions.xml -->
+<odoo>
+    <record id="action_git_nostr_event_object" model="ir.actions.act_window">
+        <field name="name">Nostr Event Objects</field>
+        <field name="res_model">nostr.event.object</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

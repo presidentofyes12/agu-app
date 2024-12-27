@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_gitlab_branch_form" model="ir.ui.view">
+        <field name="name">gitlab.branch.form</field>
+        <field name="model">gitlab.branch</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="repository_id"/>
+                        <field name="last_commit_date"/>
+                    </group>
+                    <notebook>
+                        <page string="Commits">
+                            <field name="commit_ids"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_gitlab_branch_tree" model="ir.ui.view">
+        <field name="name">gitlab.branch.tree</field>
+        <field name="model">gitlab.branch</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="repository_id"/>
+                <field name="last_commit_date"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_gitlab_branch" model="ir.actions.act_window">
+        <field name="name">GitLab Branches</field>
+        <field name="res_model">gitlab.branch</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_gitlab_branch" name="Branches" parent="menu_gitlab_nostr_bridge" action="action_gitlab_branch" sequence="20"/>
+</odoo>

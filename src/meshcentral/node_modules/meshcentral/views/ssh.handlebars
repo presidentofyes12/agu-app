@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml">
+<head lang="en">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta name="viewport" content="user-scalable=1.0,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="robots" content="noindex,nofollow">
+    <link type="text/css" href="styles/style.css" media="screen" rel="stylesheet" title="CSS" />
+    <link type="text/css" href="styles/xterm.css" media="screen" rel="stylesheet" title="CSS" />
+    <link rel="apple-touch-icon" href="/favicon-303x303.png" />
+    <script type="text/javascript" src="scripts/common-0.0.1{{min}}.js"></script>
+    <script type="text/javascript" src="scripts/meshcentral{{min}}.js"></script>
+    <script type="text/javascript" src="scripts/agent-redir-ws-0.1.1{{min}}.js"></script>
+    <script type="text/javascript" src="scripts/agent-redir-rtc-0.1.0{{min}}.js"></script>
+    <script type="text/javascript" src="scripts/xterm-min.js"></script>
+    <script type="text/javascript" src="scripts/xterm-addon-fit-min.js"></script>
+    <title>SSH</title>
+</head>
+<body style="overflow:hidden;background-color:black" onload="start()">
+    <div id=p11 class="noselect" style="overflow:hidden">
+        <div id=deskarea0 style="position:relative">
+            <div id=deskarea1 class="areaHead">
+                <div class="toright2">
+                </div>
+                <div>
+                    <input id="ConnectButton" style="display:none" type=button value="Connect" onclick="connectButton()">
+                    <input id="DisconnectButton" type=button value="Disconnect" onclick="connectButton()">
+                    <span><b id="computerName"></b></span> - <span id="termstatus"></span>
+                </div>
+            </div>
+            <div id=deskarea2 style="">
+                <div class="areaProgress"><div id="progressbar" style=""></div></div>
+            </div>
+            <div id=deskarea3x style="max-height:calc(100vh - 54px);height:calc(100vh - 54px);">
+                <div id="bigok" style="display:none;left:calc((100vh / 2))"><b>&checkmark;</b></div>
+                <div id="bigfail" style="display:none;left:calc((100vh / 2))"><b>&#10007;</b></div>
+                <div id="metadatadiv" style="padding:20px;color:lightgrey;text-align:left;display:none"></div>
+                <div id=terminal style="max-height:calc(100vh - 54px);height:calc(100vh - 54px);text-align:left"></div>
+                <div id=TermConsoleMsg style="display:none;cursor:pointer;z-index:10;position:absolute;left:30px;top:17px;color:yellow;background-color:rgba(0,0,0,0.6);padding:10px;border-radius:5px" onclick=clearConsoleMsg()></div>
+            </div>
+            <div id=deskarea4 class="areaHead">
+                <div class="toright2"></div>
+                <div style="height:21px;max-height:21px"></div>
+            </div>
+        </div>
+        <div id=dialog class="noselect" style="display:none">
+            <div id=dialogHeader>
+                <div tabindex=0 id=id_dialogclose onclick=setDialogMode() onkeypress="if (event.key == 'Enter') setDialogMode()">&#x2716;</div>
+                <div id=id_dialogtitle></div>
+            </div>
+            <div id=dialogBody>
+                <div id=dialog1>
+                    <div id=id_dialogMessage style=""></div>
+                </div>
+                <div id=dialog2 style="">
+                    <div id=id_dialogOptions></div>
+                </div>
+            </div>
+            <div id="idx_dlgButtonBar">
+                <input id="idx_dlgCancelButton" type="button" value="Cancel" style="" onclick="dialogclose(0)">
+                <input id="idx_dlgOkButton" type="button" value="OK" style="" onclick="dialogclose(1)">
+                <div><input id="idx_dlgDeleteButton" type="button" value="Delete" style="display:none" onclick="dialogclose(2)"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        var random = '{{{randomlength}}}' // Random length string for BREACH mitigation
+        var term = null;
+        var termfit = null;
+        var resizeTimer = null;
+        var urlargs = parseUriArgs();
+        if (urlargs.key && (isAlphaNumeric(urlargs.key) == false)) { delete urlargs.key; }
+        var cookie = '{{{cookie}}}';
+        var domainurl = '{{{domainurl}}}';
+        var features = parseInt('{{{features}}}');
+        var name = decodeURIComponent('{{{name}}}');
+        if (name != '') { document.title = name + ' - ' + document.title; }
+        var StatusStrs = ["Disconnected", "Connecting...", "Setup...", "Connected"];
+        var state = 0;
+        var socket = null;
+        var user = '';
+        var pass = '';
+
+        function start() {
+            // Set the computer name
+            QH('computerName', name);
+
+            // When the user resizes the window, re-fit
+            window.onresize = function () { if (termfit != null) { termfit.fit(); } }
+
+            // Update the terminal status and buttons
+            updateState();
+            resetTerminal();
+
+            connectButton();
+        }
+
+        function resetTerminal() {
+            // Setup the terminal with auto-fit
+            if (term != null) { term.dispose(); }
+            if (urlargs.fixsize != 1) { termfit = new FitAddon.FitAddon(); }
+            term = new Terminal();
+            if (termfit) { term.loadAddon(termfit); }
+            term.open(Q('terminal'));
+            term.onData(function (data) { if (state == 3) { socket.send('~' + data); } });
+            if (termfit) { termfit.fit(); }
+            term.onResize(function (size) {
+                // Despam resize
+                if (resizeTimer) clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(sendResize, 200);
+            });
+            //term.setOption('convertEol', true); // Consider \n to be \r\n, this should be taken care of by "termios"
+        }
+
+        // Send the new terminal size to the agent
+        function sendResize() {
+            resizeTimer = null;
+            if (socket != null) { socket.send(JSON.stringify({ action: 'resize', cols: term.cols, rows: term.rows, width: Q('terminal').offsetWidth, height: Q('terminal').offsetHeight })); }
+        }
+
+        function connectButton() {
+            if (state == 0) {
+                connectEx2({ action: 'connect', cols: term.cols, rows: term.rows, width: Q('terminal').offsetWidth, height: Q('terminal').offsetHeight, useexisting: true });
+            } else {
+                disconnect();
+            }
+        }
+
+        function sshAuthUpdate(e) {
+            QV('d2userauth', Q('dp2authmethod').value != 3);
+            QV('d2passauth', Q('dp2authmethod').value == 1);
+            QV('d2keyauth', Q('dp2authmethod').value == 2);
+            QV('d2keyauth2', Q('dp2authmethod').value == 3);
+            if (Q('dp2authmethod').value == 1) {
+                QE('idx_dlgOkButton', (Q('dp2user').value.length > 0) && (Q('dp2pass').value.length > 0));
+            } else if (Q('dp2authmethod').value == 3) {
+                QE('idx_dlgOkButton', Q('dp2keypass2').value.length > 0);
+            } else {
+                QE('idx_dlgOkButton', false);
+                if ((features & 1) == 0) { QE('dp2keep2', Q('dp2keep1').checked); }
+                var ok = (Q('dp2user').value.length > 0) && (Q('dp2key').files != null) && (Q('dp2key').files.length == 1) && (Q('dp2key').files[0].size < 8000);
+                if (ok == true) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        var validkey =
+                            ((e.target.result.indexOf('-----BEGIN OPENSSH PRIVATE KEY-----') >= 0) && (e.target.result.indexOf('-----END OPENSSH PRIVATE KEY-----') >= 0)) ||
+                            ((e.target.result.indexOf('-----BEGIN RSA PRIVATE KEY-----') >= 0) && (e.target.result.indexOf('-----END RSA PRIVATE KEY-----') >= 0));
+                        QE('idx_dlgOkButton', validkey);
+                        QS('d2badkey')['color'] = validkey ? '#000' : '#F00';
+                    }
+                    reader.readAsText(Q('dp2key').files[0]);
+                }
+            }
+
+            // When the enter key is pressed, move to the next field
+            if (e && (e.keyCode == 13) && (e.target) && (Q('dp2authmethod').value == 1)) {
+                if (e.target.id == 'dp2user') { Q('dp2pass').focus(); }
+                if (e.target.id == 'dp2pass') { dialogclose(1); }
+            }
+        }
+
+        function connectEx() {
+            var cmd = { action: 'connect', cols: term.cols, rows: term.rows, width: Q('terminal').offsetWidth, height: Q('terminal').offsetHeight, username: Q('dp2user').value, keep: 0 };
+
+            if (Q('dp2authmethod').value == 1) {
+                cmd.password = Q('dp2pass').value;
+                if ((features & 1) == 0) { cmd.keep = Q('dp2keep').checked ? 1 : 0; }
+                connectEx2(cmd);
+            } else if (Q('dp2authmethod').value == 3) {
+                cmd.action = 'connectKeyPass';
+                cmd.keypass = Q('dp2keypass2').value;
+                connectEx2(cmd);
+            } else {
+                if ((features & 1) == 0) { cmd.keep = (Q('dp2keep1').checked ? 1 : 0); if (cmd.keep == 1) { cmd.keep += (Q('dp2keep2').checked ? 1 : 0); } } // Keep: 1 = user & key, 2 = User, key and password
+                cmd.keypass = Q('dp2keypass').value;
+                var reader = new FileReader();
+                reader.onload = function (e) { cmd.key = e.target.result; connectEx2(cmd); }
+                reader.readAsText(Q('dp2key').files[0]);
+            }
+        }
+
+        function sshTunnelAuthDialog(j, func) {
+            var x = '';
+            if (j.askkeypass) {
+                x += addHtmlValue("Authentication", '<select id=dp2authmethod style=width:230px onchange=sshAuthUpdate(event)><option value=3 selected>' + "Stored Key" + '</option><option value=1>' + "Username & Password" + '</option><option value=2>' + "Username and Key" + '</option></select>');
+            } else {
+                x += addHtmlValue("Authentication", '<select id=dp2authmethod style=width:230px onchange=sshAuthUpdate(event)><option value=1 selected>' + "Username & Password" + '</option><option value=2>' + "Username and Key" + '</option></select>');
+            }
+            x += '<div id=d2userauth style=display:none>';
+            x += addHtmlValue("Username", '<input id=dp2user style=width:230px maxlength=64 autocomplete=off onkeyup=sshAuthUpdate(event) />');
+            x += '</div>';
+            x += '<div id=d2passauth style=display:none>';
+            x += addHtmlValue("Password", '<input type=password id=dp2pass style=width:230px maxlength=64 autocomplete=off onkeyup=sshAuthUpdate(event) />');
+            if ((features & 1) == 0) { x += addHtmlValue('', '<label><input id=dp2keep type=checkbox>' + "Remember credentials" + '</label>'); }
+            x += '</div><div id=d2keyauth style=display:none>';
+            x += addHtmlValue("Key File", '<input type=file id=dp2key style=width:230px maxlength=64 autocomplete=off onchange=sshAuthUpdate(event) />' + '<div id=d2badkey style=font-size:x-small>' + "Key file must be in OpenSSH format." + '</div>');
+            x += addHtmlValue("Key Password", '<input type=password id=dp2keypass style=width:230px maxlength=64 autocomplete=off onkeyup=sshAuthUpdate(event) />');
+            if ((features & 1) == 0) {
+                x += addHtmlValue('', '<label><input id=dp2keep1 type=checkbox onchange=sshAuthUpdate(event)>' + "Remember user & key" + '</label>');
+                x += addHtmlValue('', '<label><input id=dp2keep2 type=checkbox>' + "Remember password" + '</label>');
+            }
+            x += '</div>';
+            if (j.askkeypass) {
+                x += '<div id=d2keyauth2 style=display:none>';
+                x += addHtmlValue("Password", '<input type=password id=dp2keypass2 style=width:230px maxlength=64 autocomplete=off onkeyup=sshAuthUpdate(event) />');
+                x += '</div>';
+            }
+            setDialogMode(2, "Authentication", 11, func, x, 'ssh');
+            Q('dp2user').focus();
+            sshAuthUpdate();
+            setTimeout(sshAuthUpdate, 50);
+        }
+
+        function connectEx2(cmd) {
+            state = 1;
+            var url = window.location.protocol.replace('http', 'ws') + '//' + window.location.host + domainurl + 'sshrelay.ashx?auth=' + cookie + (urlargs.key ? ('&key=' + urlargs.key) : '');
+            socket = new WebSocket(url);
+            socket.onopen = function (e) {
+                state = 2;
+                updateState();
+                term.reset();
+
+                // Send username and terminal width and height
+                socket.send(JSON.stringify(cmd));
+                pass = '';
+            }
+            socket.onmessage = function (data) {
+                if (typeof data.data != 'string') return;
+                if (data.data[0] == '{') {
+                    var json = null;
+                    try { json = JSON.parse(data.data); } catch (ex) { }
+                    if ((json == null) || (typeof json != 'object')) return;
+                    if ((json.ctrlChannel == 102938) && (json.type == 'ping')) { socket.send('{"ctrlChannel":"102938","type":"pong"}'); return; }
+                    switch (json.action) {
+                        case 'connected': { state = 3; updateState(); term.focus(); break; }
+                        case 'sshauth': { sshTunnelAuthDialog(json, connectEx); break; }
+                        case 'autherror': { setDialogMode(2, "Authentication", 1, null, "Unable to authenticate."); break; }
+                        case 'sessionerror': { setDialogMode(2, "Session", 1, null, "Session expired."); break; }
+                        case 'sessiontimeout': { setDialogMode(2, "Session", 1, null, "Session timeout."); break; }
+                    }
+                } else if (data.data[0] == '~') {
+                    if (term.writeUtf8) { term.writeUtf8(data.data.substring(1)); } else { term.write(data.data.substring(1)); }
+                }
+            }
+            socket.onclose = function (e) { disconnect(); }
+            socket.onerror = function (e) { disconnect(); }
+            updateState();
+        }
+
+        function disconnect() {
+            if (socket != null) { socket.close(); socket = null; }
+            state = 0;
+            updateState();
+            resetTerminal();
+        }
+
+        function updateState() {
+            QV('ConnectButton', state == 0);
+            QV('DisconnectButton', state != 0);
+            QH('termstatus', StatusStrs[state]);
+        }
+
+
+        //
+        // POPUP DIALOG
+        //
+
+        // null = Hidden, 1 = Generic Message
+        var xxdialogMode;
+        var xxdialogFunc;
+        var xxdialogButtons;
+        var xxdialogTag;
+        var xxcurrentView = -1;
+
+        // Display a dialog box
+        // Parameters: Dialog Mode (0 = none), Dialog Title, Buttons (1 = OK, 2 = Cancel, 3 = OK & Cancel), Call back function(0 = Cancel, 1 = OK), Dialog Content (Mode 2 only)
+        function setDialogMode(x, y, b, f, c, tag) {
+            xxdialogMode = x;
+            xxdialogFunc = f;
+            xxdialogButtons = b;
+            xxdialogTag = tag;
+            QE('idx_dlgOkButton', true);
+            QV('idx_dlgOkButton', b & 1);
+            QV('idx_dlgCancelButton', b & 2);
+            QV('id_dialogclose', (b & 2) || (b & 8));
+            QV('idx_dlgDeleteButton', b & 4);
+            QV('idx_dlgButtonBar', b & 7);
+            if (y) QH('id_dialogtitle', y);
+            for (var i = 1; i < 3; i++) { QV('dialog' + i, i == x); } // Edit this line when more dialogs are added
+            QV('dialog', x);
+            if (c) { if (x == 2) { QH('id_dialogOptions', c); } else { QH('id_dialogMessage', c); } }
+        }
+
+        // Called when the dialog box must be closed
+        function dialogclose(x) {
+            var f = xxdialogFunc, b = xxdialogButtons, t = xxdialogTag;
+            setDialogMode();
+            if (((b & 8) || x) && f) f(x, t);
+        }
+
+        function messagebox(t, m) { setSessionActivity(); QH('id_dialogMessage', m); setDialogMode(1, t, 1); }
+        function statusbox(t, m) { setSessionActivity(); QH('id_dialogMessage', m); setDialogMode(1, t); }
+        function haltEvent(e) { if (e.preventDefault) e.preventDefault(); if (e.stopPropagation) e.stopPropagation(); return false; }
+        function pad2(num) { var s = '00' + num; return s.substr(s.length - 2); }
+        function format(format) { var args = Array.prototype.slice.call(arguments, 1); return format.replace(/{(\d+)}/g, function (match, number) { return typeof args[number] != 'undefined' ? args[number] : match; }); };
+        function isAlphaNumeric(str) { return (str.match(/^[A-Za-z0-9]+$/) != null); };
+        function isSafeString(str) { return ((typeof str == 'string') && (str.indexOf('<') == -1) && (str.indexOf('>') == -1) && (str.indexOf('&') == -1) && (str.indexOf('"') == -1) && (str.indexOf('\'') == -1) && (str.indexOf('+') == -1) && (str.indexOf('(') == -1) && (str.indexOf(')') == -1) && (str.indexOf('#') == -1) && (str.indexOf('%') == -1) && (str.indexOf(':') == -1)) };
+        function addHtmlValue(t, v) { return '<table><td style=width:120px>' + t + '<td><b>' + v + '</b></table>'; }
+
+        // Parse URL arguments, only keep safe values
+        function parseUriArgs() {
+            var href = window.document.location.href;
+            if (href.endsWith('#')) { href = href.substring(0, href.length - 1); }
+            var name, r = {}, parsedUri = href.split(/[\?&|\=]/);
+            parsedUri.splice(0, 1);
+            for (x in parsedUri) {
+                switch (x % 2) {
+                    case 0: { name = decodeURIComponent(parsedUri[x]); break; }
+                    case 1: {
+                        r[name] = decodeURIComponent(parsedUri[x]);
+                        if (!isSafeString(r[name])) { delete r[name]; } else { var x = parseInt(r[name]); if (x == r[name]) { r[name] = x; } }
+                        break;
+                    } default: { break; }
+                }
+            }
+            return r;
+        }
+
+        start();
+    </script>
+</body>
+</html>

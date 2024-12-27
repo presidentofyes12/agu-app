@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_load_questions_wizard_form" model="ir.ui.view">
+        <field name="name">load.questions.wizard.form</field>
+        <field name="model">load.questions.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Load Default Questions">
+                <group>
+                    <field name="current_question_count"/>
+                </group>
+                <footer>
+                    <button name="action_load_questions" string="Load Questions" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_load_questions_wizard" model="ir.actions.act_window">
+        <field name="name">Load Default Questions</field>
+        <field name="res_model">load.questions.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_load_questions_wizard"
+              name="Load Default Questions"
+              parent="menu_opinion_root"
+              action="action_load_questions_wizard"
+              sequence="50"/>
+</odoo>

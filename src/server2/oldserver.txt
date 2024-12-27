@@ -1,0 +1,141 @@
+const express = require('express');
+const { exec } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+const { promisify } = require('util');
+const cors = require('cors');
+const axios = require('axios');
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const execAsync = promisify(exec);
+
+const NOSTR_RELAY_URL = 'https://github.com/scsibug/nostr-rs-relay/archive/refs/heads/master.zip';
+
+const downloadFile = async (url, dest) => {
+  const writer = fs.createWriteStream(dest);
+
+  const response = await axios({
+    url,
+    method: 'GET',
+    responseType: 'stream',
+  });
+
+  return new Promise((resolve, reject) => {
+    response.data.pipe(writer);
+    let error = null;
+    writer.on('error', err => {
+      error = err;
+      writer.close();
+      reject(err);
+    });
+    writer.on('close', () => {
+      if (!error) {
+        resolve(true);
+      }
+    });
+  });
+};
+
+const extractZip = async (source, dest) => {
+  try {
+    const AdmZip = require('adm-zip');
+    const zip = new AdmZip(source);
+    zip.extractAllTo(dest, true);
+  } catch (err) {
+    throw new Error(`Failed to extract ZIP file: ${err.message}`);
+  }
+};
+
+const checkRelayStatus = async (port) => {
+  try {
+    // Use port 8080 instead of the user-specified port
+    const response = await axios.get(`http://localhost:${port}/`);
+    return response.status === 200;
+  } catch (error) {
+    console.error(`Error checking relay status: ${error.message}`);
+    return false;
+  }
+};
+
+app.post('/api/setup-relay', async (req, res) => {
+  const { port, nostrKey } = req.body;
+
+  try {
+    const workDir = path.join(__dirname, 'nostr-relay-setup');
+
+    // Check if the working directory exists
+    if (!fs.existsSync(workDir)) {
+      fs.mkdirSync(workDir);
+    }
+
+    // Download Nostr Relay
+    const nostrZipPath = path.join(workDir, 'nostr-rs-relay.zip');
+    await downloadFile(NOSTR_RELAY_URL, nostrZipPath);
+
+    // Check if the ZIP file is valid
+    if (!fs.existsSync(nostrZipPath) || fs.statSync(nostrZipPath).size === 0) {
+      throw new Error('Downloaded Nostr Relay ZIP file is empty or does not exist.');
+    }
+
+    // Extract Nostr Relay
+    await extractZip(nostrZipPath, workDir);
+    const nostrDir = path.join(workDir, 'nostr-rs-relay-master');
+
+    // Build Nostr Relay
+    await execAsync(`cd ${nostrDir} && podman build --pull -t nostr-rs-relay .`);
+
+    // Create data directory
+    const dataDir = path.join(nostrDir, 'data');
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir);
+    }
+
+    // Run Nostr Relay container
+    await execAsync(`
+      podman run -d -p ${port}:8080 --user=100:100 
+      -v ${dataDir}:/usr/src/app/db:Z 
+      -v ${path.join(nostrDir, 'config.toml')}:/usr/src/app/config.toml:ro,Z 
+      --name nostr-relay nostr-rs-relay:latest
+    `);
+
+    // Wait a bit longer for the relay to start
+    await new Promise(resolve => setTimeout(resolve, 15000));
+
+    // Check if the relay is running
+    const isRelayRunning = await checkRelayStatus(port);
+    if (!isRelayRunning) {
+      // Fetch logs if relay is not running
+      const { stdout: podmanLogs, stderr: podmanLogsError } = await execAsync(`podman logs nostr-relay`);
+      console.error(`Nostr relay logs:\n${podmanLogs}\n${podmanLogsError}`);
+      throw new Error('Nostr relay is not running.');
+    }
+
+    // Set up noscl
+    const hexKey = Buffer.from(nostrKey, 'base64').toString('hex');
+    await execAsync(`noscl setprivate ${hexKey}`);
+    await execAsync(`noscl relay add ws://localhost:${port}`);
+
+    // Publish a test event
+    await execAsync(`noscl publish "Test"`);
+
+    // Run noscl home and capture the output
+    const { stdout: homeOutput, stderr: homeError } = await execAsync(`noscl home`);
+    if (homeError) {
+      console.error(`noscl home error: ${homeError}`);
+      throw new Error(homeError);
+    }
+    console.log(`noscl home output: ${homeOutput}`);
+
+    res.json({ success: true, homeOutput });
+  } catch (error) {
+    console.error('Setup failed:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.listen(5000, () => {
+  console.log('Server is running on port 5000');
+});

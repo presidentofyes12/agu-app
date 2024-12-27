@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ivcs_item_user,ivcs.item.user,model_ivcs_item,base.group_user,1,1,1,1
+access_ivcs_branch_manager_user,ivcs.branch.manager user,model_ivcs_branch_manager,base.group_user,1,1,1,1
+access_nostr_event_user,nostr.event.user,model_nostr_event,base.group_user,1,1,1,1
+access_ivcs_item_creation_wizard_user,ivcs.item.creation.wizard.user,model_ivcs_item_creation_wizard,base.group_user,1,1,1,0
+access_ivcs_version_user,ivcs.version.user,model_ivcs_version,base.group_user,1,1,1,1
+access_ivcs_commit_user,ivcs.commit.user,model_ivcs_commit,base.group_user,1,1,1,1
+access_ivcs_sync_manager_user,ivcs.sync.manager user,model_ivcs_sync_manager,base.group_user,1,1,1,1

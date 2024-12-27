@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/opt/odoo/odoo/odoo-bin", line 8, in <module>
+    odoo.cli.main()
+  File "/opt/odoo/odoo/odoo/cli/command.py", line 66, in main
+    o.run(args)
+  File "/opt/odoo/odoo/odoo/cli/server.py", line 185, in run
+    main(args)
+  File "/opt/odoo/odoo/odoo/cli/server.py", line 132, in main
+    odoo.tools.config.parse_config(args)
+  File "/opt/odoo/odoo/odoo/tools/config.py", line 378, in parse_config
+    odoo.netsvc.init_logger()
+  File "/opt/odoo/odoo/odoo/netsvc.py", line 251, in init_logger
+    loggername, level = logconfig_item.strip().split(':')
+ValueError: too many values to unpack (expected 2)

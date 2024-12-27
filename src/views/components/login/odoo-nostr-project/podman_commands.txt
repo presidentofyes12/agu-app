@@ -1,0 +1,78 @@
+/home/impromise/.local/bin/podman-compose
+
+sudo /home/impromise/.local/bin/podman-compose down
+sudo /home/impromise/.local/bin/podman-compose build
+sudo /home/impromise/.local/bin/podman-compose up -d
+ping google.com -c 10 # wait 10 seconds
+sudo podman ps
+sudo podman logs odoo-nostr-project-odoo-1
+ping google.com -c 10 # wait 10 seconds
+sudo podman exec -it odoo-nostr-project-odoo-1 /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf -d odoodb -u nostr_bridge
+sudo podman exec -it odoo-nostr-project-odoo-1 /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf -d odoodb -u nostr_auth
+sudo podman exec -it odoo-nostr-project-odoo-1 /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf -d odoodb -u ivcs_git
+sudo podman exec -it odoo-nostr-project-odoo-1 /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf -d odoodb -u nostr_identity
+sudo podman exec -it odoo-nostr-project-odoo-1 /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf -d odoodb -u decentralized_sync
+sudo podman exec -it odoo-nostr-project-odoo-1 /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf -d odoodb -u git_nostr_bridge
+ping google.com -c 10 # wait 10 seconds
+sudo podman logs odoo-nostr-project-odoo-1
+
+
+podman-compose down
+podman-compose build
+podman-compose up -d
+ping google.com -c 10 # wait 10 seconds
+podman ps
+podman logs odoo-nostr-project-odoo-1
+ping google.com -c 10 # wait 10 seconds
+podman exec -it odoo-nostr-project-odoo-1 /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf -d odoodb -u nostr_bridge
+podman exec -it odoo-nostr-project-odoo-1 /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf -d odoodb -u nostr_auth
+podman exec -it odoo-nostr-project-odoo-1 /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf -d odoodb -u ivcs_git
+podman exec -it odoo-nostr-project-odoo-1 /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf -d odoodb -u nostr_identity
+podman exec -it odoo-nostr-project-odoo-1 /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf -d odoodb -u decentralized_sync
+podman exec -it odoo-nostr-project-odoo-1 /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf -d odoodb -u git_nostr_bridge
+ping google.com -c 10 # wait 10 seconds
+podman logs odoo-nostr-project-odoo-1
+
+
+
+
+
+podman run -d --name postgres -e POSTGRES_DB=odoodb -e POSTGRES_PASSWORD=your_secure_password -e POSTGRES_USER=odoo postgres:14
+
+podman build -t odoo-custom .
+
+podman run -d --name odoo -p 8069:8069 -p 8072:8072 --pod-id-file /tmp/postgres-pod-id -e HOST=postgres -e USER=odoo -e PASSWORD=your_secure_password -v ./odoo.conf:/etc/odoo/odoo.conf:Z -v ./odoo_custom_addons:/opt/odoo/custom_addons:Z odoo-custom
+
+
+
+# Remove any existing containers and pods
+podman pod rm -f odoo-pod
+podman rm -f postgres odoo
+
+# Create the pod
+podman pod create --name odoo-pod -p 8069:8069 -p 8072:8072
+
+# Run PostgreSQL in the pod
+podman run -d --pod odoo-pod --name postgres -e POSTGRES_DB=odoodb -e POSTGRES_PASSWORD=your_secure_password -e POSTGRES_USER=odoo postgres:14
+
+# Run Odoo in the pod
+podman run -d --pod odoo-pod --name odoo -e HOST=postgres -e USER=odoo -e PASSWORD=your_secure_password -v ./odoo.conf:/etc/odoo/odoo.conf:Z -v ./odoo_custom_addons:/opt/odoo/custom_addons:Z localhost/odoo-custom:latest /bin/bash -c "while ! pg_isready -h postgres -p 5432 -U odoo; do sleep 1; done; /opt/odoo/check_nostr_bridge.sh && python3 /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf -d odoodb -i base && python3 /opt/odoo/custom_odoo_server.py -c /etc/odoo/odoo.conf"
+
+
+
+podman stop $(sudo podman ps -aq)
+podman rm $(sudo podman ps -aq)
+podman system prune -a --volumes -f
+podman-compose down
+podman-compose build
+podman-compose up -d
+ping google.com -c 10 # wait 10 seconds
+podman ps
+podman logs odoo-nostr-project-odoo-1
+ping google.com -c 10 # wait 10 seconds
+podman exec -it odoo-nostr-project-odoo-1 /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf -d odoodb -u nostr_bridge
+podman exec -it odoo-nostr-project-odoo-1 /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf -d odoodb -u nostr_auth
+podman exec -it odoo-nostr-project-odoo-1 /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf -d odoodb -u ivcs_git
+podman exec -it odoo-nostr-project-odoo-1 /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf -d odoodb -u nostr_identity
+podman exec -it odoo-nostr-project-odoo-1 /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf -d odoodb -u decentralized_sync
+podman exec -it odoo-nostr-project-odoo-1 /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf -d odoodb -u git_nostr_bridge

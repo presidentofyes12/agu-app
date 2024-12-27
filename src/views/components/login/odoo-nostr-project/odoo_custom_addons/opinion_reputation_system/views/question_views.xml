@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_opinion_question_form" model="ir.ui.view">
+        <field name="name">opinion.question.form</field>
+        <field name="model">opinion.question</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="text"/>
+                        <field name="explanation"/>
+                        <field name="created_by"/>
+                        <field name="created_at"/>
+                        <field name="is_settled"/>
+                        <field name="last_revisited"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_opinion_question_tree" model="ir.ui.view">
+        <field name="name">opinion.question.tree</field>
+        <field name="model">opinion.question</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="text"/>
+                <field name="created_by"/>
+                <field name="created_at"/>
+                <field name="is_settled"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_opinion_question" model="ir.actions.act_window">
+        <field name="name">Questions</field>
+        <field name="res_model">opinion.question</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_opinion_question" parent="menu_opinion_root" action="action_opinion_question"/>
+</odoo>

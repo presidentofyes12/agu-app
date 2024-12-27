@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ivcs_version_form" model="ir.ui.view">
+        <field name="name">ivcs.version.form</field>
+        <field name="model">ivcs.version</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="release_version" string="Release" type="object" states="draft"/>
+                    <button name="deprecate_version" string="Deprecate" type="object" states="released"/>
+                    <button name="archive_version" type="object" string="Archive" attrs="{'invisible': [('active', '=', False)]}"/>
+                    <button name="action_unarchive" type="object" string="Unarchive" attrs="{'invisible': [('active', '=', True)]}"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="description"/>
+                        <field name="item_id"/>
+                        <field name="parent_id"/>
+                        <field name="commit_hash"/>
+                        <field name="create_date"/>
+                        <field name="active" invisible="1"/>
+                    </group>
+                    <notebook>
+                        <page string="Metadata">
+                            <field name="metadata_ids"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ivcs_version_tree" model="ir.ui.view">
+        <field name="name">ivcs.version.tree</field>
+        <field name="model">ivcs.version</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="item_id"/>
+                <field name="state"/>
+                <field name="create_date"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_ivcs_version_search" model="ir.ui.view">
+        <field name="name">ivcs.version.search</field>
+        <field name="model">ivcs.version</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="item_id"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ivcs_version" model="ir.actions.act_window">
+        <field name="name">IVCS Versions</field>
+        <field name="res_model">ivcs.version</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_ivcs_version" name="Versions" parent="menu_ivcs" action="action_ivcs_version" sequence="20"/>
+</odoo>

@@ -1,0 +1,42 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:14
+    environment:
+      - POSTGRES_DB=odoodb
+      - POSTGRES_PASSWORD=your_secure_password
+      - POSTGRES_USER=odoo
+    networks:
+      - odoo_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  odoo:
+    build: .
+    command: ["/opt/odoo/odoo/odoo-bin", "-c", "/etc/odoo/odoo.conf", "-d", "odoodb", "-i", "base,nostr_bridge,ivcs_git"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8069:8069"
+      - "8072:8072"
+    volumes:
+      - ./odoo.conf:/etc/odoo/odoo.conf:Z
+      - ./odoo_custom_addons:/opt/odoo/custom_addons:Z
+      - ivcs_repos:/opt/ivcs_repos:Z
+    environment:
+      - HOST=postgres
+      - USER=odoo
+      - PASSWORD=your_secure_password
+    networks:
+      - odoo_network
+
+networks:
+  odoo_network:
+    driver: bridge
+
+volumes:
+  ivcs_repos:

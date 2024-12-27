@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_decentralized_sync_manager_user,decentralized.sync.manager user,model_decentralized_sync_manager,base.group_user,1,1,1,1
+access_decentralized_sync_dao_user,decentralized.sync.dao user,model_decentralized_sync_dao,base.group_user,1,1,1,1
+access_decentralized_sync_creator_user,decentralized.sync.creator user,model_decentralized_sync_creator,base.group_user,1,1,1,1
+access_decentralized_sync_program_user,decentralized.sync.program user,model_decentralized_sync_program,base.group_user,1,1,1,1
+access_decentralized_sync_event_user,decentralized.sync.event user,model_decentralized_sync_event,base.group_user,1,1,1,1
+access_decentralized_sync_connection_user,decentralized.sync.connection user,model_decentralized_sync_connection,base.group_user,1,1,1,1

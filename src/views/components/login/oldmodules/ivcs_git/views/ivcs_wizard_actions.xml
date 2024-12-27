@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_create_version_wizard" model="ir.actions.act_window">
+        <field name="name">Create New Version</field>
+        <field name="res_model">ivcs.create.version.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="action_create_branch_wizard" model="ir.actions.act_window">
+        <field name="name">Create Branch</field>
+        <field name="res_model">ivcs.create.branch.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="action_switch_branch_wizard" model="ir.actions.act_window">
+        <field name="name">Switch Branch</field>
+        <field name="res_model">ivcs.switch.branch.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="action_merge_branches_wizard" model="ir.actions.act_window">
+        <field name="name">Merge Branches</field>
+        <field name="res_model">ivcs.merge.branches.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="action_rebase_branch_wizard" model="ir.actions.act_window">
+        <field name="name">Rebase Branch</field>
+        <field name="res_model">ivcs.rebase.branch.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

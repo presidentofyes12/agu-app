@@ -1,0 +1,115 @@
+<h1>Easy-RSA 3 Certificate Renewal and Revocation Documentation</h1>
+<p>This document explains how the <strong>differing versions</strong> of Easy-RSA 3 work
+with Renewal and Revocation of Certificates and Private keys.</p>
+<h2>Easy-RSA version 3.2.x</h2>
+<p>v3.2 no longer supports the <code>renew</code> command.</p>
+<p>Instead, the process is as follows:
+1. Command <code>expire &lt;NAME&gt;</code> - This will move an existing certificate
+   from <code>pki/issued</code> to <code>pki/expired</code>, so that a new certificate
+   can be signed, using the original request.</p>
+<p>Generally, renewing is required ONLY when a certificate is due to
+   expire. This means that certificates moved to <code>pki/expired</code> are
+   expected to be expired or to expire in the near future.</p>
+<ol>
+<li>Command <code>sign-req &lt;TYPE&gt; &lt;NAME&gt;</code> - Sign a new certificate.</li>
+</ol>
+<p>This allows ALL command line cutomisations to be used. eg: SAN.
+   (These customisations do not work correctly with the old <code>renew</code>)</p>
+<ol>
+<li>If required, Command <code>revoke-expired</code> can be used to revoke an
+   expired certificate in the <code>pki/expired</code> directory.</li>
+</ol>
+<p>This approach also allows certificates which have been edited during
+<code>sign-req</code> to be edited the same way, without the need for excessive
+and non-standard code. (Note: OpenSSL allows only one way for edits)</p>
+<h2>Easy-RSA version 3.1.x</h2>
+<p><strong>UPDATE</strong>:
+The changes noted for Easy-RSA version 3.1.2 have all been included with
+Easy-RSA version 3.1.1 - See https://github.com/OpenVPN/easy-rsa/pull/688</p>
+<h2>Command Details: <code>renew</code></h2>
+<pre><code>easyrsa renew file-name-base [ cmd-opts ]
+</code></pre>
+<p><code>renew</code> is <strong>only</strong> available since Easy-RSA version <code>3.0.6</code></p>
+<h4><code>renew</code> has three different versions:</h4>
+<ul>
+<li>
+<p><code>renew</code> <strong>Version 1</strong>: Easy-RSA version <code>3.0.6</code>, <code>3.0.7</code> and <code>3.0.8</code>.</p>
+<ul>
+<li>Both certificate and private key are rebuilt.</li>
+<li>Once a certificate has been renewed it <strong>cannot</strong> be revoked.</li>
+</ul>
+</li>
+<li>
+<p><code>renew</code> <strong>Version 2</strong>: Easy-RSA version <code>3.0.9</code> and <code>3.1.0</code>.</p>
+<ul>
+<li>Both certificate and private key are rebuilt.</li>
+<li>Once a certificate has been renewed it <strong>can</strong> be revoked.</li>
+<li>
+<p>Use command:</p>
+<p><code>revoke-renewed file-name-base [ reason ]</code></p>
+</li>
+</ul>
+</li>
+<li>
+<p><code>renew</code> <strong>Version 3</strong>: Easy-RSA version <code>3.1.1+</code>.</p>
+<ul>
+<li>Only certificate is renewed.</li>
+<li>The original <code>renew</code> command has been renamed to <code>rebuild</code>, which
+  rebuilds both certificate and private key.</li>
+</ul>
+</li>
+</ul>
+<h2>Resolving issues with <code>renew</code> version 1</h2>
+<h4>Upgrade Easy-RSA to version <code>3.1.1+</code> is required.</h4>
+<p><code>renew</code> version 1 <strong>rebuilds</strong> the certificate and private key.</p>
+<p>Once a certificate has been renewed by version 1, the files are saved in the
+<code>renewed/</code> storage area by <code>serialNumber</code>. These files must be recovered by
+using command:</p>
+<pre><code>easyrsa rewind-renew serialNumber
+</code></pre>
+<p>Command <code>rewind-renew</code> is available since Easy-RSA version <code>3.1.1</code></p>
+<p>Once <code>rewind-renew</code> has recovered the files, the certificate can be revoked:</p>
+<pre><code>easyrsa revoke-renewed file-name-base [ reason ]
+</code></pre>
+<h2>Using <code>renew</code> version 2</h2>
+<h4>Upgrade Easy-RSA to version <code>3.1.1+</code> is required.</h4>
+<p><code>renew</code> version 2 <strong>rebuilds</strong> the certificate and private key.</p>
+<p>Renewed certificate can be revoked:</p>
+<pre><code>easyrsa revoke-renewed file-name-base [ reason ]
+</code></pre>
+<h2>Using <code>renew</code> version 3</h2>
+<h4>Upgrade Easy-RSA to version <code>3.1.1+</code> is required.</h4>
+<p><code>renew</code> version 3 <strong>renews</strong> the certificate only.</p>
+<p>Renewed certificate can be revoked:</p>
+<pre><code>easyrsa revoke-renewed file-name-base [ reason ]
+</code></pre>
+<p>This is the preferred method to renew a certificate because the original
+private key is still valid.</p>
+<p><code>renew</code> version 3 is <strong>only</strong> available since Easy-RSA version <code>3.1.1+</code>.</p>
+<h2>Easy-RSA Reporting tools for certificate status</h2>
+<p>Easy-RSA version <code>3.1.x</code>, also has the following tools to keep track of
+certificate staus:</p>
+<pre><code>easyrsa [ --days=# ] show-expire [ file-name-base ]
+</code></pre>
+<p><code>show-expire</code> shows all certificates which will expire in given <code>--days</code>.</p>
+<pre><code>easyrsa show-renew [ file-name-base ]
+</code></pre>
+<p><code>show-renew</code> shows all certificates which have been renewed, where the old
+  certificate has not been revoked.</p>
+<pre><code>easyrsa show-revoke [ file-name-base ]
+</code></pre>
+<p><code>show-revoke</code> shows all certificates which have been revoked.</p>
+<h2>Reason codes available for revoke commands</h2>
+<p>The follow is an exhaustive list of available <code>reason</code> codes:
+- <code>unspecified</code>
+- <code>keyCompromise</code>
+- <code>CACompromise</code>
+- <code>affiliationChanged</code>
+- <code>superseded</code>
+- <code>cessationOfOperation</code>
+- <code>certificateHold</code></p>
+<p><code>reason</code> must be one of these codes, otherwise not be used.</p>
+<h2>About command <code>rebuild</code></h2>
+<p>If <code>rebuild</code> is used then the output directory of old certificate, key and
+request is also the <code>renewed</code> directory.  Use <strong><code>revoke-renewed</code></strong> to revoke
+an old certificate/key pair, which has been <em>rebuilt</em> by command <code>rebuild</code>.</p>

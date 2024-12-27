@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_create_version_wizard_form" model="ir.ui.view">
+        <field name="name">ivcs.create.version.wizard.form</field>
+        <field name="model">ivcs.create.version.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="item_id" invisible="1"/>
+                    <field name="name"/>
+                    <field name="description"/>
+                </group>
+                <footer>
+                    <button name="create_version" string="Create Version" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="ivcs_git.action_create_version_wizard" model="ir.actions.act_window">
+        <field name="name">Create New Version</field>
+        <field name="res_model">ivcs.create.version.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

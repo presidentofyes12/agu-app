@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_nostr_event_form" model="ir.ui.view">
+        <field name="name">nostr.event.form</field>
+        <field name="model">nostr.event</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="event_id" readonly="1"/>
+                        <field name="kind"/>
+                        <field name="content"/>
+                        <field name="tags"/>
+                        <field name="public_key" readonly="1"/>
+                        <field name="created_at" readonly="1"/>
+                        <field name="signature" readonly="1"/>
+                        <field name="published"/>
+                        <field name="event_type"/>
+                        <field name="repository_id"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_nostr_event_tree" model="ir.ui.view">
+        <field name="name">nostr.event.tree</field>
+        <field name="model">nostr.event</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="event_id"/>
+                <field name="kind"/>
+                <field name="event_type"/>
+                <field name="repository_id"/>
+                <field name="public_key"/>
+                <field name="created_at"/>
+                <field name="published"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_nostr_event" model="ir.actions.act_window">
+        <field name="name">Nostr Events</field>
+        <field name="res_model">nostr.event</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menu item for Nostr Events -->
+    <menuitem id="menu_nostr_event"
+              name="Nostr Events"
+              parent="menu_git_nostr_bridge_root"
+              action="action_nostr_event"
+              sequence="20"/>
+</odoo>

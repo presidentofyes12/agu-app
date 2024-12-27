@@ -1,0 +1,71 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:14
+    environment:
+      - POSTGRES_PASSWORD=odoo
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgresql.conf:/etc/postgresql/postgresql.conf
+    networks:
+      - odoo_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: postgres -c "config_file=/etc/postgresql/postgresql.conf"
+
+  odoo:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8069:8069"
+      - "8072:8072"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./queue:/opt/odoo/queue
+      - ./odoo.conf:/etc/odoo/odoo.conf:ro
+      - ./odoo_custom_addons:/opt/odoo/custom_addons
+      - odoo_data:/opt/odoo/.local/share/Odoo
+      - ./logs:/var/log/odoo
+      - ivcs_repos:/opt/ivcs_repos
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=odoo
+      - DB_PASSWORD=odoo
+      - DB_NAME=odoodb
+      - PGHOST=postgres
+      - PGPORT=5432
+      - PGUSER=odoo
+      - PGPASSWORD=odoo
+      - WAIT_FOR_DB=true
+      - NOSTR_RELAY_URLS=wss://nostr-pub.wellorder.net
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - LOG_LEVEL=debug
+    networks:
+      - odoo_network
+    command: >
+      bash -c "
+        /opt/odoo/wait-for-psql.sh &&
+        sleep 5 &&
+        python3 -u /opt/odoo/odoo/odoo-bin -c /etc/odoo/odoo.conf --dev all
+      "
+
+networks:
+  odoo_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  odoo_data:
+  odoo_logs:
+  ivcs_repos:

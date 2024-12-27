@@ -1,0 +1,7 @@
+[[[SERVERNAME]]] - Sol·licitud d'ajuda del dispositiu
+El dispositiu "[[[DEVICENAME]]]" ha sol·licitat ajuda.
+
+Usuari: "[[[HELPUSERNAME]]]"
+Sol·licitud: "[[[HELPREQUEST]]]"
+
+[[SERVERURL]]]?viewmode=10&gotonode=[[[NODEID]]]

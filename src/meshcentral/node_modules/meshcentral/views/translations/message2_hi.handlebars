@@ -1,0 +1,106 @@
+<!DOCTYPE html><html lang="hi" dir="ltr" xmlns="http://www.w3.org/1999/xhtml"><head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta name="viewport" content="user-scalable=1.0,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="robots" content="noindex,nofollow">
+    <link type="text/css" href="/styles/style.css" media="screen" rel="stylesheet" title="CSS">
+    <link rel="apple-touch-icon" href="/favicon-303x303.png">
+    <script type="text/javascript" src="scripts/common-0.0.1{{min}}.js"></script>
+    <title id="topTitle">{{{title1}}}</title>
+    <style>
+        body {
+            background-color: cadetblue;
+            background: linear-gradient(to bottom right, #369, #036);
+            height: 100%;
+            overflow: hidden;
+        }
+
+        a:link { color: #c8c8c8; }
+        a:visited { color: #c8c8c8; }
+        a:hover { color: #c8c8c8; }
+        a:active { color: #c8c8c8; }
+    </style>
+</head>
+<body>
+    <img style="position:absolute;left:0;bottom:0;z-index:-1;height:60%;opacity:0.1" src="../../images/login/back.png">
+    <table id="centralTable" class="container" style="height:100%;z-index:1">
+        <tbody><tr>
+            <td style="width:100%;text-align:center;color:#c8c8c8;font-size:larger">
+                <h1 id="mainTitle"></h1>
+                <p id="mainMessage"></p>
+            </td>
+        </tr>
+        <tr style="height:20px">
+            <td>
+                <div>
+                    <div id="flink" style="margin-left:4px">{{{footer}}}</div>
+                    <div id="flink" style="float:right;margin-right:4px">{{{rootCertLink}}}&nbsp;<a href="../../terms">शर्तें और गोपनीयता</a></div>
+                </div>
+            </td>
+        </tr>
+    </tbody></table>
+    <script>
+        var random = '{{{randomlength}}}' // Random length string for BREACH mitigation
+        var titleid = parseInt('{{{titleid}}}');
+        var msgid = parseInt('{{{msgid}}}');
+        var domainurl = decodeURIComponent('{{{domainurl}}}');
+        var arg1 = decodeURIComponent('{{{arg1}}}');
+        var arg2 = decodeURIComponent('{{{arg2}}}');
+        var urlargs = parseUriArgs();
+
+        var title = '';
+        if (titleid == 1) { title = "खाता सत्यापन"; }
+        if (titleid == 2) { title = "डेस्कटॉप शेयरिंग"; }
+        if (titleid == 3) { title = "रखरखाव के तहत सर्वर"; }
+        if (titleid == 4) { title = "टर्मिनल शेयरिंग"; }
+        QH('topTitle', Q('topTitle').innerText + ' - ' + title);
+        QH('mainTitle', title);
+
+        var msg = '';
+        switch (msgid) {
+            case 1: { msg = "त्रुटि: अमान्य डोमेन।"; break; }
+            case 2: { msg = format("त्रुटि: अमान्य उपयोगकर्ता नाम "{0}\"।", arg1); break; }
+            case 3: { msg = format("त्रुटि: उपयोगकर्ता के लिए \"{1}\" के लिए अमान्य ई-मेल \"{0}\"।", arg1, arg2); break; }
+            case 4: { msg = format("उपयोगकर्ता \"{1}\" के लिए ई-मेल \"{0}\" पहले से ही सत्यापित।", arg1, arg2); break; }
+            case 5: { msg = format("ई-मेल \"{0}\" पहले से ही एक अलग खाते पर उपयोग में है। ईमेल पता बदलें और पुनः प्रयास करें।", arg1); break; }
+            case 6: { msg = format("उपयोगकर्ता खाते {1} के लिए सत्यापित ईमेल {0}।", '<b style=color:white>' + arg1 + '</b>', '<b style=color:white>' + arg2 + '</b>'); break; }
+            case 7: { msg = format("उपयोगकर्ता \"{1}\" के लिए ई-मेल \"{0}\" सत्यापित नहीं।", arg1, arg2); break; }
+            case 8: {
+                msg = '<div>' + format("खाते के लिए पासवर्ड {0} पर रीसेट कर दिया गया है:", '<b style=color:white>' + arg1 + '</b>') + '</div><div style=padding:14px;font-size:18px><b style=color:white>' + arg2 + '</b></div>';
+                msg += "लॉगिन करें और अपना पासवर्ड अपडेट करने के लिए \"मेरा खाता\" टैब पर जाएं।";
+                break;
+            }
+            case 9: { msg = "त्रुटि: अमान्य खाता जांच।"; break; }
+            case 10: { msg = "त्रुटि: अमान्य खाता जांच, सत्यापन url केवल 30 मिनट के लिए मान्य है।"; break; }
+            case 11: { msg = "लिंक साझा करना अभी तक मान्य नहीं है।"; break; }
+            case 12: { msg = "शेयरिंग लिंक की समय सीमा समाप्त हो गई है।"; break; }
+            case 13: { msg = "यदि आप एक व्यवस्थापक हैं, तो [यहाँ लॉगिन करें]।".replace('[', '<a href=?loginscreen=1>').replace(']', '</a>'); break; }
+            case 14: { msg = '<a href=' + window.location.href + '&confirm=1>' + "अपना खाता पासवर्ड रीसेट करने के लिए यहां क्लिक करें।" + '</a>'; break; }
+        }
+
+        // Add login page link
+        if ((msgid != 11) && (msgid != 12) && (msgid != 13) && (msgid != 14)) { msg += ' <a href="' + domainurl + (urlargs.key ? ('?key=' + urlargs.key) : '') + '">' + "लॉगइन पेज पर जाएं" + '</a>.' }
+        QH('mainMessage', msg);
+
+        function format(format) { var args = Array.prototype.slice.call(arguments, 1); return format.replace(/{(\d+)}/g, function (match, number) { return typeof args[number] != 'undefined' ? args[number] : match; }); };
+
+        // Parse URL arguments, only keep safe values
+        function parseUriArgs() {
+            var href = window.document.location.href;
+            if (href.endsWith('#')) { href = href.substring(0, href.length - 1); }
+            var name, r = {}, parsedUri = href.split(/[\?&|]/);
+            parsedUri.splice(0, 1);
+            for (var j in parsedUri) {
+                var arg = parsedUri[j], i = arg.indexOf('=');
+                name = arg.substring(0, i);
+                r[name] = arg.substring(i + 1);
+                if (!isSafeString(r[name])) { delete r[name]; } else { var x = parseInt(r[name]); if (x == r[name]) { r[name] = x; } }
+            }
+            return r;
+        }
+    </script>
+
+
+</body></html>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ivcs_item_creation_wizard_form" model="ir.ui.view">
+        <field name="name">ivcs.item.creation.wizard.form</field>
+        <field name="model">ivcs.item.creation.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Create IVCS Item">
+                <group>
+                    <field name="name"/>
+                    <field name="description"/>
+                    <field name="repo_path"/>
+                </group>
+                <footer>
+                    <button name="action_create_ivcs_item" string="Create" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_ivcs_item_creation_wizard" model="ir.actions.act_window">
+        <field name="name">Create IVCS Item</field>
+        <field name="res_model">ivcs.item.creation.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_ivcs_item_creation_wizard"
+              name="Create IVCS Item"
+              action="action_ivcs_item_creation_wizard"
+              parent="menu_ivcs_git_nostr"
+              sequence="10"/>
+</odoo>

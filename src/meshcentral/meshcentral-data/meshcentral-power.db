@@ -1,0 +1,4 @@
+{"time":{"$$date":1723728990915},"nodeid":"*","power":0,"s":1,"_id":"NKaeGrjWG1ZUopIr"}
+{"time":{"$$date":1723729507768},"nodeid":"*","power":0,"s":1,"_id":"v70GGWOoNc1OGQrR"}
+{"$$indexCreated":{"fieldName":"nodeid","unique":false,"sparse":false}}
+{"$$indexCreated":{"fieldName":"time","unique":false,"sparse":false}}

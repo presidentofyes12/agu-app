@@ -1,0 +1,15 @@
+{"_id":"DatabaseIdentifier","value":"916db034af3118777cb96cb489f446fef3b78d2a0ffff6a329b6a1bfb14a25de1b284f1be1dff1cd78ccfe701f83c7d3"}
+{"_id":"InvitationLinkEncryptionKey","key":"8b4361e7024cc361a9e8cb17b2a0338a23afe6076beb2eb96393d04c477d63cc4af025248b9e329ee626c463371e13aa5f6217d8f8514857bb2cdc17dd99b49c267b9a8df12de11ec9cb9c13aa20f6c9","time":1722284907263}
+{"_id":"LastAutoBackupTime","value":1723905909792}
+{"_id":"LoginCookieEncryptionKey","key":"9674317358bf0123b0621c53e3fbc9be28391ef00a4263158d6dcd7bf52dba9eac15147cbfb8c12d1319e4849e9ba34a6833c49ac52d59554a06b838b996ad57803ac6696cefa99d13d3442eb3d72e5b","time":1722284907256}
+{"_id":"SchemaVersion","value":2}
+{"_id":"dbconfig","version":1,"amtWsEventSecret":"a10c939345a2808bd0d118a92d5517b0849c8d66e43e1f5729f59d9632a0e713"}
+{"type":"mesh","_id":"mesh//kpVkz4PkK7USRhppumvQ@wLkMyJIgRsb125AsDo3NmPMSyeFgZdY@YwxiYxP8cXI","name":"ffdgxcz","mtype":2,"desc":"frd","domain":"","links":{"user//npub1n4zrzu3cp55n6w37xhv3ekwl6nr86hn3n0gtn8u6dndct43hgyyq48hkas":{"name":"npub1n4zrzu3cp55n6w37xhv3ekwl6nr86hn3n0gtn8u6dndct43hgyyq48hkas","rights":4294967295}},"creation":1722288711707,"creatorid":"user//npub1n4zrzu3cp55n6w37xhv3ekwl6nr86hn3n0gtn8u6dndct43hgyyq48hkas","creatorname":"npub1n4zrzu3cp55n6w37xhv3ekwl6nr86hn3n0gtn8u6dndct43hgyyq48hkas"}
+{"_id":"user//npub1n4zrzu3cp55n6w37xhv3ekwl6nr86hn3n0gtn8u6dndct43hgyyq48hkas","type":"user","name":"npub1n4zrzu3cp55n6w37xhv3ekwl6nr86hn3n0gtn8u6dndct43hgyyq48hkas","domain":"","creation":1722284834,"links":{"mesh//kpVkz4PkK7USRhppumvQ@wLkMyJIgRsb125AsDo3NmPMSyeFgZdY@YwxiYxP8cXI":{"rights":4294967295}},"email":"nkenna@iheakaram.com","emailVerified":true,"salt":"gRvD72AMm4sfHuP9wJh/evu8jWl71rvJI3a71Y16S0pUOntNaVGSVSOeMhruHdOPRntnDFVAnevZC0M7SYpQ7AkqryO8P2i8ZtIYdQVb4G1ApyzHic/h6kZ9lpCgPj0l85/bH1jjGjkP+EFJtMC86uw6Q9Uj/0UBc1fEDtoeCmU=","hash":"aM3O+VZupWtqLkmGJ3eNk6II82TrllbDhRzS8Ep70BEjrEs+i622TctEPSOdowugDHO9Gk6t5Q2PniegTQmC7cw00mGX0GbDitw2wGAEmScSdgNWtcXhy96BkjL9HNZra4xTvppjSxbBSJ5/HUfJHi+3Z9WG7Z/6nf6I2Q3ErEc=","siteadmin":4294967295,"access":1722291968,"login":1722284922}
+{"_id":"user//test","type":"user","name":"test","domain":"","creation":1723729454,"links":{},"email":"nkenna@iheakaram.com","emailVerified":true,"salt":"+CHWevyy/G4wbPwkSzTF5yeZ/DuVoeucQ/BkDOuQEhDivgDZU4MTbpZNkt5fFVDF6soFiuYCsqvA7ijQxHPmYgIDJAnaUPidqYc3gY9zEtSrZZCFxcOcxeHQpfsYXrNHScJyGpHikJvD7xpIra5DlH5jJmTcYL87EBVIGCl1r58=","hash":"ogU+TAh3Nzw8EUQTpoL5Z/91V3EagqGxQxU/j56v8/NjWAUfNk+GcdWsSyBxShnuEiTVb0lA6siT3Z4MTAiJhjV3S5XVxrQMnxhgvJi2dXg+drbd8UpSAj9IRBy4wd2WWXV/qwdDjPMdZg4FIUtDbmeBJP6Poj8OL+JqdYH34kM=","siteadmin":4294967295,"access":1723730129,"login":1723729518}
+{"$$indexCreated":{"fieldName":"type","unique":false,"sparse":false}}
+{"$$indexCreated":{"fieldName":"domain","unique":false,"sparse":false}}
+{"$$indexCreated":{"fieldName":"meshid","unique":false,"sparse":true}}
+{"$$indexCreated":{"fieldName":"nodeid","unique":false,"sparse":true}}
+{"$$indexCreated":{"fieldName":"email","unique":false,"sparse":true}}
+{"_id":"LastAutoBackupTime","value":1723992310110}

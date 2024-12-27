@@ -1,0 +1,547 @@
+[2024-11-03 11:05:16] Cleaning up existing containers...
+Stopping odoo-nostr-project_odoo_1     ... 
+Stopping odoo-nostr-project_postgres_1 ... 
+Stopping odoo-nostr-project_odoo_1     ... done
+Stopping odoo-nostr-project_postgres_1 ... done
+Removing odoo-nostr-project_odoo_1     ... 
+Removing odoo-nostr-project_postgres_1 ... 
+Removing odoo-nostr-project_postgres_1 ... done
+Removing odoo-nostr-project_odoo_1     ... done
+Removing network odoo-nostr-project_odoo_network
+Removing volume odoo-nostr-project_postgres_data
+Removing volume odoo-nostr-project_odoo_data
+Removing volume odoo-nostr-project_odoo_logs
+Removing volume odoo-nostr-project_ivcs_repos
+Deleted Images:
+untagged: postgres:14
+untagged: postgres@sha256:c9fcaef49a1ca7deae24437c705bf7485922f8a768a140006c5d8abb3f6cac7b
+deleted: sha256:d4a3e64ed8edfd59f3b853e3fe43e3d549b69f3a08e78841b268cdcf4998313d
+deleted: sha256:1c1c7623303adfb01697aa14a551e9b0d4582824479680093e02f851ab94b7b7
+deleted: sha256:d33d5f1d3fd6a1d5611b60c21148d1e6c407b8d1a2f28ec097710c849750d575
+deleted: sha256:2c1f2bdbf4e451068f049f9f5e812f2293a1ce2554575d8e6b9314b9e2e32509
+deleted: sha256:d37e567f6571d27ca23b377c9a125d0db2c0d973217d411c60e4cc2551f9ad36
+deleted: sha256:18cb642387d60a6b4a732b3501e0546c39b40f6b42852897220ffdd9484c964f
+deleted: sha256:8481c5be1e9680cd66789af612fe2637c5135150d0a761a33fa28edf555e2ad0
+deleted: sha256:df2179e33884253cc67170b278ed3c8bdac1a61745e45611a3ebfdc22efc1264
+deleted: sha256:9100318cd977a045c66e50354f5321c14a84513424a5fd2fcafe520dd6ea63e2
+deleted: sha256:98fda3d46b5446a21fa55d6cb4e3bbe4c6151ab7e33cfa0949910bb02a615936
+deleted: sha256:45ea0a93b19d669cb43e5ba5d8a3581efafa610df2657c177c77e1dadaa3d739
+deleted: sha256:fc7ea647ba85ab9ec6054eda99812ff8757f1c6b73b70730eec58e7273cdff1c
+deleted: sha256:01d383623fb7a6848e53559dbf2cd8a37a16f7816b0f5a2f45c0f57e2673e231
+deleted: sha256:be29e058ba749419184bb7f007214834e05ebf121c2ca23ad6c9d8381e29b220
+deleted: sha256:98b5f35ea9d3eca6ed1881b5fe5d1e02024e1450822879e4c13bb48c9386d0ad
+untagged: odoo-nostr-project_odoo:latest
+deleted: sha256:0e1b70fb4bc2d66be80f163684bd7576010e0bedc3e08d20fdb5c271e88de4d9
+
+Deleted build cache objects:
+9df5d3g17b6r61l99fw47rzbe
+3bm36h0d86z8nl6sy0ynndhd7
+p5imx7obbr10f4c9vpeul6n54
+w4jo0m9rv3yja01omvalt3dwa
+5yx9inly41288pbkhokbk9qgr
+en5xi1s456pxjoof1whp5vlkl
+igspin39oqnpewqwnl5f4f6xj
+d5xiau6yc9zaat3d41b0xpegz
+zqd2fpzf97jb1k5po9kenmd3b
+ja5nrjqujyv3zppfitn342ewb
+zgwvpy7rbp6bqcy9myxkh8e3k
+ctznldf1vrekpu43ah1sm8zyv
+gpmwv1xerik7fit0b9d0bwwf1
+5hqtzih5i6uq1zr4kfsthvi6s
+qjetyyv5nxus61aq6kczkw6mh
+v7lpxfu9zcf18prnpj7h1a362
+uy0gxb1d63pbouwbr0gl5didm
+ozkc3hrwav42h0082x76kh66y
+ohwk22erdkmmr7t4zcf33bpyi
+g02vyo23800bgpsr23ag3uk8v
+
+Total reclaimed space: 2.707GB
+[2024-11-03 11:05:22] Creating required directories...
+[2024-11-03 11:05:22] Configuring Odoo...
+[2024-11-03 11:05:22] Starting PostgreSQL...
+Creating network "odoo-nostr-project_odoo_network" with driver "bridge"
+Creating volume "odoo-nostr-project_postgres_data" with default driver
+Creating volume "odoo-nostr-project_odoo_data" with default driver
+Creating volume "odoo-nostr-project_odoo_logs" with default driver
+Creating volume "odoo-nostr-project_ivcs_repos" with default driver
+Pulling postgres (postgres:14)...
+14: Pulling from library/postgres
+Digest: sha256:c9fcaef49a1ca7deae24437c705bf7485922f8a768a140006c5d8abb3f6cac7b
+Status: Downloaded newer image for postgres:14
+Creating odoo-nostr-project_postgres_1 ... 
+Creating odoo-nostr-project_postgres_1 ... done
+localhost:5432 - no response
+[2024-11-03 11:05:59] Waiting for PostgreSQL to be ready... (0/30)
+localhost:5432 - accepting connections
+[2024-11-03 11:06:02] Setting up PostgreSQL database...
+NOTICE:  role "odoo" does not exist, skipping
+DROP ROLE
+CREATE ROLE
+NOTICE:  database "odoodb" does not exist, skipping
+DROP DATABASE
+CREATE DATABASE
+You are now connected to database "odoodb" as user "postgres".
+CREATE EXTENSION
+SET
+SET
+[2024-11-03 11:06:02] Starting Odoo...
+Building odoo
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 3.55kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/ubuntu:22.04
+#2 DONE 1.2s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [ 1/17] FROM docker.io/library/ubuntu:22.04@sha256:0e5e4a57c2499249aafc3b40fcd541e9a456aab7296681a3994d631587203f97
+#4 resolve docker.io/library/ubuntu:22.04@sha256:0e5e4a57c2499249aafc3b40fcd541e9a456aab7296681a3994d631587203f97 0.0s done
+#4 ...
+
+#5 [internal] load build context
+#5 transferring context: 2.29MB 0.1s done
+#5 DONE 0.1s
+
+#4 [ 1/17] FROM docker.io/library/ubuntu:22.04@sha256:0e5e4a57c2499249aafc3b40fcd541e9a456aab7296681a3994d631587203f97
+#4 sha256:0e5e4a57c2499249aafc3b40fcd541e9a456aab7296681a3994d631587203f97 6.69kB / 6.69kB done
+#4 sha256:3d1556a8a18cf5307b121e0a98e93f1ddf1f3f8e092f1fddfd941254785b95d7 424B / 424B done
+#4 sha256:97271d29cb7956f0908cfb1449610a2cd9cb46b004ac8af25f0255663eb364ba 2.30kB / 2.30kB done
+#4 sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac 0B / 29.54MB 0.2s
+#4 sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac 2.10MB / 29.54MB 1.0s
+#4 sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac 4.19MB / 29.54MB 1.7s
+#4 sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac 6.29MB / 29.54MB 2.1s
+#4 sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac 8.39MB / 29.54MB 2.5s
+#4 sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac 10.49MB / 29.54MB 3.0s
+#4 sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac 12.58MB / 29.54MB 3.4s
+#4 sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac 14.68MB / 29.54MB 3.9s
+#4 sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac 16.78MB / 29.54MB 4.2s
+#4 sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac 18.87MB / 29.54MB 4.7s
+#4 sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac 20.97MB / 29.54MB 5.1s
+#4 sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac 23.07MB / 29.54MB 5.6s
+#4 sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac 25.17MB / 29.54MB 5.9s
+#4 sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac 27.26MB / 29.54MB 6.5s
+#4 sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac 29.54MB / 29.54MB 6.8s
+#4 sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac 29.54MB / 29.54MB 6.8s done
+#4 extracting sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac 0.1s
+#4 extracting sha256:6414378b647780fee8fd903ddb9541d134a1947ce092d08bdeb23a54cb3684ac 1.5s done
+#4 DONE 8.5s
+
+#6 [ 2/17] RUN apt-get update && apt-get install -y     python3     python3-pip     python3-dev     python3-venv     postgresql-client     nodejs     npm     git     wget     libxml2-dev     libxslt1-dev     libjpeg-dev     libfreetype6-dev     libpq-dev     build-essential     libldap2-dev     libsasl2-dev     libssl-dev     libffi-dev     iputils-ping     curl     netcat     sudo     && rm -rf /var/lib/apt/lists/*
+#6 0.304 Get:1 http://archive.ubuntu.com/ubuntu jammy InRelease [270 kB]
+#6 0.435 Get:2 http://security.ubuntu.com/ubuntu jammy-security InRelease [129 kB]
+#6 0.660 Get:3 http://archive.ubuntu.com/ubuntu jammy-updates InRelease [128 kB]
+#6 0.717 Get:4 http://archive.ubuntu.com/ubuntu jammy-backports InRelease [127 kB]
+#6 0.787 Get:5 http://archive.ubuntu.com/ubuntu jammy/restricted amd64 Packages [164 kB]
+#6 0.853 Get:6 http://archive.ubuntu.com/ubuntu jammy/universe amd64 Packages [17.5 MB]
+#6 1.162 Get:7 http://security.ubuntu.com/ubuntu jammy-security/restricted amd64 Packages [3227 kB]
+#6 2.123 Get:8 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 Packages [1162 kB]
+#6 2.255 Get:9 http://security.ubuntu.com/ubuntu jammy-security/multiverse amd64 Packages [44.7 kB]
+#6 2.257 Get:10 http://security.ubuntu.com/ubuntu jammy-security/main amd64 Packages [2389 kB]
+#6 7.130 Get:11 http://archive.ubuntu.com/ubuntu jammy/main amd64 Packages [1792 kB]
+#6 7.585 Get:12 http://archive.ubuntu.com/ubuntu jammy/multiverse amd64 Packages [266 kB]
+#6 7.662 Get:13 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 Packages [2665 kB]
+#6 8.368 Get:14 http://archive.ubuntu.com/ubuntu jammy-updates/restricted amd64 Packages [3305 kB]
+#6 9.277 Get:15 http://archive.ubuntu.com/ubuntu jammy-updates/universe amd64 Packages [1450 kB]
+#6 9.685 Get:16 http://archive.ubuntu.com/ubuntu jammy-updates/multiverse amd64 Packages [51.8 kB]
+#6 9.685 Get:17 http://archive.ubuntu.com/ubuntu jammy-backports/main amd64 Packages [81.4 kB]
+#6 9.730 Get:18 http://archive.ubuntu.com/ubuntu jammy-backports/universe amd64 Packages [33.7 kB]
+#6 9.797 Fetched 34.8 MB in 10s (3626 kB/s)
+#6 9.797 Reading package lists...
+#6 10.89 Reading package lists...
+#6 11.93 Building dependency tree...
+#6 12.12 Reading state information...
+#6 12.40 The following additional packages will be installed:
+#6 12.40   adwaita-icon-theme at-spi2-core binutils binutils-common
+#6 12.40   binutils-x86-64-linux-gnu bzip2 ca-certificates cpp cpp-11 dbus
+#6 12.40   dbus-user-session dconf-gsettings-backend dconf-service dirmngr dmsetup
+#6 12.40   dpkg-dev fakeroot fontconfig fontconfig-config fonts-dejavu-core g++ g++-11
+#6 12.40   gcc gcc-11 gcc-11-base gir1.2-glib-2.0 git-man gnupg gnupg-l10n gnupg-utils
+#6 12.40   gpg gpg-agent gpg-wks-client gpg-wks-server gpgconf gpgsm
+#6 12.40   gsettings-desktop-schemas gtk-update-icon-cache gyp hicolor-icon-theme
+#6 12.40   humanity-icon-theme icu-devtools javascript-common less
+#6 12.40   libalgorithm-diff-perl libalgorithm-diff-xs-perl libalgorithm-merge-perl
+#6 12.40   libapparmor1 libargon2-1 libasan6 libassuan0 libatk-bridge2.0-0 libatk1.0-0
+#6 12.40   libatk1.0-data libatomic1 libatspi2.0-0 libauthen-sasl-perl libavahi-client3
+#6 12.40   libavahi-common-data libavahi-common3 libbinutils libbrotli-dev libbrotli1
+#6 12.40   libbsd0 libc-ares2 libc-dev-bin libc-devtools libc6-dev libcairo-gobject2
+#6 12.40   libcairo2 libcap2-bin libcbor0.8 libcc1-0 libclone-perl libcolord2
+#6 12.40   libcrypt-dev libcryptsetup12 libctf-nobfd0 libctf0 libcups2 libcurl3-gnutls
+#6 12.40   libcurl4 libdata-dump-perl libdatrie1 libdbus-1-3 libdconf1 libdeflate0
+#6 12.40   libdevmapper1.02.1 libdpkg-perl libdrm-amdgpu1 libdrm-common libdrm-intel1
+#6 12.40   libdrm-nouveau2 libdrm-radeon1 libdrm2 libedit2 libelf1
+#6 12.40   libencode-locale-perl libepoxy0 liberror-perl libexpat1 libexpat1-dev
+#6 12.40   libfakeroot libfido2-1 libfile-basedir-perl libfile-desktopentry-perl
+#6 12.40   libfile-fcntllock-perl libfile-listing-perl libfile-mimeinfo-perl
+#6 12.40   libfont-afm-perl libfontconfig1 libfontenc1 libfreetype-dev libfreetype6
+#6 12.40   libfribidi0 libgcc-11-dev libgd3 libgdbm-compat4 libgdbm6
+#6 12.40   libgdk-pixbuf-2.0-0 libgdk-pixbuf2.0-bin libgdk-pixbuf2.0-common
+#6 12.40   libgirepository-1.0-1 libgl1 libgl1-amber-dri libgl1-mesa-dri libglapi-mesa
+#6 12.40   libglib2.0-0 libglib2.0-data libglvnd0 libglx-mesa0 libglx0 libgomp1
+#6 12.40   libgraphite2-3 libgtk-3-0 libgtk-3-bin libgtk-3-common libgtkd-3-0
+#6 12.40   libharfbuzz0b libhtml-form-perl libhtml-format-perl libhtml-parser-perl
+#6 12.40   libhtml-tagset-perl libhtml-tree-perl libhttp-cookies-perl
+#6 12.40   libhttp-daemon-perl libhttp-date-perl libhttp-message-perl
+#6 12.40   libhttp-negotiate-perl libice6 libicu-dev libicu70 libio-html-perl
+#6 12.40   libio-socket-ssl-perl libio-stringy-perl libip4tc2 libipc-system-simple-perl
+#6 12.40   libisl23 libitm1 libjbig0 libjpeg-turbo8 libjpeg-turbo8-dev libjpeg8
+#6 12.40   libjpeg8-dev libjs-events libjs-highlight.js libjs-inherits
+#6 12.40   libjs-is-typedarray libjs-jquery libjs-psl libjs-source-map libjs-sphinxdoc
+#6 12.40   libjs-sprintf-js libjs-typedarray-to-buffer libjs-underscore libjson-c5
+#6 12.40   libkmod2 libksba8 liblcms2-2 libldap-2.5-0 libldap-common libldap-dev
+#6 12.40   libllvm11 libllvm15 liblocale-gettext-perl liblsan0 liblwp-mediatypes-perl
+#6 12.40   liblwp-protocol-https-perl libmailtools-perl libmd0 libmpc3 libmpdec3
+#6 12.40   libmpfr6 libnet-dbus-perl libnet-http-perl libnet-smtp-ssl-perl
+#6 12.40   libnet-ssleay-perl libnghttp2-14 libnode-dev libnode72 libnotify-bin
+#6 12.40   libnotify4 libnpth0 libnsl-dev libnss-systemd libpam-cap libpam-systemd
+#6 12.40   libpango-1.0-0 libpangocairo-1.0-0 libpangoft2-1.0-0 libpciaccess0
+#6 12.40   libperl5.34 libphobos2-ldc-shared98 libpixman-1-0 libpng-dev libpng-tools
+#6 12.40   libpng16-16 libpq5 libpsl5 libpython3-dev libpython3-stdlib libpython3.10
+#6 12.40   libpython3.10-dev libpython3.10-minimal libpython3.10-stdlib libquadmath0
+#6 12.40   libreadline8 librsvg2-2 librsvg2-common librtmp1 libsasl2-2 libsasl2-modules
+#6 12.40   libsasl2-modules-db libsensors-config libsensors5 libsm6 libsqlite3-0
+#6 12.40   libssh-4 libstdc++-11-dev libtext-iconv-perl libthai-data libthai0
+#6 12.40   libtie-ixhash-perl libtiff5 libtimedate-perl libtirpc-dev libtry-tiny-perl
+#6 12.40   libtsan0 libubsan1 libunwind8 liburi-perl libuv1 libuv1-dev libvte-2.91-0
+#6 12.40   libvte-2.91-common libvted-3-0 libwayland-client0 libwayland-cursor0
+#6 12.40   libwayland-egl1 libwebp7 libwww-perl libwww-robotrules-perl libx11-6
+#6 12.40   libx11-data libx11-protocol-perl libx11-xcb1 libxau6 libxaw7 libxcb-dri2-0
+#6 12.40   libxcb-dri3-0 libxcb-glx0 libxcb-present0 libxcb-randr0 libxcb-render0
+#6 12.40   libxcb-shape0 libxcb-shm0 libxcb-sync1 libxcb-xfixes0 libxcb1 libxcomposite1
+#6 12.40   libxcursor1 libxdamage1 libxdmcp6 libxext6 libxfixes3 libxft2 libxi6
+#6 12.40   libxinerama1 libxkbcommon0 libxkbfile1 libxml-parser-perl libxml-twig-perl
+#6 12.40   libxml-xpathengine-perl libxml2 libxmu6 libxmuu1 libxpm4 libxrandr2
+#6 12.40   libxrender1 libxshmfence1 libxslt1.1 libxt6 libxtst6 libxv1 libxxf86dga1
+#6 12.40   libxxf86vm1 linux-libc-dev lto-disabled-list make manpages manpages-dev
+#6 12.40   media-types netbase netcat-openbsd networkd-dispatcher node-abab node-abbrev
+#6 12.40   node-agent-base node-ansi-regex node-ansi-styles node-ansistyles node-aproba
+#6 12.40   node-archy node-are-we-there-yet node-argparse node-arrify node-asap
+#6 12.40   node-asynckit node-balanced-match node-brace-expansion node-builtins
+#6 12.40   node-cacache node-chalk node-chownr node-clean-yaml-object node-cli-table
+#6 12.40   node-clone node-color-convert node-color-name node-colors node-columnify
+#6 12.40   node-combined-stream node-commander node-console-control-strings
+#6 12.40   node-copy-concurrently node-core-util-is node-coveralls node-cssom
+#6 12.40   node-cssstyle node-debug node-decompress-response node-defaults
+#6 12.40   node-delayed-stream node-delegates node-depd node-diff node-encoding
+#6 12.40   node-end-of-stream node-err-code node-escape-string-regexp node-esprima
+#6 12.40   node-events node-fancy-log node-fetch node-foreground-child node-form-data
+#6 12.40   node-fs-write-stream-atomic node-fs.realpath node-function-bind node-gauge
+#6 12.40   node-get-stream node-glob node-got node-graceful-fs node-growl node-gyp
+#6 12.40   node-has-flag node-has-unicode node-hosted-git-info node-https-proxy-agent
+#6 12.40   node-iconv-lite node-iferr node-imurmurhash node-indent-string node-inflight
+#6 12.40   node-inherits node-ini node-ip node-ip-regex node-is-buffer
+#6 12.40   node-is-plain-obj node-is-typedarray node-isarray node-isexe node-js-yaml
+#6 12.40   node-jsdom node-json-buffer node-json-parse-better-errors node-jsonparse
+#6 12.40   node-kind-of node-lcov-parse node-lodash-packages node-log-driver
+#6 12.40   node-lowercase-keys node-lru-cache node-mime node-mime-types
+#6 12.40   node-mimic-response node-minimatch node-minimist node-minipass node-mkdirp
+#6 12.40   node-move-concurrently node-ms node-mute-stream node-negotiator node-nopt
+#6 12.40   node-normalize-package-data node-npm-bundled node-npm-package-arg
+#6 12.40   node-npmlog node-object-assign node-once node-opener node-osenv
+#6 12.40   node-p-cancelable node-p-map node-path-is-absolute node-process-nextick-args
+#6 12.40   node-promise-inflight node-promise-retry node-promzard node-psl node-pump
+#6 12.40   node-punycode node-quick-lru node-read node-read-package-json
+#6 12.40   node-readable-stream node-resolve node-retry node-rimraf node-run-queue
+#6 12.40   node-safe-buffer node-semver node-set-blocking node-signal-exit node-slash
+#6 12.40   node-slice-ansi node-source-map node-source-map-support node-spdx-correct
+#6 12.40   node-spdx-exceptions node-spdx-expression-parse node-spdx-license-ids
+#6 12.40   node-sprintf-js node-ssri node-stack-utils node-stealthy-require
+#6 12.40   node-string-decoder node-string-width node-strip-ansi node-supports-color
+#6 12.40   node-tap node-tap-mocha-reporter node-tap-parser node-tar node-text-table
+#6 12.40   node-time-stamp node-tmatch node-tough-cookie node-typedarray-to-buffer
+#6 12.40   node-unique-filename node-universalify node-util-deprecate
+#6 12.40   node-validate-npm-package-license node-validate-npm-package-name
+#6 12.40   node-wcwidth.js node-webidl-conversions node-whatwg-fetch node-which
+#6 12.40   node-wide-align node-wrappy node-write-file-atomic node-ws node-yallist
+#6 12.40   nodejs-doc openssh-client openssl patch perl perl-modules-5.34
+#6 12.40   perl-openssl-defaults pinentry-curses postgresql-client-14
+#6 12.40   postgresql-client-common publicsuffix python3-dbus python3-distutils
+#6 12.40   python3-gi python3-lib2to3 python3-minimal python3-pip-whl
+#6 12.40   python3-pkg-resources python3-setuptools python3-setuptools-whl
+#6 12.40   python3-wheel python3.10 python3.10-dev python3.10-minimal python3.10-venv
+#6 12.40   readline-common rpcsvc-proto session-migration shared-mime-info systemd
+#6 12.40   systemd-sysv systemd-timesyncd tilix tilix-common ubuntu-mono ucf x11-common
+#6 12.40   x11-utils x11-xserver-utils xauth xdg-user-dirs xdg-utils xkb-data xz-utils
+#6 12.40   zlib1g-dev
+#6 12.40 Suggested packages:
+#6 12.40   binutils-doc bzip2-doc cpp-doc gcc-11-locales pinentry-gnome3 tor
+#6 12.40   debian-keyring g++-multilib g++-11-multilib gcc-11-doc gcc-multilib autoconf
+#6 12.40   automake libtool flex bison gdb gcc-doc gcc-11-multilib gettext-base
+#6 12.40   git-daemon-run | git-daemon-sysvinit git-doc git-email git-gui gitk gitweb
+#6 12.40   git-cvs git-mediawiki git-svn parcimonie xloadimage scdaemon apache2
+#6 12.40   | lighttpd | httpd libdigest-hmac-perl libgssapi-perl glibc-doc colord
+#6 12.40   cups-common bzr freetype2-doc libgd-tools gdbm-l10n gvfs icu-doc
+#6 12.40   libjs-angularjs liblcms2-utils libcrypt-ssleay-perl gnome-shell
+#6 12.40   | notification-daemon pciutils postgresql-doc-14 librsvg2-bin
+#6 12.40   libsasl2-modules-gssapi-mit | libsasl2-modules-gssapi-heimdal
+#6 12.40   libsasl2-modules-ldap libsasl2-modules-otp libsasl2-modules-sql lm-sensors
+#6 12.40   libssl-doc libstdc++-11-doc libsub-name-perl libbusiness-isbn-perl
+#6 12.40   libauthen-ntlm-perl libunicode-map8-perl libunicode-string-perl
+#6 12.40   xml-twig-tools pkg-config make-doc man-browser iw | wireless-tools node-nyc
+#6 12.40   keychain libpam-ssh monkeysphere ssh-askpass ed diffutils-doc perl-doc
+#6 12.40   libterm-readline-gnu-perl | libterm-readline-perl-perl
+#6 12.40   libtap-harness-archive-perl pinentry-doc postgresql-14 python3-doc
+#6 12.40   python3-tk python-dbus-doc python-setuptools-doc python3.10-doc
+#6 12.40   binfmt-support readline-doc systemd-container libtss2-esys-3.0.2-0
+#6 12.40   libtss2-mu0 libtss2-rc0 policykit-1 python-nautilus mesa-utils nickle
+#6 12.40   cairo-5c xorg-docs-core
+#6 13.91 The following NEW packages will be installed:
+#6 13.91   adwaita-icon-theme at-spi2-core binutils binutils-common
+#6 13.91   binutils-x86-64-linux-gnu build-essential bzip2 ca-certificates cpp cpp-11
+#6 13.91   curl dbus dbus-user-session dconf-gsettings-backend dconf-service dirmngr
+#6 13.91   dmsetup dpkg-dev fakeroot fontconfig fontconfig-config fonts-dejavu-core g++
+#6 13.91   g++-11 gcc gcc-11 gcc-11-base gir1.2-glib-2.0 git git-man gnupg gnupg-l10n
+#6 13.91   gnupg-utils gpg gpg-agent gpg-wks-client gpg-wks-server gpgconf gpgsm
+#6 13.91   gsettings-desktop-schemas gtk-update-icon-cache gyp hicolor-icon-theme
+#6 13.91   humanity-icon-theme icu-devtools iputils-ping javascript-common less
+#6 13.91   libalgorithm-diff-perl libalgorithm-diff-xs-perl libalgorithm-merge-perl
+#6 13.91   libapparmor1 libargon2-1 libasan6 libassuan0 libatk-bridge2.0-0 libatk1.0-0
+#6 13.91   libatk1.0-data libatomic1 libatspi2.0-0 libauthen-sasl-perl libavahi-client3
+#6 13.91   libavahi-common-data libavahi-common3 libbinutils libbrotli-dev libbrotli1
+#6 13.91   libbsd0 libc-ares2 libc-dev-bin libc-devtools libc6-dev libcairo-gobject2
+#6 13.91   libcairo2 libcap2-bin libcbor0.8 libcc1-0 libclone-perl libcolord2
+#6 13.91   libcrypt-dev libcryptsetup12 libctf-nobfd0 libctf0 libcups2 libcurl3-gnutls
+#6 13.91   libcurl4 libdata-dump-perl libdatrie1 libdbus-1-3 libdconf1 libdeflate0
+#6 13.91   libdevmapper1.02.1 libdpkg-perl libdrm-amdgpu1 libdrm-common libdrm-intel1
+#6 13.91   libdrm-nouveau2 libdrm-radeon1 libdrm2 libedit2 libelf1
+#6 13.91   libencode-locale-perl libepoxy0 liberror-perl libexpat1 libexpat1-dev
+#6 13.91   libfakeroot libffi-dev libfido2-1 libfile-basedir-perl
+#6 13.91   libfile-desktopentry-perl libfile-fcntllock-perl libfile-listing-perl
+#6 13.91   libfile-mimeinfo-perl libfont-afm-perl libfontconfig1 libfontenc1
+#6 13.91   libfreetype-dev libfreetype6 libfreetype6-dev libfribidi0 libgcc-11-dev
+#6 13.91   libgd3 libgdbm-compat4 libgdbm6 libgdk-pixbuf-2.0-0 libgdk-pixbuf2.0-bin
+#6 13.91   libgdk-pixbuf2.0-common libgirepository-1.0-1 libgl1 libgl1-amber-dri
+#6 13.91   libgl1-mesa-dri libglapi-mesa libglib2.0-0 libglib2.0-data libglvnd0
+#6 13.91   libglx-mesa0 libglx0 libgomp1 libgraphite2-3 libgtk-3-0 libgtk-3-bin
+#6 13.91   libgtk-3-common libgtkd-3-0 libharfbuzz0b libhtml-form-perl
+#6 13.91   libhtml-format-perl libhtml-parser-perl libhtml-tagset-perl
+#6 13.91   libhtml-tree-perl libhttp-cookies-perl libhttp-daemon-perl libhttp-date-perl
+#6 13.91   libhttp-message-perl libhttp-negotiate-perl libice6 libicu-dev libicu70
+#6 13.91   libio-html-perl libio-socket-ssl-perl libio-stringy-perl libip4tc2
+#6 13.91   libipc-system-simple-perl libisl23 libitm1 libjbig0 libjpeg-dev
+#6 13.91   libjpeg-turbo8 libjpeg-turbo8-dev libjpeg8 libjpeg8-dev libjs-events
+#6 13.91   libjs-highlight.js libjs-inherits libjs-is-typedarray libjs-jquery libjs-psl
+#6 13.91   libjs-source-map libjs-sphinxdoc libjs-sprintf-js libjs-typedarray-to-buffer
+#6 13.91   libjs-underscore libjson-c5 libkmod2 libksba8 liblcms2-2 libldap-2.5-0
+#6 13.91   libldap-common libldap-dev libldap2-dev libllvm11 libllvm15
+#6 13.91   liblocale-gettext-perl liblsan0 liblwp-mediatypes-perl
+#6 13.91   liblwp-protocol-https-perl libmailtools-perl libmd0 libmpc3 libmpdec3
+#6 13.91   libmpfr6 libnet-dbus-perl libnet-http-perl libnet-smtp-ssl-perl
+#6 13.91   libnet-ssleay-perl libnghttp2-14 libnode-dev libnode72 libnotify-bin
+#6 13.91   libnotify4 libnpth0 libnsl-dev libnss-systemd libpam-cap libpam-systemd
+#6 13.91   libpango-1.0-0 libpangocairo-1.0-0 libpangoft2-1.0-0 libpciaccess0
+#6 13.91   libperl5.34 libphobos2-ldc-shared98 libpixman-1-0 libpng-dev libpng-tools
+#6 13.91   libpng16-16 libpq-dev libpq5 libpsl5 libpython3-dev libpython3-stdlib
+#6 13.91   libpython3.10 libpython3.10-dev libpython3.10-minimal libpython3.10-stdlib
+#6 13.91   libquadmath0 libreadline8 librsvg2-2 librsvg2-common librtmp1 libsasl2-2
+#6 13.91   libsasl2-dev libsasl2-modules libsasl2-modules-db libsensors-config
+#6 13.91   libsensors5 libsm6 libsqlite3-0 libssh-4 libssl-dev libstdc++-11-dev
+#6 13.91   libtext-iconv-perl libthai-data libthai0 libtie-ixhash-perl libtiff5
+#6 13.91   libtimedate-perl libtirpc-dev libtry-tiny-perl libtsan0 libubsan1 libunwind8
+#6 13.91   liburi-perl libuv1 libuv1-dev libvte-2.91-0 libvte-2.91-common libvted-3-0
+#6 13.91   libwayland-client0 libwayland-cursor0 libwayland-egl1 libwebp7 libwww-perl
+#6 13.91   libwww-robotrules-perl libx11-6 libx11-data libx11-protocol-perl libx11-xcb1
+#6 13.91   libxau6 libxaw7 libxcb-dri2-0 libxcb-dri3-0 libxcb-glx0 libxcb-present0
+#6 13.91   libxcb-randr0 libxcb-render0 libxcb-shape0 libxcb-shm0 libxcb-sync1
+#6 13.91   libxcb-xfixes0 libxcb1 libxcomposite1 libxcursor1 libxdamage1 libxdmcp6
+#6 13.91   libxext6 libxfixes3 libxft2 libxi6 libxinerama1 libxkbcommon0 libxkbfile1
+#6 13.91   libxml-parser-perl libxml-twig-perl libxml-xpathengine-perl libxml2
+#6 13.91   libxml2-dev libxmu6 libxmuu1 libxpm4 libxrandr2 libxrender1 libxshmfence1
+#6 13.91   libxslt1-dev libxslt1.1 libxt6 libxtst6 libxv1 libxxf86dga1 libxxf86vm1
+#6 13.91   linux-libc-dev lto-disabled-list make manpages manpages-dev media-types
+#6 13.91   netbase netcat netcat-openbsd networkd-dispatcher node-abab node-abbrev
+#6 13.91   node-agent-base node-ansi-regex node-ansi-styles node-ansistyles node-aproba
+#6 13.91   node-archy node-are-we-there-yet node-argparse node-arrify node-asap
+#6 13.91   node-asynckit node-balanced-match node-brace-expansion node-builtins
+#6 13.91   node-cacache node-chalk node-chownr node-clean-yaml-object node-cli-table
+#6 13.91   node-clone node-color-convert node-color-name node-colors node-columnify
+#6 13.91   node-combined-stream node-commander node-console-control-strings
+#6 13.91   node-copy-concurrently node-core-util-is node-coveralls node-cssom
+#6 13.91   node-cssstyle node-debug node-decompress-response node-defaults
+#6 13.91   node-delayed-stream node-delegates node-depd node-diff node-encoding
+#6 13.91   node-end-of-stream node-err-code node-escape-string-regexp node-esprima
+#6 13.91   node-events node-fancy-log node-fetch node-foreground-child node-form-data
+#6 13.91   node-fs-write-stream-atomic node-fs.realpath node-function-bind node-gauge
+#6 13.91   node-get-stream node-glob node-got node-graceful-fs node-growl node-gyp
+#6 13.91   node-has-flag node-has-unicode node-hosted-git-info node-https-proxy-agent
+#6 13.91   node-iconv-lite node-iferr node-imurmurhash node-indent-string node-inflight
+#6 13.91   node-inherits node-ini node-ip node-ip-regex node-is-buffer
+#6 13.91   node-is-plain-obj node-is-typedarray node-isarray node-isexe node-js-yaml
+#6 13.91   node-jsdom node-json-buffer node-json-parse-better-errors node-jsonparse
+#6 13.91   node-kind-of node-lcov-parse node-lodash-packages node-log-driver
+#6 13.91   node-lowercase-keys node-lru-cache node-mime node-mime-types
+#6 13.91   node-mimic-response node-minimatch node-minimist node-minipass node-mkdirp
+#6 13.91   node-move-concurrently node-ms node-mute-stream node-negotiator node-nopt
+#6 13.91   node-normalize-package-data node-npm-bundled node-npm-package-arg
+#6 13.91   node-npmlog node-object-assign node-once node-opener node-osenv
+#6 13.91   node-p-cancelable node-p-map node-path-is-absolute node-process-nextick-args
+#6 13.91   node-promise-inflight node-promise-retry node-promzard node-psl node-pump
+#6 13.91   node-punycode node-quick-lru node-read node-read-package-json
+#6 13.91   node-readable-stream node-resolve node-retry node-rimraf node-run-queue
+#6 13.91   node-safe-buffer node-semver node-set-blocking node-signal-exit node-slash
+#6 13.91   node-slice-ansi node-source-map node-source-map-support node-spdx-correct
+#6 13.91   node-spdx-exceptions node-spdx-expression-parse node-spdx-license-ids
+#6 13.91   node-sprintf-js node-ssri node-stack-utils node-stealthy-require
+#6 13.91   node-string-decoder node-string-width node-strip-ansi node-supports-color
+#6 13.91   node-tap node-tap-mocha-reporter node-tap-parser node-tar node-text-table
+#6 13.91   node-time-stamp node-tmatch node-tough-cookie node-typedarray-to-buffer
+#6 13.91   node-unique-filename node-universalify node-util-deprecate
+#6 13.91   node-validate-npm-package-license node-validate-npm-package-name
+#6 13.91   node-wcwidth.js node-webidl-conversions node-whatwg-fetch node-which
+#6 13.91   node-wide-align node-wrappy node-write-file-atomic node-ws node-yallist
+#6 13.91   nodejs nodejs-doc npm openssh-client openssl patch perl perl-modules-5.34
+#6 13.91   perl-openssl-defaults pinentry-curses postgresql-client postgresql-client-14
+#6 13.91   postgresql-client-common publicsuffix python3 python3-dbus python3-dev
+#6 13.91   python3-distutils python3-gi python3-lib2to3 python3-minimal python3-pip
+#6 13.91   python3-pip-whl python3-pkg-resources python3-setuptools
+#6 13.91   python3-setuptools-whl python3-venv python3-wheel python3.10 python3.10-dev
+#6 13.91   python3.10-minimal python3.10-venv readline-common rpcsvc-proto
+#6 13.91   session-migration shared-mime-info sudo systemd systemd-sysv
+#6 13.91   systemd-timesyncd tilix tilix-common ubuntu-mono ucf wget x11-common
+#6 13.91   x11-utils x11-xserver-utils xauth xdg-user-dirs xdg-utils xkb-data xz-utils
+#6 13.91   zlib1g-dev
+#6 14.26 0 upgraded, 554 newly installed, 0 to remove and 0 not upgraded.
+#6 14.26 Need to get 252 MB of archives.
+#6 14.26 After this operation, 993 MB of additional disk space will be used.
+#6 14.26 Get:1 http://archive.ubuntu.com/ubuntu jammy/main amd64 liblocale-gettext-perl amd64 1.07-4build3 [17.1 kB]
+#6 14.46 Get:2 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libpython3.10-minimal amd64 3.10.12-1~22.04.6 [814 kB]
+#6 15.09 Get:3 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libexpat1 amd64 2.4.7-1ubuntu0.4 [91.2 kB]
+#6 15.11 Get:4 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 python3.10-minimal amd64 3.10.12-1~22.04.6 [2258 kB]
+#6 15.47 Get:5 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 python3-minimal amd64 3.10.6-1~22.04.1 [24.3 kB]
+#6 15.47 Get:6 http://archive.ubuntu.com/ubuntu jammy/main amd64 media-types all 7.0.0 [25.5 kB]
+#6 15.47 Get:7 http://archive.ubuntu.com/ubuntu jammy/main amd64 libmpdec3 amd64 2.5.1-2build2 [86.8 kB]
+#6 15.47 Get:8 http://archive.ubuntu.com/ubuntu jammy/main amd64 readline-common all 8.1.2-1 [53.5 kB]
+#6 15.48 Get:9 http://archive.ubuntu.com/ubuntu jammy/main amd64 libreadline8 amd64 8.1.2-1 [153 kB]
+#6 15.49 Get:10 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libsqlite3-0 amd64 3.37.2-2ubuntu0.3 [641 kB]
+#6 15.55 Get:11 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libpython3.10-stdlib amd64 3.10.12-1~22.04.6 [1850 kB]
+#6 15.72 Get:12 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 python3.10 amd64 3.10.12-1~22.04.6 [509 kB]
+#6 15.77 Get:13 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libpython3-stdlib amd64 3.10.6-1~22.04.1 [6812 B]
+#6 15.77 Get:14 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 python3 amd64 3.10.6-1~22.04.1 [22.8 kB]
+#6 15.89 Get:15 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libapparmor1 amd64 3.0.4-2ubuntu2.4 [39.7 kB]
+#6 15.90 Get:16 http://archive.ubuntu.com/ubuntu jammy/main amd64 libargon2-1 amd64 0~20171227-0.3 [19.5 kB]
+#6 15.90 Get:17 http://archive.ubuntu.com/ubuntu jammy/main amd64 libdevmapper1.02.1 amd64 2:1.02.175-2.1ubuntu4 [139 kB]
+#6 15.92 Get:18 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libjson-c5 amd64 0.15-3~ubuntu1.22.04.2 [33.5 kB]
+#6 15.92 Get:19 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libcryptsetup12 amd64 2:2.4.3-1ubuntu1.2 [211 kB]
+#6 15.94 Get:20 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libip4tc2 amd64 1.8.7-1ubuntu5.2 [19.9 kB]
+#6 16.00 Get:21 http://archive.ubuntu.com/ubuntu jammy/main amd64 libkmod2 amd64 29-1ubuntu1 [48.0 kB]
+#6 16.01 Get:22 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 systemd amd64 249.11-0ubuntu3.12 [4581 kB]
+#6 16.44 Get:23 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 systemd-sysv amd64 249.11-0ubuntu3.12 [10.5 kB]
+#6 16.45 Get:24 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 perl-modules-5.34 all 5.34.0-3ubuntu1.3 [2976 kB]
+#6 16.72 Get:25 http://archive.ubuntu.com/ubuntu jammy/main amd64 libgdbm6 amd64 1.23-1 [33.9 kB]
+#6 16.72 Get:26 http://archive.ubuntu.com/ubuntu jammy/main amd64 libgdbm-compat4 amd64 1.23-1 [6606 B]
+#6 16.72 Get:27 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libperl5.34 amd64 5.34.0-3ubuntu1.3 [4820 kB]
+#6 17.25 Get:28 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 perl amd64 5.34.0-3ubuntu1.3 [232 kB]
+#6 17.36 Get:29 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 openssl amd64 3.0.2-0ubuntu1.18 [1184 kB]
+#6 17.47 Get:30 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 ca-certificates all 20240203~22.04.1 [162 kB]
+#6 17.49 Get:31 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libdbus-1-3 amd64 1.12.20-2ubuntu4.1 [189 kB]
+#6 17.51 Get:32 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 dbus amd64 1.12.20-2ubuntu4.1 [158 kB]
+#6 17.52 Get:33 http://archive.ubuntu.com/ubuntu jammy/main amd64 dmsetup amd64 2:1.02.175-2.1ubuntu4 [81.7 kB]
+#6 17.53 Get:34 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libglib2.0-0 amd64 2.72.4-0ubuntu2.3 [1466 kB]
+#6 17.67 Get:35 http://archive.ubuntu.com/ubuntu jammy/main amd64 libgirepository-1.0-1 amd64 1.72.0-1 [55.6 kB]
+#6 17.67 Get:36 http://archive.ubuntu.com/ubuntu jammy/main amd64 gir1.2-glib-2.0 amd64 1.72.0-1 [164 kB]
+#6 17.69 Get:37 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libcap2-bin amd64 1:2.44-1ubuntu0.22.04.1 [26.0 kB]
+#6 17.77 Get:38 http://archive.ubuntu.com/ubuntu jammy/main amd64 iputils-ping amd64 3:20211215-1 [42.9 kB]
+#6 17.78 Get:39 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 less amd64 590-1ubuntu0.22.04.3 [142 kB]
+#6 17.80 Get:40 http://archive.ubuntu.com/ubuntu jammy/main amd64 libmd0 amd64 1.0.4-1build1 [23.0 kB]
+#6 17.80 Get:41 http://archive.ubuntu.com/ubuntu jammy/main amd64 libbsd0 amd64 0.11.5-1 [44.8 kB]
+#6 17.80 Get:42 http://archive.ubuntu.com/ubuntu jammy/main amd64 libelf1 amd64 0.186-1build1 [51.0 kB]
+#6 17.81 Get:43 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libfribidi0 amd64 1.0.8-2ubuntu3.1 [26.1 kB]
+#6 17.86 Get:44 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libglib2.0-data all 2.72.4-0ubuntu2.3 [4666 B]
+#6 17.87 Get:45 http://archive.ubuntu.com/ubuntu jammy/main amd64 libicu70 amd64 70.1-2 [10.6 MB]
+#6 18.94 Get:46 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libnss-systemd amd64 249.11-0ubuntu3.12 [133 kB]
+#6 18.94 Get:47 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libpam-cap amd64 1:2.44-1ubuntu0.22.04.1 [7928 B]
+#6 18.94 Get:48 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libpam-systemd amd64 249.11-0ubuntu3.12 [203 kB]
+#6 18.96 Get:49 http://archive.ubuntu.com/ubuntu jammy/main amd64 libtext-iconv-perl amd64 1.7-7build3 [14.3 kB]
+#6 18.96 Get:50 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libxml2 amd64 2.9.13+dfsg-1ubuntu0.4 [763 kB]
+#6 19.03 Get:51 http://archive.ubuntu.com/ubuntu jammy/main amd64 netbase all 6.3 [12.9 kB]
+#6 19.03 Get:52 http://archive.ubuntu.com/ubuntu jammy/main amd64 netcat-openbsd amd64 1.218-4ubuntu1 [39.4 kB]
+#6 19.03 Get:53 http://archive.ubuntu.com/ubuntu jammy/main amd64 python3-dbus amd64 1.2.18-3build1 [99.5 kB]
+#6 19.04 Get:54 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 python3-gi amd64 3.42.1-0ubuntu1 [229 kB]
+#6 19.15 Get:55 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 networkd-dispatcher all 2.1-2ubuntu0.22.04.2 [15.8 kB]
+#6 19.23 Get:56 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 python3-pkg-resources all 59.6.0-1.2ubuntu0.22.04.2 [133 kB]
+#6 19.25 Get:57 http://archive.ubuntu.com/ubuntu jammy/main amd64 shared-mime-info amd64 2.1-2 [454 kB]
+#6 19.29 Get:58 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 sudo amd64 1.9.9-1ubuntu2.4 [821 kB]
+#6 19.36 Get:59 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 systemd-timesyncd amd64 249.11-0ubuntu3.12 [31.2 kB]
+#6 19.37 Get:60 http://archive.ubuntu.com/ubuntu jammy/main amd64 ucf all 3.0043 [56.1 kB]
+#6 19.37 Get:61 http://archive.ubuntu.com/ubuntu jammy/main amd64 xdg-user-dirs amd64 0.17-2ubuntu4 [53.9 kB]
+#6 19.38 Get:62 http://archive.ubuntu.com/ubuntu jammy/main amd64 xkb-data all 2.33-1 [394 kB]
+#6 19.41 Get:63 http://archive.ubuntu.com/ubuntu jammy/main amd64 libcbor0.8 amd64 0.8.0-2ubuntu1 [24.6 kB]
+#6 19.42 Get:64 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libdrm-common all 2.4.113-2~ubuntu0.22.04.1 [5450 B]
+#6 19.42 Get:65 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libdrm2 amd64 2.4.113-2~ubuntu0.22.04.1 [38.1 kB]
+#6 19.52 Get:66 http://archive.ubuntu.com/ubuntu jammy/main amd64 libedit2 amd64 3.1-20210910-1build1 [96.8 kB]
+#6 19.53 Get:67 http://archive.ubuntu.com/ubuntu jammy/main amd64 libfido2-1 amd64 1.10.0-1 [82.8 kB]
+#6 19.55 Get:68 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libnghttp2-14 amd64 1.43.0-1ubuntu0.2 [76.9 kB]
+#6 19.55 Get:69 http://archive.ubuntu.com/ubuntu jammy/main amd64 libpng16-16 amd64 1.6.37-3build5 [191 kB]
+#6 19.57 Get:70 http://archive.ubuntu.com/ubuntu jammy/main amd64 libpsl5 amd64 0.21.0-1.2build2 [58.4 kB]
+#6 19.58 Get:71 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libuv1 amd64 1.43.0-1ubuntu0.1 [92.7 kB]
+#6 19.58 Get:72 http://archive.ubuntu.com/ubuntu jammy/main amd64 libxau6 amd64 1:1.0.9-1build5 [7634 B]
+#6 19.61 Get:73 http://archive.ubuntu.com/ubuntu jammy/main amd64 libxdmcp6 amd64 1:1.1.3-0ubuntu5 [10.9 kB]
+#6 19.61 Get:74 http://archive.ubuntu.com/ubuntu jammy/main amd64 libxcb1 amd64 1.14-3ubuntu3 [49.0 kB]
+#6 19.61 Get:75 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libx11-data all 2:1.7.5-1ubuntu0.3 [120 kB]
+#6 19.69 Get:76 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libx11-6 amd64 2:1.7.5-1ubuntu0.3 [667 kB]
+#6 19.76 Get:77 http://archive.ubuntu.com/ubuntu jammy/main amd64 libxext6 amd64 2:1.3.4-1build1 [31.8 kB]
+#6 19.76 Get:78 http://archive.ubuntu.com/ubuntu jammy/main amd64 libxmuu1 amd64 2:1.1.3-3 [10.2 kB]
+#6 19.76 Get:79 http://archive.ubuntu.com/ubuntu jammy/main amd64 manpages all 5.10-1ubuntu1 [1375 kB]
+#6 19.89 Get:80 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 openssh-client amd64 1:8.9p1-3ubuntu0.10 [906 kB]
+#6 19.97 Get:81 http://archive.ubuntu.com/ubuntu jammy/main amd64 publicsuffix all 20211207.1025-1 [129 kB]
+#6 19.98 Get:82 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 wget amd64 1.21.2-2ubuntu1.1 [339 kB]
+#6 20.06 Get:83 http://archive.ubuntu.com/ubuntu jammy/main amd64 xauth amd64 1:1.1-1build2 [27.5 kB]
+#6 20.06 Get:84 http://archive.ubuntu.com/ubuntu jammy/main amd64 xz-utils amd64 5.2.5-2ubuntu1 [84.8 kB]
+#6 20.07 Get:85 http://archive.ubuntu.com/ubuntu jammy/main amd64 hicolor-icon-theme all 0.17-2 [9976 B]
+#6 20.07 Get:86 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libgdk-pixbuf2.0-common all 2.42.8+dfsg-1ubuntu0.3 [5630 B]
+#6 20.07 Get:87 http://archive.ubuntu.com/ubuntu jammy/main amd64 libjpeg-turbo8 amd64 2.1.2-0ubuntu1 [134 kB]
+#6 20.09 Get:88 http://archive.ubuntu.com/ubuntu jammy/main amd64 libjpeg8 amd64 8c-2ubuntu10 [2264 B]
+#6 20.09 Get:89 http://archive.ubuntu.com/ubuntu jammy/main amd64 libdeflate0 amd64 1.10-2 [70.9 kB]
+#6 20.16 Get:90 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libjbig0 amd64 2.1-3.1ubuntu0.22.04.1 [29.2 kB]
+#6 20.16 Get:91 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libwebp7 amd64 1.2.2-2ubuntu0.22.04.2 [206 kB]
+#6 20.18 Get:92 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libtiff5 amd64 4.3.0-6ubuntu0.10 [185 kB]
+#6 20.20 Get:93 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libgdk-pixbuf-2.0-0 amd64 2.42.8+dfsg-1ubuntu0.3 [148 kB]
+#6 20.25 Get:94 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gtk-update-icon-cache amd64 3.24.33-1ubuntu2.2 [31.4 kB]
+#6 20.25 Get:95 http://archive.ubuntu.com/ubuntu jammy/main amd64 humanity-icon-theme all 0.6.16 [1282 kB]
+#6 20.38 Get:96 http://archive.ubuntu.com/ubuntu jammy/main amd64 ubuntu-mono all 20.10-0ubuntu2 [153 kB]
+#6 20.39 Get:97 http://archive.ubuntu.com/ubuntu jammy/main amd64 adwaita-icon-theme all 41.0-1ubuntu1 [3444 kB]
+#6 20.71 Get:98 http://archive.ubuntu.com/ubuntu jammy/main amd64 libxi6 amd64 2:1.8-1build1 [32.6 kB]
+#6 20.71 Get:99 http://archive.ubuntu.com/ubuntu jammy/main amd64 libatspi2.0-0 amd64 2.44.0-3 [80.9 kB]
+#6 20.72 Get:100 http://archive.ubuntu.com/ubuntu jammy/main amd64 x11-common all 1:7.7+23ubuntu2 [23.4 kB]
+#6 20.72 Get:101 http://archive.ubuntu.com/ubuntu jammy/main amd64 libxtst6 amd64 2:1.2.3-1build4 [13.4 kB]
+#6 20.80 Get:102 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 dbus-user-session amd64 1.12.20-2ubuntu4.1 [9442 B]
+#6 20.83 Get:103 http://archive.ubuntu.com/ubuntu jammy/main amd64 libdconf1 amd64 0.40.0-3 [40.5 kB]
+#6 20.86 Get:104 http://archive.ubuntu.com/ubuntu jammy/main amd64 dconf-service amd64 0.40.0-3 [28.5 kB]
+#6 20.88 Get:105 http://archive.ubuntu.com/ubuntu jammy/main amd64 dconf-gsettings-backend amd64 0.40.0-3 [22.8 kB]
+#6 20.89 Get:106 http://archive.ubuntu.com/ubuntu jammy/main amd64 session-migration amd64 0.3.6 [9774 B]
+#6 20.89 Get:107 http://archive.ubuntu.com/ubuntu jammy/main amd64 gsettings-desktop-schemas all 42.0-1ubuntu1 [31.1 kB]
+#6 20.93 Get:108 http://archive.ubuntu.com/ubuntu jammy/main amd64 at-spi2-core amd64 2.44.0-3 [54.4 kB]
+#6 20.93 Get:109 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 binutils-common amd64 2.38-4ubuntu2.6 [222 kB]
+#6 20.97 Get:110 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libbinutils amd64 2.38-4ubuntu2.6 [662 kB]
+#6 21.06 Get:111 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libctf-nobfd0 amd64 2.38-4ubuntu2.6 [108 kB]
+#6 21.06 Get:112 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libctf0 amd64 2.38-4ubuntu2.6 [103 kB]
+#6 21.09 Get:113 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 binutils-x86-64-linux-gnu amd64 2.38-4ubuntu2.6 [2326 kB]
+#6 21.36 Get:114 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 binutils amd64 2.38-4ubuntu2.6 [3200 B]
+#6 21.36 Get:115 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libc-dev-bin amd64 2.35-0ubuntu3.8 [20.3 kB]
+#6 21.36 Get:116 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 linux-libc-dev amd64 5.15.0-124.134 [1322 kB]
+#6 21.49 Get:117 http://archive.ubuntu.com/ubuntu jammy/main amd64 libcrypt-dev amd64 1:4.4.27-1 [112 kB]
+#6 21.51 Get:118 http://archive.ubuntu.com/ubuntu jammy/main amd64 rpcsvc-proto amd64 1.4.2-0ubuntu6 [68.5 kB]
+#6 21.51 Get:119 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libtirpc-dev amd64 1.3.2-2ubuntu0.1 [192 kB]
+#6 21.53 Get:120 http://archive.ubuntu.com/ubuntu jammy/main amd64 libnsl-dev amd64 1.3.0-2build2 [71.3 kB]
+#6 21.53 Get:121 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libc6-dev amd64 2.35-0ubuntu3.8 [2100 kB]
+#6 21.75 Get:122 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gcc-11-base amd64 11.4.0-1ubuntu1~22.04 [20.2 kB]
+#6 21.75 Get:123 http://archive.ubuntu.com/ubuntu jammy/main amd64 libisl23 amd64 0.24-2build1 [727 kB]
+#6 21.82 Get:124 http://archive.ubuntu.com/ubuntu jammy/main amd64 libmpfr6 amd64 4.1.0-3build3 [1425 kB]
+#6 21.98 Get:125 http://archive.ubuntu.com/ubuntu jammy/main amd64 libmpc3 amd64 1.2.1-2build1 [46.9 kB]
+#6 21.99 Get:126 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 cpp-11 amd64 11.4.0-1ubuntu1~22.04 [10.0 MB]
+#6 22.94 Get:127 http://archive.ubuntu.com/ubuntu jammy/main amd64 cpp amd64 4:11.2.0-1ubuntu1 [27.7 kB]
+#6 22.94 Get:128 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libcc1-0 amd64 12.3.0-1ubuntu1~22.04 [48.3 kB]
+#6 22.94 Get:129 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libgomp1 amd64 12.3.0-1ubuntu1~22.04 [126 kB]
+#6 22.95 Get:130 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libitm1 amd64 12.3.0-1ubuntu1~22.04 [30.2 kB]
+#6 22.95 Get:131 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libatomic1 amd64 12.3.0-1ubuntu1~22.04 [10.4 kB]
+#6 22.95 Get:132 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libasan6 amd64 11.4.0-1ubuntu1~22.04 [2282 kB]
+#6 23.17 Get:133 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 liblsan0 amd64 12.3.0-1ubuntu1~22.04 [1069 kB]
+#6 23.27 Get:134 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libtsan0 amd64 11.4.0-1ubuntu1~22.04 [2260 kB]
+#6 23.49 Get:135 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libubsan1 amd64 12.3.0-1ubuntu1~22.04 [976 kB]
+#6 23.58 Get:136 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libquadmath0 amd64 12.3.0-1ubuntu1~22.04 [154 kB]
+#6 23.59 Get:137 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libgcc-11-dev amd64 11.4.0-1ubuntu1~22.04 [2517 kB]
+#6 23.83 Get:138 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gcc-11 amd64 11.4.0-1ubuntu1~22.04 [20.1 MB]

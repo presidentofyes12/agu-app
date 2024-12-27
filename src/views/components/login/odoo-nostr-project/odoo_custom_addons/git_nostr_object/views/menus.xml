@@ -1,0 +1,10 @@
+<!-- views/menus.xml -->
+<odoo>
+    <menuitem id="menu_git_nostr_object_root" name="Git-Nostr Object">
+        <menuitem id="menu_git_repository" name="Repositories" action="action_git_repository"/>
+        <menuitem id="menu_git_commit" name="Commits" action="action_git_commit"/>
+        <menuitem id="menu_git_tree" name="Trees" action="action_git_tree"/>
+        <menuitem id="menu_git_blob" name="Blobs" action="action_git_blob"/>
+        <menuitem id="menu_git_nostr_event_object" name="Nostr Event Objects" action="action_git_nostr_event_object"/>
+    </menuitem>
+</odoo>

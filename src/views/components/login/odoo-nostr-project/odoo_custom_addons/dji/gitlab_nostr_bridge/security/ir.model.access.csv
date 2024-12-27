@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_gitlab_repository_user,gitlab.repository user,model_gitlab_repository,base.group_user,1,1,1,1
+access_gitlab_branch_user,gitlab.branch user,model_gitlab_branch,base.group_user,1,1,1,1
+access_gitlab_commit_user,gitlab.commit user,model_gitlab_commit,base.group_user,1,1,1,1
+access_nostr_event_user,nostr.event user,model_nostr_event,base.group_user,1,1,1,1
+access_create_branch_wizard_user,create.branch.wizard user,model_gitlab_nostr_bridge_create_branch_wizard,base.group_user,1,1,1,0
+access_create_commit_wizard_user,create.commit.wizard user,model_gitlab_nostr_bridge_create_commit_wizard,base.group_user,1,1,1,0

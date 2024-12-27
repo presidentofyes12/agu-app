@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_rebase_branch_wizard_form" model="ir.ui.view">
+        <field name="name">ivcs.rebase.branch.wizard.form</field>
+        <field name="model">ivcs.rebase.branch.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Rebase Branch">
+                <group>
+                    <field name="item_id" invisible="1"/>
+                    <field name="branch_name"/>
+                    <field name="onto_branch"/>
+                </group>
+                <footer>
+                    <button name="action_rebase_branch" string="Rebase Branch" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

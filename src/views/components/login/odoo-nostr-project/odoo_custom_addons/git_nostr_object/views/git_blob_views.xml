@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_git_blob_form" model="ir.ui.view">
+        <field name="name">git.blob.form</field>
+        <field name="model">git.blob</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="sha"/>
+                    <field name="data"/>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_git_blob_tree" model="ir.ui.view">
+        <field name="name">git.blob.tree</field>
+        <field name="model">git.blob</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="sha"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_git_blob" model="ir.actions.act_window">
+        <field name="name">Git Blobs</field>
+        <field name="res_model">git.blob</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

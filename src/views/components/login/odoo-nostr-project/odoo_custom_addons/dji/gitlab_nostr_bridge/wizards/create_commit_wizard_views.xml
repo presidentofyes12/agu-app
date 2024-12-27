@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_create_commit_wizard_form" model="ir.ui.view">
+        <field name="name">gitlab_nostr_bridge.create.commit.wizard.form</field>
+        <field name="model">gitlab_nostr_bridge.create.commit.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Create Commit">
+                <sheet>
+                    <group>
+                        <field name="repository_id" readonly="1"/>
+                        <field name="branch_name"/>
+                        <field name="file_upload" filename="file_upload_filename"/>
+                        <field name="file_upload_filename" invisible="1"/>
+                        <field name="file_path" widget="char"/>
+                        <field name="file_exists" invisible="1"/>
+                        <field name="commit_message" required="1" placeholder="Enter your commit message here"/>
+                        <field name="file_content" widget="ace" options="{'mode': 'text'}" placeholder="Enter or paste your file content here" attrs="{'readonly': [('file_exists', '=', True)]}"/>
+                        <field name="author_id" options="{'no_create': True}"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_create_commit" string="Create Commit" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_create_commit_wizard" model="ir.actions.act_window">
+        <field name="name">Create Commit</field>
+        <field name="res_model">gitlab_nostr_bridge.create.commit.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="view_id" ref="view_create_commit_wizard_form"/>
+    </record>
+
+    <!-- This is optional: add a menu item if you want to access the wizard directly -->
+    <menuitem id="menu_create_commit_wizard"
+              name="Create Commit"
+              action="action_create_commit_wizard"
+              parent="menu_gitlab_nostr_bridge"
+              sequence="20"/>
+</odoo>

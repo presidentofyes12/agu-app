@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Repository Form View -->
+        <record id="view_git_repository_form" model="ir.ui.view">
+            <field name="name">git.repository.form</field>
+            <field name="model">git.repository</field>
+            <field name="arch" type="xml">
+                <form string="Git Repository">
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                            <field name="path"/>
+                            <field name="description"/>
+                            <field name="maintainer_ids" widget="many2many_tags"/>
+                            <field name="created_at"/>
+                            <field name="last_updated"/>
+                        </group>
+                        <notebook>
+                            <page string="Branches">
+                                <field name="branch_ids">
+                                    <tree editable="bottom">
+                                        <field name="name"/>
+                                        <field name="head"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Repository Tree View -->
+        <record id="view_git_repository_tree" model="ir.ui.view">
+            <field name="name">git.repository.tree</field>
+            <field name="model">git.repository</field>
+            <field name="arch" type="xml">
+                <tree string="Git Repositories">
+                    <field name="name"/>
+                    <field name="path"/>
+                    <field name="description"/>
+                    <field name="created_at"/>
+                    <field name="last_updated"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Repository Search View -->
+        <record id="view_git_repository_search" model="ir.ui.view">
+            <field name="name">git.repository.search</field>
+            <field name="model">git.repository</field>
+            <field name="arch" type="xml">
+                <search string="Search Repositories">
+                    <field name="name"/>
+                    <field name="path"/>
+                    <field name="description"/>
+                    <field name="maintainer_ids"/>
+                    <filter string="My Repositories" name="my_repositories" domain="[('maintainer_ids', 'in', uid)]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Created Date" name="group_by_created_at" context="{'group_by': 'created_at:month'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Repository Action -->
+        <record id="action_git_repository" model="ir.actions.act_window">
+            <field name="name">Git Repositories</field>
+            <field name="res_model">git.repository</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_git_repository_search"/>
+        </record>
+
+        <!-- Menu Items -->
+        <menuitem id="menu_git_repository_root" name="Git Repositories" sequence="10"/>
+        <menuitem id="menu_git_repository" parent="menu_git_repository_root" action="action_git_repository" sequence="10"/>
+    </data>
+</odoo>

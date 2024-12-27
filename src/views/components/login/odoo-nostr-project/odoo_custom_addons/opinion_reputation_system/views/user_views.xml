@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_opinion_user_form" model="ir.ui.view">
+        <field name="name">opinion.user.form</field>
+        <field name="model">opinion.user</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="reputation"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_opinion_user_tree" model="ir.ui.view">
+        <field name="name">opinion.user.tree</field>
+        <field name="model">opinion.user</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="reputation"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_opinion_user" model="ir.actions.act_window">
+        <field name="name">Users</field>
+        <field name="res_model">opinion.user</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_opinion_root" name="Opinion Reputation System"/>
+    <menuitem id="menu_opinion_user" parent="menu_opinion_root" action="action_opinion_user"/>
+</odoo>

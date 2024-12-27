@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_update_relative_wizard_form" model="ir.ui.view">
+        <field name="name">update.relative.wizard.form</field>
+        <field name="model">update.relative.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Update Relative">
+                <group>
+                    <field name="relative_id"/>
+                    <field name="name"/>
+                    <field name="relationship_id"/>
+                    <field name="address"/>
+                    <field name="birth_date"/>
+                </group>
+                <footer>
+                    <button name="action_update_relative" string="Update" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_update_relative_wizard" model="ir.actions.act_window">
+        <field name="name">Update Relative</field>
+        <field name="res_model">update.relative.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_update_relative_wizard"
+              name="Update Relative"
+              parent="menu_opinion_root"
+              action="action_update_relative_wizard"
+              sequence="52"/>
+</odoo>

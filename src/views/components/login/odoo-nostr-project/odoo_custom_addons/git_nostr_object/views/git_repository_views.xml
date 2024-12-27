@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_git_repository_form" model="ir.ui.view">
+        <field name="name">git.repository.form</field>
+        <field name="model">git.repository</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="traverse_and_publish" string="Traverse and Publish" type="object" class="oe_highlight"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="path" string="Local Path"/>
+                    </group>
+                    <notebook>
+                        <page string="Logs">
+                            <field name="logs" widget="text" readonly="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_git_repository_tree" model="ir.ui.view">
+        <field name="name">git.repository.tree</field>
+        <field name="model">git.repository</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="path"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_git_repository" model="ir.actions.act_window">
+        <field name="name">Git Repositories</field>
+        <field name="res_model">git.repository</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>
